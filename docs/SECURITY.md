@@ -7,7 +7,10 @@ money into it.
 ## Scope
 
 The three contracts in `contracts/` (`deed`, `vault`, `tusdc`), reviewed in October 2026
-before the hackathon submission. The worker, SDK, agents and web app are out of scope here.
+before the hackathon submission. The worker, SDK, agents and web app were not part of that
+review; their threat model and known limits are in [DESIGN.md](DESIGN.md#threat-model-off-chain-parts).
+The worker's outbound requests are guarded against server-side request forgery and covered by
+tests (`worker/test/`), but that code has had no outside review either.
 
 We read every contract method looking for: state changed after a promise instead of before,
 callbacks that do not restore state on failure, missing `#[private]`, predecessor versus

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="220" viewBox="0 0 820 220" role="img" aria-labelledby="title desc">
+  <title id="title">Deed</title>
+  <desc id="desc">Deed: an NFT that owns a running paid API on NEAR. Sell the token and the business moves with it.</desc>
+  <defs>
+    <pattern id="guilloche" width="16" height="16" patternUnits="userSpaceOnUse">
+      <path d="M0 8 Q4 0 8 8 T16 8" fill="none" stroke="#d8cba9" stroke-width="0.6"/>
+    </pattern>
+  </defs>
+  <rect width="820" height="220" fill="#e9e2d0"/>
+  <rect x="10" y="10" width="800" height="200" fill="#f8f3e6" stroke="#cfc2a3"/>
+  <rect x="20" y="20" width="780" height="180" fill="none" stroke="#1f1b16" stroke-width="1.2"/>
+  <rect x="25" y="25" width="770" height="170" fill="none" stroke="#1f1b16" stroke-width="0.4"/>
+  <rect x="25" y="176" width="770" height="19" fill="url(#guilloche)"/>
+
+  <text x="56" y="76" font-family="Georgia, 'Times New Roman', serif" font-size="46" letter-spacing="6" fill="#1f1b16">DEED</text>
+  <text x="58" y="104" font-family="Georgia, 'Times New Roman', serif" font-size="17" font-style="italic" fill="#6c6252">An NFT that owns a running paid API on NEAR</text>
+  <line x1="56" y1="120" x2="600" y2="120" stroke="#cfc2a3" stroke-width="1"/>
+
+  <g font-family="'DejaVu Sans Mono', Menlo, Consolas, monospace" font-size="13" fill="#1f1b16">
+    <text x="56" y="144">treasury · price list · customer ledger · worker key</text>
+    <text x="56" y="166">sell the token: revenue, credit and worker authorization move with it</text>
+  </g>
+
+  <g transform="translate(700 104)">
+    <circle r="58" fill="#7a2420"/>
+    <circle r="50" fill="none" stroke="#f8f3e6" stroke-width="1.5"/>
+    <circle r="44" fill="none" stroke="#f8f3e6" stroke-width="0.6" stroke-dasharray="2 3"/>
+    <text y="-14" text-anchor="middle" font-family="Georgia, serif" font-size="10" letter-spacing="2" fill="#f8f3e6">NEAR</text>
+    <text y="14" text-anchor="middle" font-family="Georgia, serif" font-size="34" fill="#f8f3e6">D</text>
+    <text y="32" text-anchor="middle" font-family="Georgia, serif" font-size="9" letter-spacing="2" fill="#f8f3e6">NEP-171</text>
+  </g>
+</svg>

@@ -3,28 +3,28 @@
   "explorer": "https://testnet.nearblocks.io",
   "accounts": {
     "parent": "deedlab.testnet",
-    "deed": "deed.deedlab.testnet",
+    "deed": "deed2.deedlab.testnet",
     "tusdc": "tusdc.deedlab.testnet",
     "seller": "deedlab-seller.testnet",
     "buyer": "deedlab-buyer.testnet",
     "alice": "deedlab-alice.testnet",
     "bob": "deedlab-bob.testnet",
-    "vault": "relay.deed.deedlab.testnet"
+    "vault": "relay.deed2.deedlab.testnet"
   },
   "links": {
-    "deed": "https://testnet.nearblocks.io/address/deed.deedlab.testnet",
+    "deed": "https://testnet.nearblocks.io/address/deed2.deedlab.testnet",
     "tusdc": "https://testnet.nearblocks.io/address/tusdc.deedlab.testnet"
   },
   "code_hashes": {
     "deed": {
-      "sha256_base58": "7DRVHABo5oFpHh9smpbAZgNUVQGa7Gt1vPj8oKu328Wt",
-      "sha256_hex": "5c54c7897bb12ac16c1cd1e5c1374fd0ba16d98b549c0ea56c88fa7383355a09",
-      "size_bytes": 527105
+      "sha256_base58": "4yU2geQtGBib4s27Ezv4WYGYBbX3zt8RpmEdq2WvztZb",
+      "sha256_hex": "3b0a25dd18bd2e81b3a79ebb48ed4cc8d202c79ae15ea3e9c54f0bae8e10dc26",
+      "size_bytes": 531102
     },
     "vault": {
-      "sha256_base58": "CwC6rxAQ43KsXnKF5Wd1ravygQSDotrtMgqZcgJ8copA",
-      "sha256_hex": "b15278cd5bc710773a66f004a6b57aa10eaf19be8295f171d1ce6c9c49e8b4ef",
-      "size_bytes": 229551
+      "sha256_base58": "B6DFjQMSgKMRU4awG8gsX2boKQSd5HZ23C4EYYJb2rre",
+      "sha256_hex": "95eaa101bfa7d70f9e0f4fcb76ad7d6749f9f37d35899e7640d3dd46ab7b634b",
+      "size_bytes": 231852
     },
     "tusdc": {
       "sha256_base58": "puNMKSyRj9oVdWxWd4qedx3KXryexRJ3umvJSxb2C54",
@@ -32,281 +32,539 @@
       "size_bytes": 145392
     }
   },
-  "mint_cost_yocto": "2856760000000000000000000",
-  "deploy": [
+  "mint_cost_yocto": "2879770000000000000000000",
+  "updated_at": "2026-10-30T06:34:14.108Z",
+  "superseded": [
     {
-      "step": "create tusdc.deedlab.testnet",
-      "hash": "CfEWvrgcctH4fh5hZoq5t2XkjZPj2diyXfsdT5UQtn3D",
-      "link": "https://testnet.nearblocks.io/txns/CfEWvrgcctH4fh5hZoq5t2XkjZPj2diyXfsdT5UQtn3D",
-      "success": true,
-      "at": "2026-10-30T05:59:35.579Z"
-    },
-    {
-      "step": "deploy and init tusdc.deedlab.testnet",
-      "hash": "F1v5rPtcj8vGL3vvSxNmZYSsAqM8Ua7aQKV6swgNrCvx",
-      "link": "https://testnet.nearblocks.io/txns/F1v5rPtcj8vGL3vvSxNmZYSsAqM8Ua7aQKV6swgNrCvx",
-      "success": true,
-      "at": "2026-10-30T05:59:35.579Z"
-    },
-    {
-      "step": "create deed.deedlab.testnet",
-      "hash": "AF4QUU6SpgSaPRsU95Tws8btnBEv12WG25jeMfhJEgPT",
-      "link": "https://testnet.nearblocks.io/txns/AF4QUU6SpgSaPRsU95Tws8btnBEv12WG25jeMfhJEgPT",
-      "success": true,
-      "at": "2026-10-30T05:59:35.579Z"
-    },
-    {
-      "step": "deploy and init deed.deedlab.testnet",
-      "hash": "Bb6xhofb1CZRXGMt29DA3tWugkiXmZzYXDaqbTDnLLZB",
-      "link": "https://testnet.nearblocks.io/txns/Bb6xhofb1CZRXGMt29DA3tWugkiXmZzYXDaqbTDnLLZB",
-      "success": true,
-      "at": "2026-10-30T05:59:35.579Z"
-    },
-    {
-      "step": "register deed.deedlab.testnet on tusdc.deedlab.testnet",
-      "hash": "ADZXHEp3z3FoWJ9MnzeCkJRApSARggZYScB3YHqi1K9p",
-      "link": "https://testnet.nearblocks.io/txns/ADZXHEp3z3FoWJ9MnzeCkJRApSARggZYScB3YHqi1K9p",
-      "success": true,
-      "at": "2026-10-30T05:59:35.579Z"
+      "deed": "deed.deedlab.testnet",
+      "vault": "relay.deed.deedlab.testnet",
+      "code_hashes": {
+        "deed": {
+          "sha256_base58": "7DRVHABo5oFpHh9smpbAZgNUVQGa7Gt1vPj8oKu328Wt",
+          "sha256_hex": "5c54c7897bb12ac16c1cd1e5c1374fd0ba16d98b549c0ea56c88fa7383355a09",
+          "size_bytes": 527105
+        },
+        "vault": {
+          "sha256_base58": "CwC6rxAQ43KsXnKF5Wd1ravygQSDotrtMgqZcgJ8copA",
+          "sha256_hex": "b15278cd5bc710773a66f004a6b57aa10eaf19be8295f171d1ce6c9c49e8b4ef",
+          "size_bytes": 229551
+        },
+        "tusdc": {
+          "sha256_base58": "puNMKSyRj9oVdWxWd4qedx3KXryexRJ3umvJSxb2C54",
+          "sha256_hex": "0c4582c624eecf42d7ed07aca0f695d931576469d46033670b93fee2867158df",
+          "size_bytes": 145392
+        }
+      },
+      "deploy": [
+        {
+          "step": "create tusdc.deedlab.testnet",
+          "hash": "CfEWvrgcctH4fh5hZoq5t2XkjZPj2diyXfsdT5UQtn3D",
+          "link": "https://testnet.nearblocks.io/txns/CfEWvrgcctH4fh5hZoq5t2XkjZPj2diyXfsdT5UQtn3D",
+          "success": true,
+          "at": "2026-10-30T05:59:35.579Z"
+        },
+        {
+          "step": "deploy and init tusdc.deedlab.testnet",
+          "hash": "F1v5rPtcj8vGL3vvSxNmZYSsAqM8Ua7aQKV6swgNrCvx",
+          "link": "https://testnet.nearblocks.io/txns/F1v5rPtcj8vGL3vvSxNmZYSsAqM8Ua7aQKV6swgNrCvx",
+          "success": true,
+          "at": "2026-10-30T05:59:35.579Z"
+        },
+        {
+          "step": "create deed.deedlab.testnet",
+          "hash": "AF4QUU6SpgSaPRsU95Tws8btnBEv12WG25jeMfhJEgPT",
+          "link": "https://testnet.nearblocks.io/txns/AF4QUU6SpgSaPRsU95Tws8btnBEv12WG25jeMfhJEgPT",
+          "success": true,
+          "at": "2026-10-30T05:59:35.579Z"
+        },
+        {
+          "step": "deploy and init deed.deedlab.testnet",
+          "hash": "Bb6xhofb1CZRXGMt29DA3tWugkiXmZzYXDaqbTDnLLZB",
+          "link": "https://testnet.nearblocks.io/txns/Bb6xhofb1CZRXGMt29DA3tWugkiXmZzYXDaqbTDnLLZB",
+          "success": true,
+          "at": "2026-10-30T05:59:35.579Z"
+        },
+        {
+          "step": "register deed.deedlab.testnet on tusdc.deedlab.testnet",
+          "hash": "ADZXHEp3z3FoWJ9MnzeCkJRApSARggZYScB3YHqi1K9p",
+          "link": "https://testnet.nearblocks.io/txns/ADZXHEp3z3FoWJ9MnzeCkJRApSARggZYScB3YHqi1K9p",
+          "success": true,
+          "at": "2026-10-30T05:59:35.579Z"
+        }
+      ],
+      "smoke": {
+        "run_at": "2026-10-30T06:05:21.442Z",
+        "slug": "relay",
+        "vault": "relay.deed.deedlab.testnet",
+        "sale_price": "25000000",
+        "price_per_call": "10000",
+        "final_vault_owner": "deedlab-buyer.testnet",
+        "final_owner_epoch": 2,
+        "final_worker_key": "ed25519:GFchgt48zC2p2G9wvL1XVa7XSuhtgAt2W2wsxP3pZzv7",
+        "steps": [
+          {
+            "step": "deedlab-seller.testnet mints deed \"relay\"",
+            "actor": "deedlab-seller.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "DDdmQzTHd7UXHqLKKDB7sPW2zovuXq5xnvoSVSzeBxK8",
+            "link": "https://testnet.nearblocks.io/txns/DDdmQzTHd7UXHqLKKDB7sPW2zovuXq5xnvoSVSzeBxK8"
+          },
+          {
+            "step": "deedlab-seller.testnet sets worker key A",
+            "actor": "deedlab-seller.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "5KQZUwUXiVweJpumzuw3PVPYVfjjXDTk6WwFhccKpYn1",
+            "link": "https://testnet.nearblocks.io/txns/5KQZUwUXiVweJpumzuw3PVPYVfjjXDTk6WwFhccKpYn1"
+          },
+          {
+            "step": "register deedlab-seller.testnet on tUSDC",
+            "actor": "deedlab-seller.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "3o8JWU2qPoj7VGjGsSWjzGuM6ttNezwJh8bYS6CoaQCv",
+            "link": "https://testnet.nearblocks.io/txns/3o8JWU2qPoj7VGjGsSWjzGuM6ttNezwJh8bYS6CoaQCv"
+          },
+          {
+            "step": "register deedlab-buyer.testnet on tUSDC",
+            "actor": "deedlab-buyer.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "CGE5nYdkyjy488bhxNunS9hpkxHUkSwWD63mfL1tVutJ",
+            "link": "https://testnet.nearblocks.io/txns/CGE5nYdkyjy488bhxNunS9hpkxHUkSwWD63mfL1tVutJ"
+          },
+          {
+            "step": "register deedlab-alice.testnet on tUSDC",
+            "actor": "deedlab-alice.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "66j6b9yuky9VLxgUf4j65P23dCfwpybaa87hEUH6zuF1",
+            "link": "https://testnet.nearblocks.io/txns/66j6b9yuky9VLxgUf4j65P23dCfwpybaa87hEUH6zuF1"
+          },
+          {
+            "step": "register deedlab-bob.testnet on tUSDC",
+            "actor": "deedlab-bob.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "7vsyjk84bPPD4Psnw7T84Am55iCqeMKzyT9WiJpBKVxK",
+            "link": "https://testnet.nearblocks.io/txns/7vsyjk84bPPD4Psnw7T84Am55iCqeMKzyT9WiJpBKVxK"
+          },
+          {
+            "step": "deedlab-alice.testnet mints 100.000000 tUSDC",
+            "actor": "deedlab-alice.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "HNshGHuu2s6huVYfCFoW3ZzKsU1g2dHbvY8LaEvK8ks7",
+            "link": "https://testnet.nearblocks.io/txns/HNshGHuu2s6huVYfCFoW3ZzKsU1g2dHbvY8LaEvK8ks7"
+          },
+          {
+            "step": "deedlab-bob.testnet mints 100.000000 tUSDC",
+            "actor": "deedlab-bob.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "9E1CZhwgvYMyJNmadytjgk2yQEoFcmar1SS6mqjVemZN",
+            "link": "https://testnet.nearblocks.io/txns/9E1CZhwgvYMyJNmadytjgk2yQEoFcmar1SS6mqjVemZN"
+          },
+          {
+            "step": "deedlab-alice.testnet deposits 20.000000 tUSDC credit",
+            "actor": "deedlab-alice.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "DP1MU8RafNfRjpxpsGRJDdJn1GvfUBSHpv1Au3djLc4S",
+            "link": "https://testnet.nearblocks.io/txns/DP1MU8RafNfRjpxpsGRJDdJn1GvfUBSHpv1Au3djLc4S"
+          },
+          {
+            "step": "deedlab-bob.testnet deposits 10.000000 tUSDC credit",
+            "actor": "deedlab-bob.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "EnzuyCFyzZbv5podntfYq7LRiEPhRFmV8gv7mjEWMshH",
+            "link": "https://testnet.nearblocks.io/txns/EnzuyCFyzZbv5podntfYq7LRiEPhRFmV8gv7mjEWMshH"
+          },
+          {
+            "step": "worker key A charges a batch (65 calls)",
+            "actor": "relay.deed.deedlab.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "52XjpZFjbobW3DYgxH7A2Piz8SapBHNzmZPFdoUwaFwp",
+            "link": "https://testnet.nearblocks.io/txns/52XjpZFjbobW3DYgxH7A2Piz8SapBHNzmZPFdoUwaFwp"
+          },
+          {
+            "step": "deedlab-seller.testnet withdraws 0.650000 tUSDC",
+            "actor": "deedlab-seller.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "GdQVn148YXpM6gUmmjNTgnJzC54ptC1TejCcudTkB6fR",
+            "link": "https://testnet.nearblocks.io/txns/GdQVn148YXpM6gUmmjNTgnJzC54ptC1TejCcudTkB6fR"
+          },
+          {
+            "step": "deedlab-alice.testnet tries to withdraw (must fail)",
+            "actor": "deedlab-alice.testnet",
+            "expected": "failure",
+            "outcome": "failure",
+            "hash": "2m6SAQy2xyNSpeFWc3vRYVXtWfeajtE5urkcPQGESwkk",
+            "link": "https://testnet.nearblocks.io/txns/2m6SAQy2xyNSpeFWc3vRYVXtWfeajtE5urkcPQGESwkk"
+          },
+          {
+            "step": "worker key A charges (10 calls)",
+            "actor": "relay.deed.deedlab.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "DaS9RqJcxKFhixV9y1QgKaDxrrqJCK9H7Cub5t6N5ak4",
+            "link": "https://testnet.nearblocks.io/txns/DaS9RqJcxKFhixV9y1QgKaDxrrqJCK9H7Cub5t6N5ak4"
+          },
+          {
+            "step": "deedlab-seller.testnet lists the deed for 25.000000 tUSDC",
+            "actor": "deedlab-seller.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "JBAcpTNgZBD6PePFLJej4pu1HzWWh8uQHcgbj9w1E2rY",
+            "link": "https://testnet.nearblocks.io/txns/JBAcpTNgZBD6PePFLJej4pu1HzWWh8uQHcgbj9w1E2rY"
+          },
+          {
+            "step": "deedlab-seller.testnet tries to withdraw while listed (must fail)",
+            "actor": "deedlab-seller.testnet",
+            "expected": "failure",
+            "outcome": "failure",
+            "hash": "AU1gepjsEy5nxWd8SLS2tKpJVAPsbKtUUJaULXZvjS9c",
+            "link": "https://testnet.nearblocks.io/txns/AU1gepjsEy5nxWd8SLS2tKpJVAPsbKtUUJaULXZvjS9c"
+          },
+          {
+            "step": "deedlab-buyer.testnet mints 100.000000 tUSDC",
+            "actor": "deedlab-buyer.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "3ANnLa7JxY8zFQQ57QY6vHjnvLrMaB81YWvMDonTyuPB",
+            "link": "https://testnet.nearblocks.io/txns/3ANnLa7JxY8zFQQ57QY6vHjnvLrMaB81YWvMDonTyuPB"
+          },
+          {
+            "step": "deedlab-buyer.testnet buys the deed",
+            "actor": "deedlab-buyer.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "EaVz2ciChPCz3DofnWQ19gxz9eRUttj9noWYhktHBf4Q",
+            "link": "https://testnet.nearblocks.io/txns/EaVz2ciChPCz3DofnWQ19gxz9eRUttj9noWYhktHBf4Q"
+          },
+          {
+            "step": "deedlab-seller.testnet tries to withdraw after the sale (must fail)",
+            "actor": "deedlab-seller.testnet",
+            "expected": "failure",
+            "outcome": "failure",
+            "hash": "GbxhNTBK75TzLuwxnjaTJFRmQLsNpbYcTyKbZNDzuApo",
+            "link": "https://testnet.nearblocks.io/txns/GbxhNTBK75TzLuwxnjaTJFRmQLsNpbYcTyKbZNDzuApo"
+          },
+          {
+            "step": "worker key A keeps charging after the sale (10 calls)",
+            "actor": "relay.deed.deedlab.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "CUqQ18CLT5E9VN553iYS5py96VCSj8u6GdwTjhuYtJdB",
+            "link": "https://testnet.nearblocks.io/txns/CUqQ18CLT5E9VN553iYS5py96VCSj8u6GdwTjhuYtJdB"
+          },
+          {
+            "step": "deedlab-buyer.testnet withdraws 0.200000 tUSDC",
+            "actor": "deedlab-buyer.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "Hmc8keJpuA6C9npjqyobYPqwteFgogw4gHSVvW7KkKsg",
+            "link": "https://testnet.nearblocks.io/txns/Hmc8keJpuA6C9npjqyobYPqwteFgogw4gHSVvW7KkKsg"
+          },
+          {
+            "step": "deedlab-buyer.testnet rotates the worker key to B",
+            "actor": "deedlab-buyer.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "CN74n2WgssxkRbshWyMBpp9p1EyAUZw2g4KqVkbvMHQb",
+            "link": "https://testnet.nearblocks.io/txns/CN74n2WgssxkRbshWyMBpp9p1EyAUZw2g4KqVkbvMHQb"
+          },
+          {
+            "step": "old worker key A tries to charge (must fail)",
+            "actor": "relay.deed.deedlab.testnet",
+            "expected": "failure",
+            "outcome": "rejected_by_rpc",
+            "error": "AccessKeyDoesNotExist: key A was deleted by the rotation, so the RPC refused the transaction before it reached the chain (near-api-js reported RetriesExceeded after trying both RPC endpoints)"
+          },
+          {
+            "step": "new worker key B charges",
+            "actor": "relay.deed.deedlab.testnet",
+            "expected": "success",
+            "outcome": "success",
+            "hash": "8Sia2jBL3eCfxQYJ5m1xJSNnYADbP4WGBhGr8ooBpaA7",
+            "link": "https://testnet.nearblocks.io/txns/8Sia2jBL3eCfxQYJ5m1xJSNnYADbP4WGBhGr8ooBpaA7"
+          }
+        ],
+        "access_keys_after_rotation": [
+          {
+            "public_key": "ed25519:GFchgt48zC2p2G9wvL1XVa7XSuhtgAt2W2wsxP3pZzv7",
+            "permission": {
+              "FunctionCall": {
+                "allowance": "499763379782764300000000",
+                "method_names": [
+                  "charge"
+                ],
+                "receiver_id": "relay.deed.deedlab.testnet"
+              }
+            }
+          }
+        ],
+        "worker_history": [
+          {
+            "public_key": "ed25519:pcXekU5bAoNPji7B8obyGDeraBbuR8brCMyTPszNoDS",
+            "set_at_ms": "1793340105059",
+            "owner_epoch": 1
+          },
+          {
+            "public_key": "ed25519:GFchgt48zC2p2G9wvL1XVa7XSuhtgAt2W2wsxP3pZzv7",
+            "set_at_ms": "1793340315871",
+            "owner_epoch": 2
+          }
+        ],
+        "final_info": {
+          "owner_id": "deedlab-buyer.testnet",
+          "owner_epoch": 2,
+          "locked": false,
+          "revenue": "10000",
+          "liabilities": "29140000",
+          "customers": 2,
+          "charged_items": "6"
+        }
+      },
+      "superseded_at": "2026-10-30T06:32:29.151Z",
+      "reason": "replaced by deed2.deedlab.testnet (new state layout after the self-review fixes, see docs/SECURITY.md)"
     }
   ],
-  "updated_at": "2026-10-30T06:05:35.367Z",
+  "deploy": [
+    {
+      "step": "create deed2.deedlab.testnet",
+      "hash": "E6zRMS5Y6grVp4Jw8E5kEJoXNgLdfDxgjPwh1L2Xje7h",
+      "link": "https://testnet.nearblocks.io/txns/E6zRMS5Y6grVp4Jw8E5kEJoXNgLdfDxgjPwh1L2Xje7h",
+      "success": true,
+      "at": "2026-10-30T06:32:29.202Z"
+    },
+    {
+      "step": "deploy and init deed2.deedlab.testnet",
+      "hash": "HvyjN13Az3WwhTvEKpje2QHHdNBgc3yM7NosbUaRFtwv",
+      "link": "https://testnet.nearblocks.io/txns/HvyjN13Az3WwhTvEKpje2QHHdNBgc3yM7NosbUaRFtwv",
+      "success": true,
+      "at": "2026-10-30T06:32:29.202Z"
+    },
+    {
+      "step": "register deed2.deedlab.testnet on tusdc.deedlab.testnet",
+      "hash": "819Gnt8LELT3XowGab6TDwR4vgwPmCfTMthxp4iL8Gz",
+      "link": "https://testnet.nearblocks.io/txns/819Gnt8LELT3XowGab6TDwR4vgwPmCfTMthxp4iL8Gz",
+      "success": true,
+      "at": "2026-10-30T06:32:29.202Z"
+    }
+  ],
   "smoke": {
-    "run_at": "2026-10-30T06:05:21.442Z",
+    "run_at": "2026-10-30T06:34:14.107Z",
     "slug": "relay",
-    "vault": "relay.deed.deedlab.testnet",
+    "vault": "relay.deed2.deedlab.testnet",
     "sale_price": "25000000",
     "price_per_call": "10000",
     "final_vault_owner": "deedlab-buyer.testnet",
     "final_owner_epoch": 2,
-    "final_worker_key": "ed25519:GFchgt48zC2p2G9wvL1XVa7XSuhtgAt2W2wsxP3pZzv7",
+    "final_worker_key": "ed25519:J7dNQEGZVi4mPxQ9JMyf4Mq5B8df4F6BwLEV13J6rjS7",
+    "access_keys_after_rotation": [
+      {
+        "public_key": "ed25519:J7dNQEGZVi4mPxQ9JMyf4Mq5B8df4F6BwLEV13J6rjS7",
+        "permission": {
+          "FunctionCall": {
+            "allowance": "500000000000000000000000",
+            "method_names": [
+              "charge"
+            ],
+            "receiver_id": "relay.deed2.deedlab.testnet"
+          }
+        }
+      }
+    ],
     "steps": [
       {
         "step": "deedlab-seller.testnet mints deed \"relay\"",
         "actor": "deedlab-seller.testnet",
         "expected": "success",
         "outcome": "success",
-        "hash": "DDdmQzTHd7UXHqLKKDB7sPW2zovuXq5xnvoSVSzeBxK8",
-        "link": "https://testnet.nearblocks.io/txns/DDdmQzTHd7UXHqLKKDB7sPW2zovuXq5xnvoSVSzeBxK8"
+        "hash": "ETRRVn1L7CFHxRNQgUoTeFqykpTqddhunhfnzBkiDmuD",
+        "link": "https://testnet.nearblocks.io/txns/ETRRVn1L7CFHxRNQgUoTeFqykpTqddhunhfnzBkiDmuD"
       },
       {
         "step": "deedlab-seller.testnet sets worker key A",
         "actor": "deedlab-seller.testnet",
         "expected": "success",
         "outcome": "success",
-        "hash": "5KQZUwUXiVweJpumzuw3PVPYVfjjXDTk6WwFhccKpYn1",
-        "link": "https://testnet.nearblocks.io/txns/5KQZUwUXiVweJpumzuw3PVPYVfjjXDTk6WwFhccKpYn1"
-      },
-      {
-        "step": "register deedlab-seller.testnet on tUSDC",
-        "actor": "deedlab-seller.testnet",
-        "expected": "success",
-        "outcome": "success",
-        "hash": "3o8JWU2qPoj7VGjGsSWjzGuM6ttNezwJh8bYS6CoaQCv",
-        "link": "https://testnet.nearblocks.io/txns/3o8JWU2qPoj7VGjGsSWjzGuM6ttNezwJh8bYS6CoaQCv"
-      },
-      {
-        "step": "register deedlab-buyer.testnet on tUSDC",
-        "actor": "deedlab-buyer.testnet",
-        "expected": "success",
-        "outcome": "success",
-        "hash": "CGE5nYdkyjy488bhxNunS9hpkxHUkSwWD63mfL1tVutJ",
-        "link": "https://testnet.nearblocks.io/txns/CGE5nYdkyjy488bhxNunS9hpkxHUkSwWD63mfL1tVutJ"
-      },
-      {
-        "step": "register deedlab-alice.testnet on tUSDC",
-        "actor": "deedlab-alice.testnet",
-        "expected": "success",
-        "outcome": "success",
-        "hash": "66j6b9yuky9VLxgUf4j65P23dCfwpybaa87hEUH6zuF1",
-        "link": "https://testnet.nearblocks.io/txns/66j6b9yuky9VLxgUf4j65P23dCfwpybaa87hEUH6zuF1"
-      },
-      {
-        "step": "register deedlab-bob.testnet on tUSDC",
-        "actor": "deedlab-bob.testnet",
-        "expected": "success",
-        "outcome": "success",
-        "hash": "7vsyjk84bPPD4Psnw7T84Am55iCqeMKzyT9WiJpBKVxK",
-        "link": "https://testnet.nearblocks.io/txns/7vsyjk84bPPD4Psnw7T84Am55iCqeMKzyT9WiJpBKVxK"
+        "hash": "9meLvpJf3FyYF6pQar8XSpWtbAhDkhTfAGmLH7mf4hFH",
+        "link": "https://testnet.nearblocks.io/txns/9meLvpJf3FyYF6pQar8XSpWtbAhDkhTfAGmLH7mf4hFH"
       },
       {
         "step": "deedlab-alice.testnet mints 100.000000 tUSDC",
         "actor": "deedlab-alice.testnet",
         "expected": "success",
         "outcome": "success",
-        "hash": "HNshGHuu2s6huVYfCFoW3ZzKsU1g2dHbvY8LaEvK8ks7",
-        "link": "https://testnet.nearblocks.io/txns/HNshGHuu2s6huVYfCFoW3ZzKsU1g2dHbvY8LaEvK8ks7"
+        "hash": "8RGjU2guTmXwaaKa7Kx6jvd54m9YUsPpiqDFG41ZXUp9",
+        "link": "https://testnet.nearblocks.io/txns/8RGjU2guTmXwaaKa7Kx6jvd54m9YUsPpiqDFG41ZXUp9"
       },
       {
         "step": "deedlab-bob.testnet mints 100.000000 tUSDC",
         "actor": "deedlab-bob.testnet",
         "expected": "success",
         "outcome": "success",
-        "hash": "9E1CZhwgvYMyJNmadytjgk2yQEoFcmar1SS6mqjVemZN",
-        "link": "https://testnet.nearblocks.io/txns/9E1CZhwgvYMyJNmadytjgk2yQEoFcmar1SS6mqjVemZN"
+        "hash": "8pk9U4djotMjLThGdbYBJxNS32sRjjux5cMA7reZm5Bs",
+        "link": "https://testnet.nearblocks.io/txns/8pk9U4djotMjLThGdbYBJxNS32sRjjux5cMA7reZm5Bs"
       },
       {
         "step": "deedlab-alice.testnet deposits 20.000000 tUSDC credit",
         "actor": "deedlab-alice.testnet",
         "expected": "success",
         "outcome": "success",
-        "hash": "DP1MU8RafNfRjpxpsGRJDdJn1GvfUBSHpv1Au3djLc4S",
-        "link": "https://testnet.nearblocks.io/txns/DP1MU8RafNfRjpxpsGRJDdJn1GvfUBSHpv1Au3djLc4S"
+        "hash": "22eaqLHjsizgZ6yMxeGR7BsV4NzCMduez5pYuykFWk4p",
+        "link": "https://testnet.nearblocks.io/txns/22eaqLHjsizgZ6yMxeGR7BsV4NzCMduez5pYuykFWk4p"
       },
       {
         "step": "deedlab-bob.testnet deposits 10.000000 tUSDC credit",
         "actor": "deedlab-bob.testnet",
         "expected": "success",
         "outcome": "success",
-        "hash": "EnzuyCFyzZbv5podntfYq7LRiEPhRFmV8gv7mjEWMshH",
-        "link": "https://testnet.nearblocks.io/txns/EnzuyCFyzZbv5podntfYq7LRiEPhRFmV8gv7mjEWMshH"
+        "hash": "7Sf2ir3YuY8yGN1gA91qq19a8kdkkxtCWD7UcYfaeLTm",
+        "link": "https://testnet.nearblocks.io/txns/7Sf2ir3YuY8yGN1gA91qq19a8kdkkxtCWD7UcYfaeLTm"
       },
       {
         "step": "worker key A charges a batch (65 calls)",
-        "actor": "relay.deed.deedlab.testnet",
+        "actor": "relay.deed2.deedlab.testnet",
         "expected": "success",
         "outcome": "success",
-        "hash": "52XjpZFjbobW3DYgxH7A2Piz8SapBHNzmZPFdoUwaFwp",
-        "link": "https://testnet.nearblocks.io/txns/52XjpZFjbobW3DYgxH7A2Piz8SapBHNzmZPFdoUwaFwp"
+        "hash": "HQsnqtaboeVnFd2q4z5BwyxSkUbABRBFFng4X2B4dZwG",
+        "link": "https://testnet.nearblocks.io/txns/HQsnqtaboeVnFd2q4z5BwyxSkUbABRBFFng4X2B4dZwG"
       },
       {
         "step": "deedlab-seller.testnet withdraws 0.650000 tUSDC",
         "actor": "deedlab-seller.testnet",
         "expected": "success",
         "outcome": "success",
-        "hash": "GdQVn148YXpM6gUmmjNTgnJzC54ptC1TejCcudTkB6fR",
-        "link": "https://testnet.nearblocks.io/txns/GdQVn148YXpM6gUmmjNTgnJzC54ptC1TejCcudTkB6fR"
+        "hash": "CGzkTstPjVeoajVNYDGhtxhRMVppBdzTUDHupYfPjWhv",
+        "link": "https://testnet.nearblocks.io/txns/CGzkTstPjVeoajVNYDGhtxhRMVppBdzTUDHupYfPjWhv"
       },
       {
         "step": "deedlab-alice.testnet tries to withdraw (must fail)",
         "actor": "deedlab-alice.testnet",
         "expected": "failure",
         "outcome": "failure",
-        "hash": "2m6SAQy2xyNSpeFWc3vRYVXtWfeajtE5urkcPQGESwkk",
-        "link": "https://testnet.nearblocks.io/txns/2m6SAQy2xyNSpeFWc3vRYVXtWfeajtE5urkcPQGESwkk"
+        "hash": "8mDd3PWHFLz3w83gA78PHkr4FegvmbA1zxusfki1NrLT",
+        "link": "https://testnet.nearblocks.io/txns/8mDd3PWHFLz3w83gA78PHkr4FegvmbA1zxusfki1NrLT"
       },
       {
         "step": "worker key A charges (10 calls)",
-        "actor": "relay.deed.deedlab.testnet",
+        "actor": "relay.deed2.deedlab.testnet",
         "expected": "success",
         "outcome": "success",
-        "hash": "DaS9RqJcxKFhixV9y1QgKaDxrrqJCK9H7Cub5t6N5ak4",
-        "link": "https://testnet.nearblocks.io/txns/DaS9RqJcxKFhixV9y1QgKaDxrrqJCK9H7Cub5t6N5ak4"
+        "hash": "Dfqp9hpWN37SQJSxdRmST5mtQRfvkfeKymHsBm81XWSn",
+        "link": "https://testnet.nearblocks.io/txns/Dfqp9hpWN37SQJSxdRmST5mtQRfvkfeKymHsBm81XWSn"
       },
       {
         "step": "deedlab-seller.testnet lists the deed for 25.000000 tUSDC",
         "actor": "deedlab-seller.testnet",
         "expected": "success",
         "outcome": "success",
-        "hash": "JBAcpTNgZBD6PePFLJej4pu1HzWWh8uQHcgbj9w1E2rY",
-        "link": "https://testnet.nearblocks.io/txns/JBAcpTNgZBD6PePFLJej4pu1HzWWh8uQHcgbj9w1E2rY"
+        "hash": "447XHBTBqAJceKj1dfCYQhCkXp5dZLK4T2ixa9hvNH9E",
+        "link": "https://testnet.nearblocks.io/txns/447XHBTBqAJceKj1dfCYQhCkXp5dZLK4T2ixa9hvNH9E"
       },
       {
         "step": "deedlab-seller.testnet tries to withdraw while listed (must fail)",
         "actor": "deedlab-seller.testnet",
         "expected": "failure",
         "outcome": "failure",
-        "hash": "AU1gepjsEy5nxWd8SLS2tKpJVAPsbKtUUJaULXZvjS9c",
-        "link": "https://testnet.nearblocks.io/txns/AU1gepjsEy5nxWd8SLS2tKpJVAPsbKtUUJaULXZvjS9c"
+        "hash": "Fp13ncHMmyoGdeXvjiN9zwWHvqKxNBnXQn5jwMxpGWyv",
+        "link": "https://testnet.nearblocks.io/txns/Fp13ncHMmyoGdeXvjiN9zwWHvqKxNBnXQn5jwMxpGWyv"
       },
       {
         "step": "deedlab-buyer.testnet mints 100.000000 tUSDC",
         "actor": "deedlab-buyer.testnet",
         "expected": "success",
         "outcome": "success",
-        "hash": "3ANnLa7JxY8zFQQ57QY6vHjnvLrMaB81YWvMDonTyuPB",
-        "link": "https://testnet.nearblocks.io/txns/3ANnLa7JxY8zFQQ57QY6vHjnvLrMaB81YWvMDonTyuPB"
+        "hash": "GgeMdohb3nL4sEtoTTkhrAZuNBkkodgbVphzxAsnajKv",
+        "link": "https://testnet.nearblocks.io/txns/GgeMdohb3nL4sEtoTTkhrAZuNBkkodgbVphzxAsnajKv"
       },
       {
-        "step": "deedlab-buyer.testnet buys the deed",
+        "step": "deedlab-seller.testnet cancels the listing",
+        "actor": "deedlab-seller.testnet",
+        "expected": "success",
+        "outcome": "success",
+        "hash": "FZ1J9SGPFrvT9BBVkue7W566tmA9PKoQFjqK1JxDn1fR",
+        "link": "https://testnet.nearblocks.io/txns/FZ1J9SGPFrvT9BBVkue7W566tmA9PKoQFjqK1JxDn1fR"
+      },
+      {
+        "step": "deedlab-seller.testnet lists again for 25.000000 tUSDC",
+        "actor": "deedlab-seller.testnet",
+        "expected": "success",
+        "outcome": "success",
+        "hash": "3zxFy7bsCxBFnRgtaghLt2Cz6uFDVvzvz4BUKryvaMTj",
+        "link": "https://testnet.nearblocks.io/txns/3zxFy7bsCxBFnRgtaghLt2Cz6uFDVvzvz4BUKryvaMTj"
+      },
+      {
+        "step": "deedlab-buyer.testnet buys pinned to the cancelled listing (refused, refunded)",
         "actor": "deedlab-buyer.testnet",
         "expected": "success",
         "outcome": "success",
-        "hash": "EaVz2ciChPCz3DofnWQ19gxz9eRUttj9noWYhktHBf4Q",
-        "link": "https://testnet.nearblocks.io/txns/EaVz2ciChPCz3DofnWQ19gxz9eRUttj9noWYhktHBf4Q"
+        "hash": "5rnmwS3R1R2A8fp9rfXcYiyZcTf8Ubth993RKGmAwcub",
+        "link": "https://testnet.nearblocks.io/txns/5rnmwS3R1R2A8fp9rfXcYiyZcTf8Ubth993RKGmAwcub"
+      },
+      {
+        "step": "deedlab-buyer.testnet buys the deed (listing 2)",
+        "actor": "deedlab-buyer.testnet",
+        "expected": "success",
+        "outcome": "success",
+        "hash": "AXfiuWwxGpsFbo6ta82Pf529dyxkXqGQizNwBAT7nS84",
+        "link": "https://testnet.nearblocks.io/txns/AXfiuWwxGpsFbo6ta82Pf529dyxkXqGQizNwBAT7nS84"
       },
       {
         "step": "deedlab-seller.testnet tries to withdraw after the sale (must fail)",
         "actor": "deedlab-seller.testnet",
         "expected": "failure",
         "outcome": "failure",
-        "hash": "GbxhNTBK75TzLuwxnjaTJFRmQLsNpbYcTyKbZNDzuApo",
-        "link": "https://testnet.nearblocks.io/txns/GbxhNTBK75TzLuwxnjaTJFRmQLsNpbYcTyKbZNDzuApo"
+        "hash": "HLbpTsoTWUBwJ19G9RuyeKPVtGZkFPp1V7dMkaF8gGoP",
+        "link": "https://testnet.nearblocks.io/txns/HLbpTsoTWUBwJ19G9RuyeKPVtGZkFPp1V7dMkaF8gGoP"
       },
       {
         "step": "worker key A keeps charging after the sale (10 calls)",
-        "actor": "relay.deed.deedlab.testnet",
+        "actor": "relay.deed2.deedlab.testnet",
         "expected": "success",
         "outcome": "success",
-        "hash": "CUqQ18CLT5E9VN553iYS5py96VCSj8u6GdwTjhuYtJdB",
-        "link": "https://testnet.nearblocks.io/txns/CUqQ18CLT5E9VN553iYS5py96VCSj8u6GdwTjhuYtJdB"
+        "hash": "JA1gNHD8TwpLsZ9XZ97aQNM12Q9pnLAnKn1rzeUkX2hY",
+        "link": "https://testnet.nearblocks.io/txns/JA1gNHD8TwpLsZ9XZ97aQNM12Q9pnLAnKn1rzeUkX2hY"
       },
       {
         "step": "deedlab-buyer.testnet withdraws 0.200000 tUSDC",
         "actor": "deedlab-buyer.testnet",
         "expected": "success",
         "outcome": "success",
-        "hash": "Hmc8keJpuA6C9npjqyobYPqwteFgogw4gHSVvW7KkKsg",
-        "link": "https://testnet.nearblocks.io/txns/Hmc8keJpuA6C9npjqyobYPqwteFgogw4gHSVvW7KkKsg"
+        "hash": "FkdWjxhZ6171pkUMa4dhs1i4YFJCQMnrsexffdW6Lr3r",
+        "link": "https://testnet.nearblocks.io/txns/FkdWjxhZ6171pkUMa4dhs1i4YFJCQMnrsexffdW6Lr3r"
       },
       {
         "step": "deedlab-buyer.testnet rotates the worker key to B",
         "actor": "deedlab-buyer.testnet",
         "expected": "success",
         "outcome": "success",
-        "hash": "CN74n2WgssxkRbshWyMBpp9p1EyAUZw2g4KqVkbvMHQb",
-        "link": "https://testnet.nearblocks.io/txns/CN74n2WgssxkRbshWyMBpp9p1EyAUZw2g4KqVkbvMHQb"
+        "hash": "6SMhEeoEfGuQeX2Uk7hfBjcVdixcgnFMCfdGKnrozEK7",
+        "link": "https://testnet.nearblocks.io/txns/6SMhEeoEfGuQeX2Uk7hfBjcVdixcgnFMCfdGKnrozEK7"
       },
       {
         "step": "old worker key A tries to charge (must fail)",
-        "actor": "relay.deed.deedlab.testnet",
+        "actor": "relay.deed2.deedlab.testnet",
         "expected": "failure",
         "outcome": "rejected_by_rpc",
-        "error": "AccessKeyDoesNotExist: key A was deleted by the rotation, so the RPC refused the transaction before it reached the chain (near-api-js reported RetriesExceeded after trying both RPC endpoints)"
+        "error": "AccessKeyDoesNotExist",
+        "note": "both RPCs answered AccessKeyDoesNotExistError; near-api-js FailoverRpcProvider reported it as RetriesExceeded"
       },
       {
         "step": "new worker key B charges",
-        "actor": "relay.deed.deedlab.testnet",
+        "actor": "relay.deed2.deedlab.testnet",
         "expected": "success",
         "outcome": "success",
-        "hash": "8Sia2jBL3eCfxQYJ5m1xJSNnYADbP4WGBhGr8ooBpaA7",
-        "link": "https://testnet.nearblocks.io/txns/8Sia2jBL3eCfxQYJ5m1xJSNnYADbP4WGBhGr8ooBpaA7"
+        "hash": "6dyFPhGqLsfmyCcg8zJGHiwYiFGT1hs63QVoGFbmx1Ab",
+        "link": "https://testnet.nearblocks.io/txns/6dyFPhGqLsfmyCcg8zJGHiwYiFGT1hs63QVoGFbmx1Ab"
       }
-    ],
-    "access_keys_after_rotation": [
-      {
-        "public_key": "ed25519:GFchgt48zC2p2G9wvL1XVa7XSuhtgAt2W2wsxP3pZzv7",
-        "permission": {
-          "FunctionCall": {
-            "allowance": "499763379782764300000000",
-            "method_names": [
-              "charge"
-            ],
-            "receiver_id": "relay.deed.deedlab.testnet"
-          }
-        }
-      }
-    ],
-    "worker_history": [
-      {
-        "public_key": "ed25519:pcXekU5bAoNPji7B8obyGDeraBbuR8brCMyTPszNoDS",
-        "set_at_ms": "1793340105059",
-        "owner_epoch": 1
-      },
-      {
-        "public_key": "ed25519:GFchgt48zC2p2G9wvL1XVa7XSuhtgAt2W2wsxP3pZzv7",
-        "set_at_ms": "1793340315871",
-        "owner_epoch": 2
-      }
-    ],
-    "final_info": {
-      "owner_id": "deedlab-buyer.testnet",
-      "owner_epoch": 2,
-      "locked": false,
-      "revenue": "10000",
-      "liabilities": "29140000",
-      "customers": 2,
-      "charged_items": "6"
-    }
+    ]
   }
 }

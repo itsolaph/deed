@@ -5,6 +5,8 @@
 // and registers the deed on tUSDC so it can receive sale payments.
 //
 // Env: DEED_PARENT (default deedlab.testnet), DEED_ACCOUNT, TUSDC_ACCOUNT.
+// A deed with incompatible state goes to a new account name; the previous deployment record
+// is kept under "superseded" in deployments/testnet.json.
 
 import {
   NEAR, TGAS, account, accountExists, actions, addressLink, call, newKeyPair, provider,
@@ -13,7 +15,8 @@ import {
 import { codeHash, loadDeployments, readWasm, saveDeployments } from "./lib/deployments.mjs";
 
 const PARENT = process.env.DEED_PARENT || "deedlab.testnet";
-const DEED_ID = process.env.DEED_ACCOUNT || `deed.${PARENT}`;
+// deed.<parent> runs the Phase A code; the reviewed code (new state layout) lives on deed2.
+const DEED_ID = process.env.DEED_ACCOUNT || `deed2.${PARENT}`;
 const TUSDC_ID = process.env.TUSDC_ACCOUNT || `tusdc.${PARENT}`;
 const FT_STORAGE = 1_250_000_000_000_000_000_000n; // 0.00125 NEAR
 
@@ -99,6 +102,24 @@ async function main() {
   }
 
   const data = loadDeployments();
+  const previousDeed = data.accounts && data.accounts.deed;
+  if (previousDeed && previousDeed !== DEED_ID) {
+    data.superseded = [
+      ...(data.superseded || []),
+      {
+        deed: previousDeed,
+        vault: data.accounts.vault,
+        code_hashes: data.code_hashes,
+        deploy: data.deploy,
+        smoke: data.smoke,
+        superseded_at: new Date().toISOString(),
+        reason: `replaced by ${DEED_ID} (new state layout after the self-review fixes, see docs/SECURITY.md)`,
+      },
+    ];
+    delete data.deploy;
+    delete data.smoke;
+    delete data.accounts.vault;
+  }
   data.network = "testnet";
   data.explorer = "https://testnet.nearblocks.io";
   data.accounts = {

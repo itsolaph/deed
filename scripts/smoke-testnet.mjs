@@ -15,7 +15,7 @@ import {
 import { loadDeployments, saveDeployments } from "./lib/deployments.mjs";
 
 const SLUG = process.env.SMOKE_SLUG || "relay";
-const DEED = process.env.DEED_ACCOUNT || "deed.deedlab.testnet";
+const DEED = process.env.DEED_ACCOUNT || "deed2.deedlab.testnet";
 const TUSDC = process.env.TUSDC_ACCOUNT || "tusdc.deedlab.testnet";
 const SELLER = process.env.SELLER_ACCOUNT || "deedlab-seller.testnet";
 const BUYER = process.env.BUYER_ACCOUNT || "deedlab-buyer.testnet";
@@ -44,7 +44,9 @@ async function step(name, actor, expect, run) {
     res = await run();
   } catch (e) {
     // Rejected before reaching the chain (for example a deleted access key): no tx hash exists.
-    const text = `${e.name || ""} ${e.message || e}`;
+    // The failover provider wraps the errors of every RPC it tried in `errors`.
+    const all = [e, ...(e.errors || [])];
+    const text = all.map((x) => `${x.name || ""} ${x.message || x}`).join(" ");
     const error = /access key .* does not exist|AccessKeyDoesNotExist/i.test(text)
       ? "AccessKeyDoesNotExist"
       : e.type || e.name || String(e);
@@ -186,12 +188,33 @@ async function main() {
   await step(`${SELLER} tries to withdraw while listed (must fail)`, SELLER, "failure", () =>
     withdraw(SELLER, 1n));
 
-  // 7. Buyer buys with tUSDC through ft_transfer_call, sending 1 tUSDC too much.
+  // 7. The buyer pins the listing it evaluated. If the seller cancels and re-lists (for example
+  // to withdraw the cash first), a purchase pinned to the old listing is refused and refunded.
   await faucet(BUYER, 100n * U);
+  const listingId = (await view(DEED, "get_deed", { token_id: SLUG })).listing.listing_id;
+  await step(`${SELLER} cancels the listing`, SELLER, "success", () =>
+    call(account(SELLER), DEED, "cancel_listing", { token_id: SLUG }, { gas: BIG_GAS, deposit: ONE_YOCTO }));
+  const relisted = await step(`${SELLER} lists again for ${show(SALE_PRICE)}`, SELLER, "success", () =>
+    call(account(SELLER), DEED, "list", { token_id: SLUG, price: SALE_PRICE.toString() },
+      { gas: BIG_GAS, deposit: ONE_YOCTO }));
+  if (relisted.value !== true) throw new Error("second listing did not become active");
+  const buyMsg = (id) => JSON.stringify({ buy: { token_id: SLUG, max_price: SALE_PRICE.toString(), listing_id: id } });
+  const staleStart = await ftBalance(BUYER);
+  const stale = await step(`${BUYER} buys pinned to the cancelled listing (refused, refunded)`, BUYER, "success", () =>
+    call(account(BUYER), TUSDC, "ft_transfer_call",
+      { receiver_id: DEED, amount: SALE_PRICE.toString(), msg: buyMsg(listingId) },
+      { gas: BIG_GAS, deposit: ONE_YOCTO }));
+  if (stale.value !== "0" || (await ftBalance(BUYER)) !== staleStart) {
+    throw new Error("a buy pinned to a cancelled listing must use nothing");
+  }
+  console.log("     nothing used, buyer balance unchanged");
+
+  // 8. Buyer buys the current listing with tUSDC through ft_transfer_call, sending 1 tUSDC too much.
+  const currentId = (await view(DEED, "get_deed", { token_id: SLUG })).listing.listing_id;
   const buyerBefore = await ftBalance(BUYER);
   const sellerBefore = await ftBalance(SELLER);
-  const msg = JSON.stringify({ buy: { token_id: SLUG, max_price: SALE_PRICE.toString() } });
-  await step(`${BUYER} buys the deed`, BUYER, "success", () =>
+  const msg = buyMsg(currentId);
+  await step(`${BUYER} buys the deed (listing ${currentId})`, BUYER, "success", () =>
     call(account(BUYER), TUSDC, "ft_transfer_call",
       { receiver_id: DEED, amount: (SALE_PRICE + U).toString(), msg }, { gas: BIG_GAS, deposit: ONE_YOCTO }));
   const paid = buyerBefore - (await ftBalance(BUYER));
@@ -204,7 +227,7 @@ async function main() {
     throw new Error("sale did not settle as expected");
   }
 
-  // 8. The seller's withdraw now reverts. The next call's revenue accrues to the buyer.
+  // 9. The seller's withdraw now reverts. The next call's revenue accrues to the buyer.
   await step(`${SELLER} tries to withdraw after the sale (must fail)`, SELLER, "failure", () =>
     withdraw(SELLER, 1n));
   const batch3 = await chargeItems([[ALICE, 5], [BOB, 5]]);
@@ -214,7 +237,7 @@ async function main() {
   await step(`${BUYER} withdraws ${show(buyerRevenue)}`, BUYER, "success", () => withdraw(BUYER, buyerRevenue));
   await assertInvariant("buyer withdraw");
 
-  // 9. Buyer rotates the worker key to their own server's key B.
+  // 10. Buyer rotates the worker key to their own server's key B.
   const workerB = newKeyPair();
   const setB = await step(`${BUYER} rotates the worker key to B`, BUYER, "success", () =>
     call(account(BUYER), VAULT, "set_worker", { public_key: workerB.getPublicKey().toString() },

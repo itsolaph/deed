@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Deed: an NFT that owns a running paid API on NEAR testnet." />
+    <meta name="referrer" content="no-referrer" />
+    <title>Deed · businesses as NFTs on NEAR testnet</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="brand">
+        <span class="seal" aria-hidden="true">D</span>
+        <div>
+          <h1>Deed</h1>
+          <p class="tagline">Each token owns a running paid API. Whoever holds it runs the business.</p>
+        </div>
+      </div>
+      <div class="wallet-box">
+        <span class="network">testnet</span>
+        <div id="wallet"></div>
+      </div>
+    </header>
+
+    <main>
+      <section class="intro">
+        <p>
+          Every deed below is an NFT on <span id="deed-link"></span>. Its business lives in its own vault sub-account:
+          treasury, price list, customer ledger and worker key. Buying the deed moves all of it to the buyer. The figures
+          are read live from the contract views.
+        </p>
+        <p class="note">Testnet only. The payment token is tUSDC, a test token without value. <span id="updated"></span></p>
+      </section>
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+      <div id="deeds" class="deeds"><p class="note">Reading the chain …</p></div>
+    </main>
+
+    <footer>
+      <p>
+        Open source under the MIT licence. No trackers, no analytics. Read-only calls go to public NEAR RPC nodes;
+        transactions are signed in your own wallet.
+      </p>
+    </footer>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

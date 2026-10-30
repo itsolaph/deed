@@ -27,7 +27,12 @@ for f in scripts/*.mjs scripts/lib/*.mjs; do
   node --check "$f"
 done
 
-for dir in worker sdk agents; do
+if [[ ! -d node_modules ]]; then
+  step "npm ci"
+  npm ci --no-audit --no-fund
+fi
+
+for dir in sdk worker agents; do
   if [[ -f "$dir/package.json" ]]; then
     step "node tests: $dir"
     (cd "$dir" && npm test)

@@ -2,6 +2,11 @@
 /contracts/target/
 node_modules/
 dist/
+*.tsbuildinfo
+
+# Local run output: worker journals and demo logs
+.deed-worker/
+demo-logs/
 
 # Local keys and env files: never commit
 .env

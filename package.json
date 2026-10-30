@@ -8,11 +8,24 @@
   "engines": {
     "node": ">=22"
   },
+  "workspaces": [
+    "sdk",
+    "worker",
+    "agents",
+    "web"
+  ],
   "scripts": {
+    "build": "tsc -b sdk worker agents",
+    "test": "npm test -w sdk -w worker -w agents",
     "deploy:testnet": "node scripts/deploy-testnet.mjs",
-    "smoke:testnet": "node scripts/smoke-testnet.mjs"
+    "smoke:testnet": "node scripts/smoke-testnet.mjs",
+    "demo:testnet": "node scripts/demo-testnet.mjs"
   },
   "dependencies": {
     "near-api-js": "7.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "5.9.3"
   }
 }

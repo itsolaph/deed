@@ -1,0 +1,30 @@
+{
+  "name": "@deed/sdk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Customer client for Deed relays: NEP-413 auth, top-ups, receipts and proofs",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./node": {
+      "types": "./dist/src/node.d.ts",
+      "default": "./dist/src/node.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "tsc -b && node --test dist/test/*.test.js"
+  },
+  "dependencies": {
+    "@noble/curves": "2.2.0",
+    "@noble/hashes": "2.2.0",
+    "@scure/base": "2.2.0",
+    "near-api-js": "7.4.0"
+  }
+}

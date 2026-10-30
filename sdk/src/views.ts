@@ -1,0 +1,198 @@
+// Typed views of the deed and vault contracts (see docs/CONTRACTS.md). Browser-safe.
+
+import { Rpc } from "./chain.js";
+
+export interface VaultInfo {
+  deed_id: string;
+  token_id: string;
+  owner_id: string;
+  owner_epoch: number;
+  locked: boolean;
+  lock_id: number;
+  payment_token: string;
+  price_per_call: string;
+  pending_price: string | null;
+  price_effective_at_ms: string | null;
+  endpoint: string;
+  image_hash: string;
+  worker_key: string | null;
+  revenue: string;
+  liabilities: string;
+  in_flight: string;
+  customers: number;
+  charged_items: string;
+  default_daily_cap: string;
+  min_deposit: string;
+  refund_delay_sec: number;
+  stats_interval_sec: number;
+  near_balance: string;
+  created_at_ms: string;
+}
+
+export interface CustomerView {
+  balance: string;
+  daily_cap: string;
+  pending_daily_cap: string | null;
+  daily_cap_effective_at_ms: string | null;
+  spent_today: string;
+  chargeable_today: string;
+  day: number;
+  last_seq: string;
+  refund_requested_at_ms: string | null;
+  refund_available_at_ms: string | null;
+}
+
+export interface DayBucket {
+  day: number;
+  calls: number;
+  revenue: string;
+  gas_spent: string;
+}
+
+export interface VaultStatsView {
+  today: number;
+  calls_30d: number;
+  revenue_30d: string;
+  gas_spent_30d: string;
+  calls_total: number;
+  revenue_total: string;
+  /** Days with activity in the last 30, oldest first. */
+  days: DayBucket[];
+}
+
+export interface WorkerKeyView {
+  public_key: string;
+  set_at_ms: string;
+  owner_epoch: number;
+}
+
+export interface ChargeItem {
+  customer: string;
+  seq: number;
+  units: number;
+  receipts_root: string;
+}
+
+export interface ChargeResult {
+  customer: string;
+  seq: number;
+  status: string;
+  cost: string;
+}
+
+export interface ListingView {
+  token_id: string;
+  /** Pass as `listing_id` in the buy message to pin the purchase to this listing. */
+  listing_id: number;
+  seller: string;
+  price: string;
+  active: boolean;
+  epoch: number;
+  listed_at_ms: string;
+}
+
+/** Stats the vault pushes to the deed (shown in the NFT metadata). */
+export interface PushedStats {
+  calls_30d: number;
+  revenue_30d: string;
+  gas_spent_30d: string;
+  cash: string;
+  liabilities: string;
+  price_per_call: string;
+  customers: number;
+  owner_epoch: number;
+  updated_at_ms: number;
+}
+
+export interface DeedView {
+  token_id: string;
+  title: string;
+  owner_id: string;
+  owner_epoch: number;
+  vault_id: string;
+  price_at_mint: string;
+  minted_at_ms: string;
+  stats: PushedStats | null;
+  listing: ListingView | null;
+  transfer_call_pending: boolean;
+}
+
+export interface DeedConfig {
+  admin_id: string;
+  payment_token: string;
+  payment_symbol: string;
+  mint_cost: string;
+  proceeds_total: string;
+  proceeds_in_flight: string;
+}
+
+export interface NftToken {
+  token_id: string;
+  owner_id: string;
+  metadata: {
+    title: string | null;
+    description: string | null;
+    media: string | null;
+    updated_at: string | null;
+    extra: string | null;
+  } | null;
+}
+
+export class VaultViews {
+  constructor(
+    readonly rpc: Rpc,
+    readonly vault: string,
+  ) {}
+
+  info(): Promise<VaultInfo> {
+    return this.rpc.view<VaultInfo>(this.vault, "get_info");
+  }
+
+  customer(accountId: string): Promise<CustomerView | null> {
+    return this.rpc.view<CustomerView | null>(this.vault, "get_customer", { account_id: accountId });
+  }
+
+  stats(): Promise<VaultStatsView> {
+    return this.rpc.view<VaultStatsView>(this.vault, "get_stats");
+  }
+
+  workerHistory(): Promise<WorkerKeyView[]> {
+    return this.rpc.view<WorkerKeyView[]>(this.vault, "get_worker_history");
+  }
+}
+
+export class DeedViews {
+  constructor(
+    readonly rpc: Rpc,
+    readonly deed: string,
+  ) {}
+
+  deedOf(tokenId: string): Promise<DeedView | null> {
+    return this.rpc.view<DeedView | null>(this.deed, "get_deed", { token_id: tokenId });
+  }
+
+  deeds(fromIndex = 0, limit = 50): Promise<DeedView[]> {
+    return this.rpc.view<DeedView[]>(this.deed, "get_deeds", { from_index: fromIndex, limit });
+  }
+
+  listings(fromIndex = 0, limit = 50): Promise<ListingView[]> {
+    return this.rpc.view<ListingView[]>(this.deed, "get_listings", { from_index: fromIndex, limit });
+  }
+
+  config(): Promise<DeedConfig> {
+    return this.rpc.view<DeedConfig>(this.deed, "get_config");
+  }
+
+  token(tokenId: string): Promise<NftToken | null> {
+    return this.rpc.view<NftToken | null>(this.deed, "nft_token", { token_id: tokenId });
+  }
+
+  mintCost(): Promise<string> {
+    return this.rpc.view<string>(this.deed, "mint_cost");
+  }
+}
+
+/** Account id of the vault for `tokenId` under `deed`. */
+export function vaultAccountFor(deed: string, tokenId: string): string {
+  return `${tokenId}.${deed}`;
+}

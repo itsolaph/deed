@@ -60,10 +60,13 @@ impl Vault {
             } else {
                 match self.customers.get_mut(&item.customer) {
                     None => ("unknown_customer", 0),
-                    Some(c) => match c.try_charge(item.seq, item.units, price, today) {
-                        ChargeOutcome::Charged(cost) => ("charged", cost),
-                        other => (other.as_str(), 0),
-                    },
+                    Some(c) => {
+                        c.settle_cap(now);
+                        match c.try_charge(item.seq, item.units, price, today) {
+                            ChargeOutcome::Charged(cost) => ("charged", cost),
+                            other => (other.as_str(), 0),
+                        }
+                    }
                 }
             };
             if cost > 0 {

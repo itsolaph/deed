@@ -11,8 +11,8 @@ use crate::{
 #[ext_contract(ext_vault)]
 pub trait VaultHooks {
     fn set_owner(&mut self, new_owner: AccountId, epoch: u64) -> bool;
-    fn lock(&mut self, epoch: u64);
-    fn unlock(&mut self, epoch: u64) -> bool;
+    fn lock(&mut self, epoch: u64, lock_id: u64);
+    fn unlock(&mut self, epoch: u64, lock_id: u64) -> bool;
 }
 
 impl Deed {
@@ -44,6 +44,9 @@ impl Deed {
     #[payable]
     pub fn sync_vault(&mut self, token_id: String) -> Promise {
         let r = self.token(&token_id);
+        // During nft_transfer_call the registry already shows the receiver, but that owner is
+        // not final yet and must not reach the vault.
+        require!(!r.transfer_call_pending, "a transfer call is pending");
         Self::push_owner(&token_id, r.vault_id.clone(), r.owner_id.clone(), r.owner_epoch, env::attached_deposit())
     }
 
@@ -55,10 +58,14 @@ impl Deed {
         ok
     }
 
-    /// Accepted only from the token's own vault account.
+    /// Accepted only from the token's own vault account. A push older than the stored one
+    /// (pushes can arrive out of order) is ignored.
     pub fn on_stats(&mut self, token_id: String, stats: VaultStats) {
         let record = self.token_mut(&token_id);
         require!(env::predecessor_account_id() == record.vault_id, "only the token's vault");
+        if record.stats.as_ref().is_some_and(|s| s.updated_at_ms > stats.updated_at_ms) {
+            return;
+        }
         record.stats = Some(stats.clone());
         events::emit("deed_stats", json!({ "token_id": token_id, "stats": stats }));
     }

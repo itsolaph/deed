@@ -37,20 +37,24 @@ impl Vault {
 
     /// The deed locks the vault before a listing becomes active. The epoch must match the
     /// vault's current one, so a lock for a stale owner fails and the listing is not activated.
-    pub fn lock(&mut self, epoch: u64) {
+    /// `lock_id` is the listing id and must be newer than any lock seen before.
+    pub fn lock(&mut self, epoch: u64, lock_id: u64) {
         self.assert_deed();
         require!(epoch == self.owner_epoch, "lock epoch does not match the vault owner epoch");
+        require!(lock_id > self.lock_id, "lock id is not newer than the last lock");
         self.locked = true;
-        events::emit("vault_lock", json!({ "epoch": epoch }));
+        self.lock_id = lock_id;
+        events::emit("vault_lock", json!({ "epoch": epoch, "lock_id": lock_id }));
     }
 
-    pub fn unlock(&mut self, epoch: u64) -> bool {
+    /// Releases the lock only for the listing that set it.
+    pub fn unlock(&mut self, epoch: u64, lock_id: u64) -> bool {
         self.assert_deed();
-        if epoch != self.owner_epoch || !self.locked {
+        if epoch != self.owner_epoch || lock_id != self.lock_id || !self.locked {
             return false;
         }
         self.locked = false;
-        events::emit("vault_unlock", json!({ "epoch": epoch }));
+        events::emit("vault_unlock", json!({ "epoch": epoch, "lock_id": lock_id }));
         true
     }
 

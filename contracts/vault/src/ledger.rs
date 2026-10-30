@@ -17,6 +17,8 @@ pub struct Customer {
     pub balance: u128,
     /// Maximum amount that may be charged per UTC day.
     pub daily_cap: u128,
+    /// A scheduled cap decrease: (new cap, block timestamp in ns when it applies).
+    pub pending_cap: Option<(u128, u64)>,
     /// Amount charged on `day`.
     pub spent_today: u128,
     /// UTC day that `spent_today` belongs to.
@@ -55,11 +57,19 @@ impl ChargeOutcome {
     }
 }
 
+/// Result of a customer changing their daily cap.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CapChange {
+    Immediate,
+    Scheduled { effective_at: u64 },
+}
+
 impl Customer {
     pub fn new(daily_cap: u128, seq_floor: u64) -> Self {
         Self {
             balance: 0,
             daily_cap,
+            pending_cap: None,
             spent_today: 0,
             day: 0,
             last_seq: seq_floor,
@@ -76,9 +86,41 @@ impl Customer {
         }
     }
 
+    /// The cap in force at `now`, counting a scheduled decrease that is already due.
+    pub fn cap_at(&self, now: u64) -> u128 {
+        match self.pending_cap {
+            Some((cap, at)) if now >= at => cap,
+            _ => self.daily_cap,
+        }
+    }
+
+    /// Applies a scheduled cap decrease once it is due.
+    pub fn settle_cap(&mut self, now: u64) {
+        if let Some((cap, at)) = self.pending_cap {
+            if now >= at {
+                self.daily_cap = cap;
+                self.pending_cap = None;
+            }
+        }
+    }
+
+    /// A raise applies at once and drops a scheduled decrease. A decrease applies only after
+    /// `delay_ns` (the refund delay), so calls already served can still be charged first.
+    pub fn set_cap(&mut self, cap: u128, now: u64, delay_ns: u64) -> CapChange {
+        self.settle_cap(now);
+        if cap >= self.daily_cap || delay_ns == 0 {
+            self.daily_cap = cap;
+            self.pending_cap = None;
+            return CapChange::Immediate;
+        }
+        let effective_at = now.saturating_add(delay_ns);
+        self.pending_cap = Some((cap, effective_at));
+        CapChange::Scheduled { effective_at }
+    }
+
     /// What is still chargeable today: the smaller of balance and remaining cap.
-    pub fn chargeable_today(&self, today: u32) -> u128 {
-        let cap_left = self.daily_cap.saturating_sub(self.spent_on(today));
+    pub fn chargeable_today(&self, today: u32, now: u64) -> u128 {
+        let cap_left = self.cap_at(now).saturating_sub(self.spent_on(today));
         cap_left.min(self.balance)
     }
 
@@ -112,10 +154,10 @@ impl Customer {
         ChargeOutcome::Charged(cost)
     }
 
-    /// A new deposit adds credit and cancels a pending refund request.
+    /// Adds credit. Only the caller decides whether this deposit cancels a refund request:
+    /// a deposit by someone else must not, or anyone could keep a customer from leaving.
     pub fn credit(&mut self, amount: u128) -> Option<()> {
         self.balance = self.balance.checked_add(amount)?;
-        self.refund_requested_at = None;
         Some(())
     }
 
@@ -191,7 +233,7 @@ mod tests {
         let mut c = funded(10_000, 2_500);
         assert_eq!(c.try_charge(1, 2, PRICE, DAY), ChargeOutcome::Charged(2 * PRICE));
         assert_eq!(c.try_charge(2, 1, PRICE, DAY), ChargeOutcome::OverDailyCap);
-        assert_eq!(c.chargeable_today(DAY), 500);
+        assert_eq!(c.chargeable_today(DAY, 0), 500);
         assert_eq!(c.spent_on(DAY + 1), 0);
         assert_eq!(c.try_charge(2, 1, PRICE, DAY + 1), ChargeOutcome::Charged(PRICE));
         assert_eq!(c.spent_today, PRICE);
@@ -206,13 +248,38 @@ mod tests {
     }
 
     #[test]
-    fn deposit_cancels_refund_request() {
+    fn credit_alone_keeps_a_refund_request() {
         let mut c = funded(1_000, 1_000);
         c.refund_requested_at = Some(5);
         assert_eq!(c.refund_available_at(10), Some(15));
         c.credit(1).unwrap();
-        assert_eq!(c.refund_requested_at, None);
+        assert_eq!(c.refund_requested_at, Some(5));
         assert_eq!(c.balance, 1_001);
+    }
+
+    #[test]
+    fn cap_raise_is_immediate_and_decrease_waits() {
+        const DELAY: u64 = 600 * NS_PER_SEC;
+        const NOW: u64 = 1_000 * NS_PER_SEC;
+        let mut c = funded(10_000, 2_000);
+        assert_eq!(c.set_cap(0, NOW, DELAY), CapChange::Scheduled { effective_at: NOW + DELAY });
+        assert_eq!(c.cap_at(NOW + DELAY - 1), 2_000);
+        assert_eq!(c.chargeable_today(DAY, NOW), 2_000);
+        assert_eq!(c.cap_at(NOW + DELAY), 0);
+        assert_eq!(c.chargeable_today(DAY, NOW + DELAY), 0);
+
+        // A raise during the notice applies at once and drops the scheduled decrease.
+        assert_eq!(c.set_cap(3_000, NOW + 1, DELAY), CapChange::Immediate);
+        assert_eq!((c.daily_cap, c.pending_cap), (3_000, None));
+
+        // A due decrease is settled before the next change.
+        c.set_cap(500, NOW, DELAY);
+        c.settle_cap(NOW + DELAY);
+        assert_eq!((c.daily_cap, c.pending_cap), (500, None));
+
+        // Without a refund delay there is nothing to wait for.
+        assert_eq!(c.set_cap(100, NOW, 0), CapChange::Immediate);
+        assert_eq!(c.daily_cap, 100);
     }
 
     #[test]

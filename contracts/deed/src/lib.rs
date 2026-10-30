@@ -74,6 +74,8 @@ pub struct VaultStats {
 #[near(serializers = [borsh])]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Listing {
+    /// Unique per token and increasing. Also the vault lock id, and buyers may pin it.
+    pub id: u64,
     pub seller: AccountId,
     pub price: u128,
     /// False until the vault confirmed the lock.
@@ -94,6 +96,8 @@ pub struct TokenRecord {
     pub minted_at: u64,
     pub stats: Option<VaultStats>,
     pub listing: Option<Listing>,
+    /// Id of the newest listing ever made for this token (0 if never listed).
+    pub last_listing_id: u64,
     /// Set between nft_transfer_call and nft_resolve_transfer.
     pub transfer_call_pending: bool,
 }

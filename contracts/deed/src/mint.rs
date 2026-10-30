@@ -124,6 +124,7 @@ impl Deed {
                 minted_at: env::block_timestamp(),
                 stats: None,
                 listing: None,
+                last_listing_id: 0,
                 transfer_call_pending: false,
             },
         );

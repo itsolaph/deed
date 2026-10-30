@@ -74,6 +74,9 @@ pub struct Vault {
     owner_epoch: u64,
     /// Set while the deed is listed for sale. Blocks withdraw, set_worker, set_config, set_price.
     locked: bool,
+    /// Listing id of the newest lock. Lock ids only grow, so a lock or unlock that arrives
+    /// late (receipts between two accounts are not formally ordered) is ignored.
+    lock_id: u64,
     payment_token: AccountId,
     price: PriceSchedule,
     endpoint: String,
@@ -163,6 +166,7 @@ impl Vault {
             owner_id,
             owner_epoch: 1,
             locked: false,
+            lock_id: 0,
             payment_token,
             price: PriceSchedule::new(price_per_call.0),
             endpoint,

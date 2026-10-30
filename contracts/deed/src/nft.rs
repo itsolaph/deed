@@ -100,6 +100,11 @@ impl Deed {
         let r = self.token(token_id);
         require!(&r.owner_id == sender, "only the token owner may transfer");
         require!(sender != receiver, "sender and receiver must differ");
+        // Neither account could ever use the vault's owner powers, so the business would be lost.
+        require!(
+            receiver != &r.vault_id && receiver != &env::current_account_id(),
+            "the deed contract and the token's vault cannot receive the token"
+        );
         require!(r.listing.is_none(), "token is listed; cancel the listing first");
     }
 }

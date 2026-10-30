@@ -66,8 +66,8 @@ async fn vault_hooks_are_deed_only_and_stale_epochs_are_ignored() -> Result<()> 
 
     for (method, args) in [
         ("set_owner", json!({ "new_owner": env.alice.id(), "epoch": 99 })),
-        ("lock", json!({ "epoch": 1 })),
-        ("unlock", json!({ "epoch": 1 })),
+        ("lock", json!({ "epoch": 1, "lock_id": 1 })),
+        ("unlock", json!({ "epoch": 1, "lock_id": 1 })),
     ] {
         fails(env.alice.call(&vault, method).args_json(args).transact().await?, "only the deed contract");
     }
@@ -123,9 +123,13 @@ async fn vault_hooks_are_deed_only_and_stale_epochs_are_ignored() -> Result<()> 
     assert_eq!(info["owner_id"], env.alice.id().as_str());
     assert_eq!(info["owner_epoch"], 3);
 
-    fails(fake_deed.call(v.id(), "lock").args_json(json!({ "epoch": 2 })).transact().await?, "does not match");
-    done(fake_deed.call(v.id(), "lock").args_json(json!({ "epoch": 3 })).transact().await?);
-    assert!(!ok(fake_deed.call(v.id(), "unlock").args_json(json!({ "epoch": 2 })).transact().await?).json::<bool>()?);
+    fails(
+        fake_deed.call(v.id(), "lock").args_json(json!({ "epoch": 2, "lock_id": 1 })).transact().await?,
+        "does not match",
+    );
+    done(fake_deed.call(v.id(), "lock").args_json(json!({ "epoch": 3, "lock_id": 1 })).transact().await?);
+    let unlock_stale_epoch = json!({ "epoch": 2, "lock_id": 1 });
+    assert!(!ok(fake_deed.call(v.id(), "unlock").args_json(unlock_stale_epoch).transact().await?).json::<bool>()?);
     assert_eq!(v.view("get_info").await?.json::<Value>()?["locked"], true);
 
     // A newer owner clears the lock.

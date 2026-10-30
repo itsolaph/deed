@@ -11,5 +11,6 @@ mod integration {
     pub mod mint;
     pub mod ownership;
     pub mod owner_powers;
+    pub mod review;
     pub mod sale;
 }

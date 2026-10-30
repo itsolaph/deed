@@ -8,6 +8,8 @@ use crate::{Deed, DeedExt, Listing, TokenRecord, VaultStats, VAULT_WASM};
 #[near(serializers = [json])]
 pub struct ListingView {
     pub token_id: String,
+    /// Pass this as `listing_id` in the buy message to pin the purchase to this listing.
+    pub listing_id: u64,
     pub seller: AccountId,
     pub price: U128,
     pub active: bool,
@@ -50,6 +52,7 @@ pub struct DeedConfig {
 fn listing_view(token_id: &str, l: &Listing) -> ListingView {
     ListingView {
         token_id: token_id.to_string(),
+        listing_id: l.id,
         seller: l.seller.clone(),
         price: U128(l.price),
         active: l.active,

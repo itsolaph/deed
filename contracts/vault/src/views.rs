@@ -14,6 +14,8 @@ pub struct VaultInfo {
     pub owner_id: AccountId,
     pub owner_epoch: u64,
     pub locked: bool,
+    /// Id of the newest listing that locked the vault (0 if never listed).
+    pub lock_id: u64,
     pub payment_token: AccountId,
     pub price_per_call: U128,
     pub pending_price: Option<U128>,
@@ -37,7 +39,11 @@ pub struct VaultInfo {
 #[near(serializers = [json])]
 pub struct CustomerView {
     pub balance: U128,
+    /// Cap in force now.
     pub daily_cap: U128,
+    /// A scheduled cap decrease and when it applies.
+    pub pending_daily_cap: Option<U128>,
+    pub daily_cap_effective_at_ms: Option<U64>,
     pub spent_today: U128,
     pub chargeable_today: U128,
     pub day: u32,
@@ -90,12 +96,16 @@ impl Vault {
     }
 
     fn customer_view(&self, c: &Customer) -> CustomerView {
-        let today = utc_day(env::block_timestamp());
+        let now = env::block_timestamp();
+        let today = utc_day(now);
+        let pending = c.pending_cap.filter(|(_, at)| now < *at);
         CustomerView {
             balance: U128(c.balance),
-            daily_cap: U128(c.daily_cap),
+            daily_cap: U128(c.cap_at(now)),
+            pending_daily_cap: pending.map(|(cap, _)| U128(cap)),
+            daily_cap_effective_at_ms: pending.map(|(_, at)| ms(at)),
             spent_today: U128(c.spent_on(today)),
-            chargeable_today: U128(c.chargeable_today(today)),
+            chargeable_today: U128(c.chargeable_today(today, now)),
             day: c.day,
             last_seq: U64(c.last_seq),
             refund_requested_at_ms: c.refund_requested_at.map(ms),
@@ -115,6 +125,7 @@ impl Vault {
             owner_id: self.owner_id.clone(),
             owner_epoch: self.owner_epoch,
             locked: self.locked,
+            lock_id: self.lock_id,
             payment_token: self.payment_token.clone(),
             price_per_call: U128(self.price.effective(now)),
             pending_price: pending.map(|(p, _)| U128(p)),

@@ -6,7 +6,7 @@ use near_sdk::json_types::U128;
 use near_sdk::serde_json::{self, json};
 use near_sdk::{env, near, require, AccountId, NearToken, Promise, PromiseOrValue};
 
-use crate::ledger::Customer;
+use crate::ledger::{CapChange, Customer};
 use crate::{
     events, promise_succeeded, Vault, VaultExt, GAS_CALLBACK, GAS_FT_TRANSFER,
     MIN_CUSTOMER_DEPOSIT,
@@ -42,10 +42,14 @@ impl FungibleTokenReceiver for Vault {
         let amount = amount.0;
         require!(amount > 0, "amount must be positive");
 
-        let balance = match self.customers.get_mut(&customer_id) {
+        // Only the customer's own deposit cancels their refund request. A deposit by anyone
+        // else is added to the balance (and refunded with it) but cannot block the exit.
+        let own_deposit = sender_id == customer_id;
+        let (balance, refund_cancelled) = match self.customers.get_mut(&customer_id) {
             Some(c) => {
                 c.credit(amount).expect("balance overflow");
-                c.balance
+                let cancelled = own_deposit && c.refund_requested_at.take().is_some();
+                (c.balance, cancelled)
             }
             None => {
                 require!(amount >= MIN_CUSTOMER_DEPOSIT, "first deposit is below the minimum");
@@ -53,7 +57,7 @@ impl FungibleTokenReceiver for Vault {
                 c.credit(amount).expect("balance overflow");
                 self.customers.insert(customer_id.clone(), c);
                 self.customer_count += 1;
-                amount
+                (amount, false)
             }
         };
         self.liabilities = self.liabilities.checked_add(amount).expect("liabilities overflow");
@@ -65,6 +69,7 @@ impl FungibleTokenReceiver for Vault {
                 "sender": sender_id,
                 "amount": U128(amount),
                 "balance": U128(balance),
+                "refund_cancelled": refund_cancelled,
             }),
         );
         PromiseOrValue::Value(U128(0))
@@ -73,11 +78,22 @@ impl FungibleTokenReceiver for Vault {
 
 #[near]
 impl Vault {
+    /// A raise applies at once. A decrease applies after the refund delay, so a customer
+    /// cannot block charges for calls the worker already served.
     pub fn set_daily_cap(&mut self, amount: U128) {
         let id = env::predecessor_account_id();
+        let now = env::block_timestamp();
+        let delay = self.refund_delay_ns;
         let c = self.customers.get_mut(&id).unwrap_or_else(|| env::panic_str("not a customer"));
-        c.daily_cap = amount.0;
-        events::emit("vault_daily_cap", json!({ "customer": id, "daily_cap": amount }));
+        match c.set_cap(amount.0, now, delay) {
+            CapChange::Immediate => {
+                events::emit("vault_daily_cap", json!({ "customer": id, "daily_cap": amount }))
+            }
+            CapChange::Scheduled { effective_at } => events::emit(
+                "vault_daily_cap_scheduled",
+                json!({ "customer": id, "daily_cap": amount, "effective_at_ms": effective_at / 1_000_000 }),
+            ),
+        }
     }
 
     /// Starts the refund delay. The worker may still charge calls it already served.
@@ -148,7 +164,8 @@ impl Vault {
         } else {
             let c = self.customers.get_mut(&customer).expect("customer entry kept until refund settles");
             c.balance = c.balance.checked_add(amount).expect("balance overflow");
-            // A deposit during the failed transfer cancelled the request; otherwise restore it.
+            // Restore the request unless a deposit arrived while the transfer was in flight;
+            // then the customer can request again.
             if c.balance == amount {
                 c.refund_requested_at = Some(requested_at);
             }

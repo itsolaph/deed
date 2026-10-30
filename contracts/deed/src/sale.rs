@@ -18,6 +18,11 @@ use crate::{
 struct BuyArgs {
     token_id: String,
     max_price: U128,
+    /// Optional but recommended: the listing the buyer evaluated. A seller cannot withdraw
+    /// while listed, but could cancel, withdraw and re-list at the same price while a purchase
+    /// is on its way; the re-listing gets a new id and the pinned purchase is refused.
+    #[serde(default)]
+    listing_id: Option<u64>,
 }
 
 #[near(serializers = [json])]
@@ -33,6 +38,9 @@ impl Deed {
         let l = r.listing.as_ref().ok_or("token is not listed")?;
         if !l.active {
             return Err("listing is not active yet");
+        }
+        if args.listing_id.is_some_and(|id| id != l.id) {
+            return Err("listing_id does not match the current listing");
         }
         if l.epoch != r.owner_epoch || l.seller != r.owner_id {
             return Err("listing is stale");
@@ -79,7 +87,11 @@ impl Deed {
         require!(price.0 > 0, "price must be positive");
         let (vault, epoch) = (r.vault_id.clone(), r.owner_epoch);
 
-        self.token_mut(&token_id).listing = Some(Listing {
+        let record = self.token_mut(&token_id);
+        record.last_listing_id += 1;
+        let id = record.last_listing_id;
+        record.listing = Some(Listing {
+            id,
             seller: seller.clone(),
             price: price.0,
             active: false,
@@ -88,63 +100,68 @@ impl Deed {
         });
         events::emit(
             "deed_listed",
-            json!({ "token_id": token_id, "seller": seller, "price": price, "epoch": epoch }),
+            json!({ "token_id": token_id, "listing_id": id, "seller": seller, "price": price, "epoch": epoch }),
         );
 
         ext_vault::ext(vault)
             .with_static_gas(GAS_LOCK)
-            .lock(epoch)
-            .then(Self::ext(env::current_account_id()).with_static_gas(GAS_ON_LOCKED).on_locked(token_id, epoch))
+            .lock(epoch, id)
+            .then(Self::ext(env::current_account_id()).with_static_gas(GAS_ON_LOCKED).on_locked(token_id, epoch, id))
     }
 
     #[private]
-    pub fn on_locked(&mut self, token_id: String, epoch: u64) -> bool {
+    pub fn on_locked(&mut self, token_id: String, epoch: u64, listing_id: u64) -> bool {
         let ok = promise_succeeded();
         let record = self.token_mut(&token_id);
-        let pending = record.listing.as_ref().is_some_and(|l| l.epoch == epoch && !l.active);
+        let pending = record.listing.as_ref().is_some_and(|l| l.id == listing_id && !l.active);
         if ok && pending {
             let listing = record.listing.as_mut().expect("listing");
             listing.active = true;
             let price = U128(listing.price);
-            events::emit("deed_listing_active", json!({ "token_id": token_id, "price": price, "epoch": epoch }));
+            events::emit(
+                "deed_listing_active",
+                json!({ "token_id": token_id, "listing_id": listing_id, "price": price, "epoch": epoch }),
+            );
             return true;
         }
         if pending {
             record.listing = None;
-            events::emit("deed_listing_failed", json!({ "token_id": token_id, "epoch": epoch }));
+            events::emit("deed_listing_failed", json!({ "token_id": token_id, "listing_id": listing_id }));
         } else if ok {
-            // Locked, but the listing is gone: release the lock again.
+            // Locked, but this listing was cancelled meanwhile: release its lock. The vault
+            // ignores this if a newer listing locked it since.
             let vault = record.vault_id.clone();
-            ext_vault::ext(vault).with_static_gas(GAS_LOCK).unlock(epoch).detach();
+            ext_vault::ext(vault).with_static_gas(GAS_LOCK).unlock(epoch, listing_id).detach();
         }
         false
     }
 
-    /// Seller only. Removes an active listing and unlocks the vault.
+    /// Seller only. Removes the listing, active or still activating, and unlocks the vault.
+    /// Lock ids make the order of the lock and unlock receipts irrelevant.
     #[payable]
     pub fn cancel_listing(&mut self, token_id: String) -> Promise {
         assert_one_yocto();
         let caller = env::predecessor_account_id();
         let record = self.token_mut(&token_id);
-        let listing = record.listing.as_ref().unwrap_or_else(|| env::panic_str("token is not listed"));
+        let listing = record.listing.take().unwrap_or_else(|| env::panic_str("token is not listed"));
         require!(listing.seller == caller, "only the seller may cancel");
-        require!(listing.active, "listing is still being activated; try again shortly");
-        let epoch = listing.epoch;
-        record.listing = None;
         let vault = record.vault_id.clone();
-        events::emit("deed_listing_cancelled", json!({ "token_id": token_id, "epoch": epoch }));
-        ext_vault::ext(vault).with_static_gas(GAS_LOCK).unlock(epoch)
+        events::emit(
+            "deed_listing_cancelled",
+            json!({ "token_id": token_id, "listing_id": listing.id, "epoch": listing.epoch }),
+        );
+        ext_vault::ext(vault).with_static_gas(GAS_LOCK).unlock(listing.epoch, listing.id)
     }
 
-    /// Owner only, when not listed: re-sends the unlock, for example if the unlock from
-    /// `cancel_listing` ran out of gas.
+    /// Owner only, when not listed: re-sends the unlock for the newest listing, for example
+    /// if the unlock from `cancel_listing` ran out of gas.
     #[payable]
     pub fn unlock_vault(&mut self, token_id: String) -> Promise {
         assert_one_yocto();
         let r = self.token(&token_id);
         require!(r.owner_id == env::predecessor_account_id(), "only the token owner");
         require!(r.listing.is_none(), "token is listed");
-        ext_vault::ext(r.vault_id.clone()).with_static_gas(GAS_LOCK).unlock(r.owner_epoch)
+        ext_vault::ext(r.vault_id.clone()).with_static_gas(GAS_LOCK).unlock(r.owner_epoch, r.last_listing_id)
     }
 
     #[private]

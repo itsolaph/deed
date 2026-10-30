@@ -1,0 +1,18 @@
+{
+  "name": "deed",
+  "private": true,
+  "version": "0.1.0",
+  "description": "An NFT that owns a running paid API on NEAR",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "deploy:testnet": "node scripts/deploy-testnet.mjs",
+    "smoke:testnet": "node scripts/smoke-testnet.mjs"
+  },
+  "dependencies": {
+    "near-api-js": "7.4.0"
+  }
+}

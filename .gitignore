@@ -1,0 +1,14 @@
+# Build output
+/contracts/target/
+node_modules/
+dist/
+
+# Local keys and env files: never commit
+.env
+.env.*
+*.key
+*.pem
+.near-credentials/
+**/neardev/
+*.pid
+*.log

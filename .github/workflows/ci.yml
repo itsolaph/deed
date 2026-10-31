@@ -14,8 +14,9 @@ env:
 
 jobs:
   contracts:
-    name: contracts (wasm build and unit tests)
+    name: contracts (wasm build, unit and sandbox tests)
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -33,29 +34,7 @@ jobs:
         run: bash scripts/build.sh
       - name: Contract unit tests
         run: cd contracts && cargo test -p vault -p deed -p tusdc
-      - uses: actions/upload-artifact@v4
-        with:
-          name: wasm
-          path: contracts/target/near/*/*.wasm
-
-  sandbox:
-    name: sandbox integration tests (near-workspaces)
-    runs-on: ubuntu-latest
-    needs: contracts
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: contracts
-      - uses: actions/download-artifact@v4
-        with:
-          name: wasm
-          path: contracts/target/near
-      - name: Integration tests
+      - name: Sandbox integration tests
         run: cd contracts && cargo test -p deed-tests --test integration -- --test-threads 4
 
   node:

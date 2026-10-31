@@ -1,0 +1,42 @@
+name: status
+
+# During the private-repo period we cannot read the Actions API with the
+# tokens we hold, so this mirrors each finished `ci` run's conclusion into a
+# single status.json on the orphan `ci-status` branch, readable with any
+# deploy key. Remove this file when the repo goes public.
+
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+
+permissions:
+  contents: write
+
+jobs:
+  report:
+    name: mirror ci conclusion to the ci-status branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Push status.json
+        env:
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          URL: ${{ github.event.workflow_run.html_url }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          json=$(printf '{"conclusion":"%s","sha":"%s","run_id":%s,"url":"%s","at":"%s"}' \
+            "$CONCLUSION" "$SHA" "$RUN_ID" "$URL" "$(date -u +%FT%TZ)")
+          mkdir -p out
+          cd out
+          git init -q
+          git config user.name "ci-status-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -q -b ci-status
+          printf '%s\n' "$json" > status.json
+          git add status.json
+          git commit -qm "ci status: $CONCLUSION for ${SHA:0:12}"
+          git push -q --force "https://x-access-token:$GH_TOKEN@github.com/$REPO.git" ci-status:ci-status

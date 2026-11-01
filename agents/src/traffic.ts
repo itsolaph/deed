@@ -44,9 +44,10 @@ async function main(): Promise<void> {
       "top-up": { type: "string", default: "5" },
       duration: { type: "string", default: "0" },
       summary: { type: "string" },
+      "track-ms": { type: "string", default: String(TRACK_INTERVAL_MS) },
     },
   });
-  if (!values.vault || !values.customers) throw new Error("usage: traffic --vault <account> --customers a,b [--target url] [--rate per-sec] [--top-up tUSDC] [--duration sec] [--summary file]");
+  if (!values.vault || !values.customers) throw new Error("usage: traffic --vault <account> --customers a,b [--target url] [--rate per-sec] [--top-up tUSDC] [--duration sec] [--summary file] [--track-ms ms]");
   const vault = values.vault;
   const r = rpc();
   const runId = toHex(randomBytes(3));
@@ -141,7 +142,7 @@ async function main(): Promise<void> {
         if (tracking) return;
         tracking = true;
         void track(run).finally(() => (tracking = false));
-      }, TRACK_INTERVAL_MS),
+      }, Number(values["track-ms"])),
     );
   }
   timers.push(setInterval(printSummary, SUMMARY_INTERVAL_MS));

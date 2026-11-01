@@ -17,7 +17,7 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { DeedViews, VaultViews, formatUnits, fromUnits, generateSecretKey, vaultAccountFor } from "@deed/sdk";
 import { credentialsDir, displayPath, readKeyFile, writeKeyFile, type TxOutcome } from "@deed/sdk/node";
-import { NETWORK, clock, isMain, loadDeployments, rpc, runMain, tokenMeta, txLink, txSigner, writeJson } from "./common.js";
+import { NETWORK, clock, isMain, loadDeployments, rpc, runMain, tokenMeta, txLink, txSigner, withRpcRetry, writeJson } from "./common.js";
 
 const ONE_YOCTO = 1n;
 const NEAR = 10n ** 24n;
@@ -58,6 +58,7 @@ async function main(): Promise<void> {
   const deedId = values.deed ?? dep.accounts.deed;
   const r = rpc();
   const signer = txSigner(values.as);
+  const send = <T,>(fn: () => Promise<T>): Promise<T> => withRpcRetry(fn, 4, (line) => say(`  ${line}`));
   const say = (line: string) => process.stdout.write(`${clock()} [owner ${values.as}] ${line}\n`);
   const deed = new DeedViews(r, deedId);
   const config = await deed.config();
@@ -69,21 +70,22 @@ async function main(): Promise<void> {
     case "mint": {
       if (!values.slug || !values.price || !values.endpoint) throw new Error("mint needs --slug, --price and --endpoint");
       const cost = BigInt(await deed.mintCost());
-      const out = await signer.call(deedId, {
+      const { slug, price, endpoint } = { slug: values.slug!, price: values.price!, endpoint: values.endpoint! };
+      const out = await send(() => signer.call(deedId, {
         method: "mint",
         args: {
-          slug: values.slug,
-          title: values.title ?? values.slug,
-          price_per_call: units(values.price).toString(),
-          endpoint: values.endpoint,
+          slug,
+          title: values.title ?? slug,
+          price_per_call: units(price).toString(),
+          endpoint,
           image_hash: values["image-hash"] ?? "",
           default_daily_cap: units(values["daily-cap"]!).toString(),
         },
         gasTgas: 300,
         depositYocto: cost,
-      });
-      report(say, `mint ${values.slug} (deposit ${formatUnits(cost, 24, 3)} NEAR, excess refunded)`, out);
-      result = { tx: out.hash, success: out.success, vault: vaultAccountFor(deedId, values.slug) };
+      }));
+      report(say, `mint ${slug} (deposit ${formatUnits(cost, 24, 3)} NEAR, excess refunded)`, out);
+      result = { tx: out.hash, success: out.success, vault: vaultAccountFor(deedId, slug) };
       break;
     }
     case "rotate": {
@@ -104,12 +106,13 @@ async function main(): Promise<void> {
         say(`new worker key ${key.publicKey} saved to ${displayPath(file)} (mode 600)`);
       }
       const allowance = (BigInt(Math.round(Number(values.allowance) * 1000)) * NEAR) / 1000n;
+      const { vault, endpoint } = { vault: values.vault!, endpoint: values.endpoint! };
       // Key and endpoint in one transaction: customers never see the new endpoint without the key.
-      const out = await signer.callMany(values.vault, [
+      const out = await send(() => signer.callMany(vault, [
         { method: "set_worker", args: { public_key: key.publicKey, allowance: allowance.toString() }, gasTgas: 60, depositYocto: ONE_YOCTO },
         { method: "set_config", args: { endpoint: values.endpoint, image_hash: info.image_hash }, gasTgas: 20, depositYocto: ONE_YOCTO },
-      ]);
-      report(say, `set_worker + set_config(endpoint ${values.endpoint}) in one transaction`, out);
+      ]));
+      report(say, `set_worker + set_config(endpoint ${endpoint}) in one transaction`, out);
       result = { tx: out.hash, success: out.success, public_key: key.publicKey, key_file: displayPath(file), previous_key: info.worker_key };
       break;
     }
@@ -124,7 +127,8 @@ async function main(): Promise<void> {
     }
     case "list": {
       if (!values["token-id"] || !values.price) throw new Error("list needs --token-id and --price");
-      const out = await signer.call(deedId, { method: "list", args: { token_id: values["token-id"], price: units(values.price).toString() }, gasTgas: 100, depositYocto: ONE_YOCTO });
+      const { token_id: listToken, price: listPrice } = { token_id: values["token-id"]!, price: values.price! };
+      const out = await send(() => signer.call(deedId, { method: "list", args: { token_id: listToken, price: units(listPrice).toString() }, gasTgas: 100, depositYocto: ONE_YOCTO }));
       report(say, `list ${values["token-id"]} for ${values.price} ${token.symbol}`, out);
       const d = await deed.deedOf(values["token-id"]);
       say(`listing ${d?.listing ? `#${d.listing.listing_id} active=${d.listing.active}` : "missing"}`);
@@ -133,7 +137,7 @@ async function main(): Promise<void> {
     }
     case "cancel": {
       if (!values["token-id"]) throw new Error("cancel needs --token-id");
-      const out = await signer.call(deedId, { method: "cancel_listing", args: { token_id: values["token-id"] }, gasTgas: 100, depositYocto: ONE_YOCTO });
+      const out = await send(() => signer.call(deedId, { method: "cancel_listing", args: { token_id: values["token-id"] }, gasTgas: 100, depositYocto: ONE_YOCTO }));
       report(say, `cancel listing of ${values["token-id"]}`, out);
       result = { tx: out.hash, success: out.success };
       break;
@@ -145,14 +149,14 @@ async function main(): Promise<void> {
       say(`vault revenue ${formatUnits(info.revenue, token.decimals)} ${token.symbol}, owner on chain ${info.owner_id}, locked ${info.locked}; withdrawing ${formatUnits(amount, token.decimals)}`);
       const args: Record<string, unknown> = { amount: (amount > 0n ? amount : 1n).toString() };
       if (values.receiver) args.receiver_id = values.receiver;
-      const out = await signer.call(values.vault, { method: "withdraw", args, gasTgas: 80, depositYocto: ONE_YOCTO });
+      const out = await send(() => signer.call(values.vault!, { method: "withdraw", args, gasTgas: 80, depositYocto: ONE_YOCTO }));
       report(say, "withdraw", out);
       result = { tx: out.hash, success: out.success, amount: amount.toString(), error: out.error ?? null };
       break;
     }
     case "push-stats": {
       if (!values.vault) throw new Error("push-stats needs --vault");
-      const out = await signer.call(values.vault, { method: "push_stats", args: {}, gasTgas: 50, depositYocto: 0n });
+      const out = await send(() => signer.call(values.vault!, { method: "push_stats", args: {}, gasTgas: 50, depositYocto: 0n }));
       report(say, "push_stats (refreshes the NFT certificate)", out);
       result = { tx: out.hash, success: out.success };
       break;

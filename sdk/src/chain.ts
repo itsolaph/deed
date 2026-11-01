@@ -30,7 +30,8 @@ export class RpcError extends Error {
   }
 }
 
-const REQUEST_TIMEOUT_MS = 15_000;
+// Generous on purpose: in front of a queueing local proxy a view can legitimately wait.
+const REQUEST_TIMEOUT_MS = 45_000;
 
 export class Rpc {
   private id = 0;

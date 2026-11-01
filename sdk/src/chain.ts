@@ -41,32 +41,36 @@ export class Rpc {
 
   /** Calls `method` on each URL in order until one answers. Contract errors are not retried. */
   async request<T>(method: string, params: unknown): Promise<T> {
-    let lastError: unknown;
-    for (const url of this.urls) {
-      try {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ jsonrpc: "2.0", id: ++this.id, method, params }),
-          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-        });
-        if (!res.ok) throw new Error(`RPC ${url} answered HTTP ${res.status}`);
-        const body = (await res.json()) as { result?: T & { error?: string }; error?: { message?: string; data?: unknown; cause?: { name?: string } } };
-        if (body.error) {
-          const name = body.error.cause?.name ?? "";
-          // A missing account or key is an answer, not an outage: do not try the next URL.
-          throw new RpcError(`${name || "RPC error"}: ${JSON.stringify(body.error.data ?? body.error.message)}`, body.error);
+    // Public testnet RPCs answer 429/503 in bursts; every request here is a read,
+    // so the whole failover loop is safe to retry with backoff.
+    return withRpcRetry(async () => {
+      let lastError: unknown;
+      for (const url of this.urls) {
+        try {
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ jsonrpc: "2.0", id: ++this.id, method, params }),
+            signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+          });
+          if (!res.ok) throw new Error(`RPC ${url} answered HTTP ${res.status}`);
+          const body = (await res.json()) as { result?: T & { error?: string }; error?: { message?: string; data?: unknown; cause?: { name?: string } } };
+          if (body.error) {
+            const name = body.error.cause?.name ?? "";
+            // A missing account or key is an answer, not an outage: do not try the next URL.
+            throw new RpcError(`${name || "RPC error"}: ${JSON.stringify(body.error.data ?? body.error.message)}`, body.error);
+          }
+          if (body.result && typeof body.result === "object" && "error" in body.result && body.result.error) {
+            throw new RpcError(String(body.result.error));
+          }
+          return body.result as T;
+        } catch (e) {
+          if (e instanceof RpcError) throw e;
+          lastError = e;
         }
-        if (body.result && typeof body.result === "object" && "error" in body.result && body.result.error) {
-          throw new RpcError(String(body.result.error));
-        }
-        return body.result as T;
-      } catch (e) {
-        if (e instanceof RpcError) throw e;
-        lastError = e;
       }
-    }
-    throw lastError instanceof Error ? lastError : new Error(String(lastError));
+      throw lastError instanceof Error ? lastError : new Error(String(lastError));
+    });
   }
 
   async view<T>(contractId: string, method: string, args: Record<string, unknown> = {}): Promise<T> {

@@ -24,6 +24,7 @@ const USAGE = `usage: deed-worker --vault <account> --network testnet --port <p>
   --wait-for-key <sec>    wait up to this long for the key to be registered on chain
   --charge-gas <tgas>     prepaid gas per charge transaction (default 30)
   --flush-ms <ms>         charge batch interval (default 4000)
+  --watch-ms <ms>         key-change watch interval (default 3000)
   --no-handoff            do not hand pending deliveries to the next worker
   --pid-file <path>       write the process id here
 `;
@@ -46,6 +47,7 @@ async function main(): Promise<void> {
       "wait-for-key": { type: "string", default: "0" },
       "charge-gas": { type: "string", default: "30" },
       "flush-ms": { type: "string", default: "4000" },
+      "watch-ms": { type: "string", default: "3000" },
       "no-handoff": { type: "boolean", default: false },
       "pid-file": { type: "string" },
       help: { type: "boolean", default: false },
@@ -85,6 +87,7 @@ async function main(): Promise<void> {
     publicUrl,
     allowTarget: values["allow-target"],
     flushIntervalMs: Number(values["flush-ms"]),
+    watchIntervalMs: Number(values["watch-ms"]),
     handoff: !values["no-handoff"],
     log,
     onRetired: () => {

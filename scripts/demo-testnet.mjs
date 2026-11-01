@@ -97,7 +97,10 @@ function node(script, args) {
 }
 
 /** Runs an agent to completion, mirrors its output, returns its --out JSON. */
-function run(script, args, name) {
+/** Every on-chain step goes through here: a short settle before each keeps the
+ *  public RPC quota window from bursting when steps queue up back to back. */
+async function run(script, args, name) {
+  await sleep(8000);
   const out = path.join(LOGS, `${name}.json`);
   const res = node(script, [...args, "--out", out]);
   fs.writeFileSync(path.join(LOGS, `${name}.log`), (res.stdout || "") + (res.stderr || ""));
@@ -196,7 +199,7 @@ async function main() {
 
   // 1. The seller mints the business: a deed NFT plus its vault sub-account.
   banner("1. seller mints the deed; the deed contract creates the vault sub-account");
-  const mint = run("agents/dist/src/owner.js", ["mint", "--as", A.seller, "--slug", SLUG, "--title", "Webhook Relay", "--price", PRICE_PER_CALL, "--endpoint", ENDPOINT_A, "--image-hash", imageHash, "--daily-cap", "50"], "01-mint");
+  const mint = await run("agents/dist/src/owner.js", ["mint", "--as", A.seller, "--slug", SLUG, "--title", "Webhook Relay", "--price", PRICE_PER_CALL, "--endpoint", ENDPOINT_A, "--image-hash", imageHash, "--daily-cap", "50"], "01-mint");
   step(`seller mints ${SLUG}`, { tx: mint.tx, success: mint.success });
   if (!mint.success) throw new Error("mint failed");
   record.links.vault = addressLink(VAULT);
@@ -205,7 +208,7 @@ async function main() {
 
   // 2. Worker A key, registered with the endpoint in one transaction.
   banner("2. seller registers worker A (function-call key limited to charge)");
-  const rotA = run("agents/dist/src/owner.js", ["rotate", "--as", A.seller, "--vault", VAULT, "--endpoint", ENDPOINT_A, "--key-file", KEY_A], "02-worker-a");
+  const rotA = await run("agents/dist/src/owner.js", ["rotate", "--as", A.seller, "--vault", VAULT, "--endpoint", ENDPOINT_A, "--key-file", KEY_A], "02-worker-a");
   step("seller sets worker key A and endpoint", { tx: rotA.tx, success: rotA.success });
   record.worker_a_key = rotA.public_key;
 
@@ -234,22 +237,22 @@ async function main() {
 
   // 5. Dynamic NFT: push the stats so the certificate shows the numbers.
   banner("5. stats pushed to the deed; the NFT certificate updates");
-  const push1 = run("agents/dist/src/owner.js", ["push-stats", "--as", A.seller, "--vault", VAULT], "05-push-stats");
+  const push1 = await run("agents/dist/src/owner.js", ["push-stats", "--as", A.seller, "--vault", VAULT], "05-push-stats");
   step("push_stats updates the dynamic NFT metadata", { tx: push1.tx, success: push1.success });
   const deedView = await view(DEED, "get_deed", { token_id: SLUG });
   say(`deed stats now: ${deedView.stats?.calls_30d} calls, revenue ${fmt(deedView.stats?.revenue_30d ?? "0")} tUSDC`);
 
   // 6. The seller takes the cash out, then lists.
   banner("6. seller withdraws revenue, then lists the deed (the vault locks)");
-  const w1 = run("agents/dist/src/owner.js", ["withdraw", "--as", A.seller, "--vault", VAULT, "--amount", "all"], "06-seller-withdraw");
+  const w1 = await run("agents/dist/src/owner.js", ["withdraw", "--as", A.seller, "--vault", VAULT, "--amount", "all"], "06-seller-withdraw");
   step("seller withdraws revenue before listing", { tx: w1.tx, success: w1.success });
-  const list = run("agents/dist/src/owner.js", ["list", "--as", A.seller, "--token-id", SLUG, "--price", LIST_PRICE], "06-list");
+  const list = await run("agents/dist/src/owner.js", ["list", "--as", A.seller, "--token-id", SLUG, "--price", LIST_PRICE], "06-list");
   step(`seller lists ${SLUG} for ${LIST_PRICE} tUSDC`, { tx: list.tx, success: list.success && list.listing?.active === true });
   await sleep(20_000); // a little more revenue accrues to the vault while listed
 
   // 7. The buyer agent decides and buys.
   banner("7. buyer agent reads the vault, computes payback, gets a dry 1Click funding quote, buys");
-  const buy = run("agents/dist/src/buyer.js", ["--account", A.buyer, "--token-id", SLUG, "--max-payback-days", "30", "--fund-from", "eth:usdc", "--refund-to", "0x1111111111111111111111111111111111111111", "--mint-if-short"], "07-buyer");
+  const buy = await run("agents/dist/src/buyer.js", ["--account", A.buyer, "--token-id", SLUG, "--max-payback-days", "30", "--fund-from", "eth:usdc", "--refund-to", "0x1111111111111111111111111111111111111111", "--mint-if-short"], "07-buyer");
   step(`buyer agent buys ${SLUG}`, { tx: buy.buy_tx, success: buy.bought === true, note: buy.evaluated?.[0] ? `payback ${Number(buy.evaluated[0].payback_days).toFixed(2)} days` : undefined });
   record.buyer = { decision: buy.decision, evaluated: buy.evaluated, funding_quote: buy.funding_quote?.quote ?? null, funding_quote_error: buy.funding_quote_error ?? null };
   if (!buy.bought) throw new Error("the buyer did not buy");
@@ -257,7 +260,7 @@ async function main() {
   // 8. Revenue now accrues to the buyer; the seller's withdraw reverts.
   banner("8. the seller's withdraw now reverts");
   await sleep(8_000);
-  const w2 = run("agents/dist/src/owner.js", ["withdraw", "--as", A.seller, "--vault", VAULT, "--amount", "0.000001"], "08-seller-withdraw-fails");
+  const w2 = await run("agents/dist/src/owner.js", ["withdraw", "--as", A.seller, "--vault", VAULT, "--amount", "0.000001"], "08-seller-withdraw-fails");
   step("seller withdraw after the sale reverts (only the deed owner)", { tx: w2.tx, success: w2.success, expect: "failure" });
 
   // 9. Worker B: start it first, then rotate key and endpoint in one transaction.
@@ -267,10 +270,10 @@ async function main() {
   fs.writeFileSync(OUTAGE_FILE, "");
   say("the echo target is down for a while (simulated outage): deliveries pile up in worker A's queue");
   await sleep(15_000);
-  const kg = run("agents/dist/src/owner.js", ["keygen", "--as", A.buyer, "--vault", VAULT, "--key-file", KEY_B], "09-keygen");
+  const kg = await run("agents/dist/src/owner.js", ["keygen", "--as", A.buyer, "--vault", VAULT, "--key-file", KEY_B], "09-keygen");
   record.worker_b_key = kg.public_key;
   start("worker-b", "worker/dist/src/cli.js", ["--vault", VAULT, "--network", "testnet", "--port", String(PORT_B), "--key-file", KEY_B, "--allow-target", `127.0.0.1:${ECHO_PORT}`, "--flush-ms", "15000", "--wait-for-key", "180", "--data-dir", path.join(LOGS, "worker-b-data")]);
-  const rotB = run("agents/dist/src/owner.js", ["rotate", "--as", A.buyer, "--vault", VAULT, "--endpoint", ENDPOINT_B, "--key-file", KEY_B], "09-rotate");
+  const rotB = await run("agents/dist/src/owner.js", ["rotate", "--as", A.buyer, "--vault", VAULT, "--endpoint", ENDPOINT_B, "--key-file", KEY_B], "09-rotate");
   step("buyer rotates the worker key and endpoint in one transaction", { tx: rotB.tx, success: rotB.success });
   await waitHealth(ENDPOINT_B, 90_000);
   say("worker B is serving");
@@ -318,9 +321,9 @@ async function main() {
 
   // 12. The buyer withdraws and the certificate is refreshed.
   banner("12. buyer withdraws the revenue");
-  const w3 = run("agents/dist/src/owner.js", ["withdraw", "--as", A.buyer, "--vault", VAULT, "--amount", "all"], "12-buyer-withdraw");
+  const w3 = await run("agents/dist/src/owner.js", ["withdraw", "--as", A.buyer, "--vault", VAULT, "--amount", "all"], "12-buyer-withdraw");
   step("buyer withdraws revenue", { tx: w3.tx, success: w3.success });
-  const push2 = run("agents/dist/src/owner.js", ["push-stats", "--as", A.buyer, "--vault", VAULT], "12-push-stats");
+  const push2 = await run("agents/dist/src/owner.js", ["push-stats", "--as", A.buyer, "--vault", VAULT], "12-push-stats");
   step("push_stats after the sale", { tx: push2.tx, success: push2.success });
   const finalInfo = await view(VAULT, "get_info");
   const finalStats = await view(VAULT, "get_stats");

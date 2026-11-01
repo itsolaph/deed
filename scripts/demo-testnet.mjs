@@ -21,9 +21,11 @@ import path from "node:path";
 import { loadDeployments, saveDeployments, ROOT } from "./lib/deployments.mjs";
 import { addressLink, txLink, view } from "./lib/near.mjs";
 
-const ECHO_PORT = 7611;
-const PORT_A = 7601;
-const PORT_B = 7602;
+// Ports bind 127.0.0.1 and can be overridden with DEMO_ECHO_PORT, DEMO_PORT_A
+// and DEMO_PORT_B when the defaults are taken by long-running services.
+const ECHO_PORT = Number(process.env.DEMO_ECHO_PORT || 7611);
+const PORT_A = Number(process.env.DEMO_PORT_A || 7601);
+const PORT_B = Number(process.env.DEMO_PORT_B || 7602);
 const PRICE_PER_CALL = "0.01"; // tUSDC
 const LIST_PRICE = "3"; // tUSDC
 const TRAFFIC_SEC = Number(process.env.DEMO_TRAFFIC_SEC || 75);

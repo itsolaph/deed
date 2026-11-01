@@ -21,7 +21,7 @@ import {
   type VaultInfo,
 } from "@deed/sdk";
 import { keychainFile, readKeyFile } from "@deed/sdk/node";
-import { clock, ensureTusdc, isMain, loadDeployments, rpc, runMain, tokenBalance, tokenMeta, txLink, txSigner, writeJson } from "./common.js";
+import { clock, ensureTusdc, isMain, loadDeployments, rpc, runMain, tokenBalance, tokenMeta, txLink, txSigner, withRpcRetry, writeJson } from "./common.js";
 import { NEAR_USDC_ASSET, dryQuote, fetchTokens, findAsset, fundingQuoteRequest, nearPriceFrom } from "./oneclick.js";
 
 const DEFAULT_NEAR_PRICE = 3;
@@ -241,12 +241,12 @@ async function main(): Promise<void> {
 
   const msg = JSON.stringify({ buy: { token_id: pick.listing.token_id, max_price: price.toString(), listing_id: pick.listing.listing_id } });
   say(`buying: ft_transfer_call ${fmt(price)} to ${deedId} with msg ${msg}`);
-  const tx = await txSigner(account).call(config.payment_token, {
+  const tx = await withRpcRetry(() => txSigner(account).call(config.payment_token, {
     method: "ft_transfer_call",
     args: { receiver_id: deedId, amount: price.toString(), msg },
     gasTgas: 250,
     depositYocto: 1n,
-  });
+  }), 4, (line) => say(`  ${line}`));
   const after = await deedViews.deedOf(pick.listing.token_id);
   const vaultAfter = await new VaultViews(r, pick.deed.vault_id).info();
   const bought = after?.owner_id === account && vaultAfter.owner_id === account;

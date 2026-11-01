@@ -95,10 +95,15 @@ async function main(): Promise<void> {
   });
 
   // Refuse to serve with a key the vault does not know (optionally wait for the rotation).
+  // The vault state names the new worker in the set_worker transaction, but the access
+  // key itself lands in a later promise receipt, so the permission check can lag a
+  // block behind checkKey(); both belong inside the same retry loop.
   const waitUntil = Date.now() + Number(values["wait-for-key"]) * 1000;
   for (;;) {
     try {
       await worker.checkKey();
+      const perm = await chain.keyPermission(vault, signer.publicKey);
+      if (perm !== "function_call") throw new Error(`the worker key on ${vault} is ${perm ?? "missing"}, expected a function-call key`);
       break;
     } catch (e) {
       if (Date.now() >= waitUntil) throw e;
@@ -106,8 +111,6 @@ async function main(): Promise<void> {
       await new Promise((r) => setTimeout(r, 3000));
     }
   }
-  const perm = await chain.keyPermission(vault, signer.publicKey);
-  if (perm !== "function_call") throw new Error(`the worker key on ${vault} is ${perm ?? "missing"}, expected a function-call key`);
   const allowance = await chain.workerAllowance(signer.publicKey);
   log(`worker key registered on chain; allowance left ${allowance === null ? "unlimited" : formatUnits(allowance, 24, 4) + " NEAR"}`);
 

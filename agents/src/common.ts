@@ -4,7 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { Rpc, TESTNET_EXPLORER, rpcUrlsFor, signerFromSecretKey, type Signer } from "@deed/sdk";
+import { Rpc, TESTNET_EXPLORER, rpcUrlsFor, signerFromSecretKey, withRpcRetry, type Signer } from "@deed/sdk";
 import { NodeSigner, keychainFile, readKeyFile, type TxOutcome } from "@deed/sdk/node";
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
@@ -20,26 +20,10 @@ export function loadDeployments(): Deployments {
   return JSON.parse(fs.readFileSync(DEPLOYMENTS_FILE, "utf8")) as Deployments;
 }
 
+export { withRpcRetry };
+
 export function rpc(): Rpc {
   return new Rpc(process.env.NEAR_RPC_URLS ? process.env.NEAR_RPC_URLS.split(",") : rpcUrlsFor(NETWORK));
-}
-
-/**
- * Runs `fn`, retrying transient RPC failures (public testnet endpoints answer
- * 429/503 in bursts, and failover alone is not enough when every URL is busy).
- * A send that failed before acceptance never lands, so retrying is safe.
- */
-export async function withRpcRetry<T>(fn: () => Promise<T>, attempts = 4, onRetry?: (line: string) => void): Promise<T> {
-  for (let i = 1; ; i++) {
-    try {
-      return await fn();
-    } catch (e) {
-      const msg = String((e as Error)?.message ?? e);
-      if (i >= attempts || !/429|too many requests|fetch failed|econnreset|etimeout|timeout|503|exceeded \d+ providers|rate limit/i.test(msg)) throw e;
-      onRetry?.(`transient RPC error (${msg.slice(0, 90)}); retry ${i} of ${attempts - 1} in ${5 * i}s`);
-      await new Promise((r) => setTimeout(r, 5000 * i));
-    }
-  }
 }
 
 /** Signs transactions as `accountId` with its key from the legacy keychain. */

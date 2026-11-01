@@ -1,6 +1,6 @@
 // What the worker needs from chain, behind an interface so tests can use a fake vault.
 
-import { Rpc, VaultViews, type ChargeItem, type ChargeResult, type CustomerView, type VaultInfo, type WorkerKeyView } from "@deed/sdk";
+import { Rpc, VaultViews, type ChargeItem, type ChargeResult, type CustomerView, type VaultInfo, type WorkerKeyView, withRpcRetry } from "@deed/sdk";
 import { NodeSigner } from "@deed/sdk/node";
 
 export type KeyPermission = "full" | "function_call" | null;
@@ -67,12 +67,13 @@ export class RpcVaultChain implements VaultChain {
 
   async charge(items: ChargeItem[]): Promise<ChargeOutcome> {
     try {
-      const out = await this.signer.call(this.vault, {
+      const out = await withRpcRetry(() => this.signer.call(this.vault, {
         method: "charge",
         args: { items },
         gasTgas: this.chargeGasTgas,
         depositYocto: 0n,
-      });
+      })); // transient RPC errors retry inside withRpcRetry
+
       if (!out.success) return { ok: false, hash: out.hash, results: [], error: out.error ?? "charge failed" };
       return { ok: true, hash: out.hash, results: out.value as ChargeResult[] };
     } catch (e) {

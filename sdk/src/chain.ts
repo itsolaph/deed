@@ -109,3 +109,21 @@ export class Rpc {
     return this.request("query", { request_type: "view_account", finality: "final", account_id: accountId });
   }
 }
+
+/**
+ * Runs `fn`, retrying transient RPC failures (public testnet endpoints answer
+ * 429/503 in bursts; a send rejected before acceptance never lands, so
+ * retrying is safe). Shared by the agents and the worker.
+ */
+export async function withRpcRetry<T>(fn: () => Promise<T>, attempts = 4, onRetry?: (line: string) => void): Promise<T> {
+  for (let i = 1; ; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      const msg = String((e as Error)?.message ?? e);
+      if (i >= attempts || !/429|too many requests|fetch failed|econnreset|etimeout|timeout|503|exceeded \d+ providers|rate limit/i.test(msg)) throw e;
+      onRetry?.(`transient RPC error (${msg.slice(0, 90)}); retry ${i} of ${attempts - 1} in ${5 * i}s`);
+      await new Promise((r) => setTimeout(r, 5000 * i));
+    }
+  }
+}

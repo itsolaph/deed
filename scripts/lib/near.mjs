@@ -80,7 +80,16 @@ export async function accountExists(accountId) {
 }
 
 export async function view(contractId, method, args = {}) {
-  return provider.callFunction({ contractId, method, args });
+  // Public testnet RPCs 429 in bursts; a read is always safe to retry.
+  for (let i = 1; ; i++) {
+    try {
+      return await provider.callFunction({ contractId, method, args });
+    } catch (e) {
+      const msg = String(e?.message ?? e);
+      if (i >= 4 || !/429|too many requests|exceeded \d+ providers|rate limit|503|timeout|fetch failed/i.test(msg)) throw e;
+      await new Promise((r) => setTimeout(r, 4000 * i));
+    }
+  }
 }
 
 export function txLink(hash) {

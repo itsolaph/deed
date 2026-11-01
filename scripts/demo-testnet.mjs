@@ -212,7 +212,7 @@ async function main() {
   // 3. Echo target and worker A.
   banner("3. echo target and worker A start");
   start("echo", "agents/dist/src/echo-target.js", ["--port", String(ECHO_PORT), "--fail-rate", "0.3", "--outage-file", OUTAGE_FILE]);
-  start("worker-a", "worker/dist/src/cli.js", ["--vault", VAULT, "--network", "testnet", "--port", String(PORT_A), "--key-file", KEY_A, "--allow-target", `127.0.0.1:${ECHO_PORT}`, "--data-dir", path.join(LOGS, "worker-a-data")]);
+  start("worker-a", "worker/dist/src/cli.js", ["--vault", VAULT, "--network", "testnet", "--port", String(PORT_A), "--key-file", KEY_A, "--allow-target", `127.0.0.1:${ECHO_PORT}`, "--flush-ms", "15000", "--data-dir", path.join(LOGS, "worker-a-data")]);
   const healthA = await waitHealth(ENDPOINT_A, 60_000);
   say(`worker A healthy: key ${healthA.worker_public_key}, price ${healthA.price_per_call}`);
 
@@ -269,7 +269,7 @@ async function main() {
   await sleep(15_000);
   const kg = run("agents/dist/src/owner.js", ["keygen", "--as", A.buyer, "--vault", VAULT, "--key-file", KEY_B], "09-keygen");
   record.worker_b_key = kg.public_key;
-  start("worker-b", "worker/dist/src/cli.js", ["--vault", VAULT, "--network", "testnet", "--port", String(PORT_B), "--key-file", KEY_B, "--allow-target", `127.0.0.1:${ECHO_PORT}`, "--wait-for-key", "180", "--data-dir", path.join(LOGS, "worker-b-data")]);
+  start("worker-b", "worker/dist/src/cli.js", ["--vault", VAULT, "--network", "testnet", "--port", String(PORT_B), "--key-file", KEY_B, "--allow-target", `127.0.0.1:${ECHO_PORT}`, "--flush-ms", "15000", "--wait-for-key", "180", "--data-dir", path.join(LOGS, "worker-b-data")]);
   const rotB = run("agents/dist/src/owner.js", ["rotate", "--as", A.buyer, "--vault", VAULT, "--endpoint", ENDPOINT_B, "--key-file", KEY_B], "09-rotate");
   step("buyer rotates the worker key and endpoint in one transaction", { tx: rotB.tx, success: rotB.success });
   await waitHealth(ENDPOINT_B, 90_000);

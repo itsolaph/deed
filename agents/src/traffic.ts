@@ -10,7 +10,7 @@
 import { parseArgs } from "node:util";
 import { DeedClient, PaymentRequiredError, fromUnits, randomBytes, toHex } from "@deed/sdk";
 import { createNodeTransactor } from "@deed/sdk/node";
-import { clock, isMain, messageSigner, rpc, runMain, txLink, txSigner, writeJson } from "./common.js";
+import { clock, isMain, messageSigner, rpc, runMain, txLink, txSigner, withRpcRetry, writeJson } from "./common.js";
 
 interface CustomerRun {
   name: string;
@@ -87,7 +87,7 @@ async function main(): Promise<void> {
         const canPay = e.details.reason === "unknown_customer" || e.details.reason === "insufficient_balance";
         if (canPay && Date.now() - run.lastTopUp > TOP_UP_COOLDOWN_MS) {
           run.lastTopUp = Date.now();
-          const tx = await run.client.topUp(topUp);
+          const tx = await withRpcRetry(() => run.client.topUp(topUp), 4, (line) => log(`${run.name.padEnd(6)} ${line}`));
           log(`${run.name.padEnd(6)} topped up ${values["top-up"]} tUSDC with ft_transfer_call: ${tx.success ? "ok" : "FAILED"} ${txLink(tx.hash)}`);
         }
         return;

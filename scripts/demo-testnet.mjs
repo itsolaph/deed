@@ -218,7 +218,7 @@ async function main() {
 
   // 4. Traffic: alice and bob start without credit, get 402, top up and keep sending.
   banner("4. traffic: alice and bob send deliveries (first call answers 402, the SDK tops up)");
-  start("traffic", "agents/dist/src/traffic.js", ["--vault", VAULT, "--customers", `${A.alice},${A.bob}`, "--target", `http://127.0.0.1:${ECHO_PORT}/hook`, "--rate", "0.5", "--top-up", "5", "--track-ms", "6000", "--summary", path.join(LOGS, "traffic-summary.json")]);
+  start("traffic", "agents/dist/src/traffic.js", ["--vault", VAULT, "--customers", `${A.alice},${A.bob}`, "--target", `http://127.0.0.1:${ECHO_PORT}/hook`, "--rate", "0.25", "--top-up", "5", "--track-ms", "6000", "--summary", path.join(LOGS, "traffic-summary.json")]);
   const tickEnd = Date.now() + TRAFFIC_SEC * 1000;
   while (Date.now() < tickEnd) {
     await sleep(15_000);

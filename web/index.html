@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Deed: an NFT that owns a running paid API on NEAR testnet." />
     <meta name="referrer" content="no-referrer" />
-    <title>Deed · businesses as NFTs on NEAR testnet</title>
+    <title>Deed — a business you can hold</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
   </head>
@@ -19,39 +19,38 @@
       <div class="brand">
         <span class="seal" aria-hidden="true">D</span>
         <span class="word">Deed</span>
+        <span class="where">registry · testnet</span>
       </div>
       <div class="wallet-box">
-        <span class="network">testnet</span>
         <div id="wallet"></div>
       </div>
     </header>
 
     <main>
       <section class="hero">
-        <h1>A business you can hold.</h1>
-        <p class="lede">
-          Every deed is an NFT that owns a running paid API — a vault with its treasury, price list, customer
-          ledger and worker key. Buy the deed, the business is yours.
-        </p>
-        <div class="mechs">
-          <div class="mech">
-            <strong>A cashier that can’t steal</strong>
-            <span>The worker key can only charge. Withdraw belongs to the deed owner alone.</span>
-          </div>
-          <div class="mech">
-            <strong>A sale that locks the vault</strong>
-            <span>While listed, no withdraw, no key change, no price change — the buyer sees exactly what runs.</span>
-          </div>
-          <div class="mech">
-            <strong>A handover without downtime</strong>
-            <span>One transaction rotates the worker; pending deliveries survive and follow the new owner.</span>
-          </div>
+        <div class="copy">
+          <h1>A business<br />you can hold</h1>
+          <p class="lede">
+            Every deed is an NFT that owns a running paid API — a vault with its treasury, price list,
+            customer ledger and worker key. Buy the deed and the business is yours, in one transaction.
+          </p>
+          <dl class="ledger" id="kpis"></dl>
+          <p class="mechs">
+            <span><strong>The cashier can only charge</strong> — its key can never withdraw.</span>
+            <span><strong>A listing locks the vault</strong> — the buyer sees exactly what runs.</span>
+            <span><strong>The sale rotates the worker</strong> — deliveries survive, no downtime.</span>
+          </p>
         </div>
-        <dl class="kpis" id="kpis"></dl>
+        <div class="stage" id="hero-cert">
+          <p class="stage-note">the registry opens below</p>
+        </div>
       </section>
 
       <div id="status" class="status" role="status" aria-live="polite"></div>
-      <div id="deeds" class="deeds"><p class="note">Reading the chain …</p></div>
+      <section class="entries">
+        <h2 class="book">Registry</h2>
+        <div id="deeds"><p class="note">Reading the chain …</p></div>
+      </section>
     </main>
 
     <footer>

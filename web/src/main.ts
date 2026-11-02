@@ -353,24 +353,25 @@ function spark(days: { day: number; calls: number }[]): HTMLElement {
   );
 }
 
-function card(r: Row): HTMLElement {
+function entry(r: Row): HTMLElement {
   const me = currentAccount();
   const { deed, info, stats } = r;
-  const img = r.token?.metadata?.media ? h("img", { class: "cert", src: r.token.metadata.media, alt: `Certificate of ${deed.title}` }) : h("div", { class: "cert empty" }, "no certificate");
+  const media = r.token?.metadata?.media;
+  const thumb = media ? h("img", { class: "thumb", src: media, alt: `Certificate of ${deed.title}` }) : h("div", { class: "thumb empty" }, "cert");
   const pendingPrice = info.pending_price ? ` → ${amount(info.pending_price)} from ${new Date(Number(info.price_effective_at_ms)).toLocaleString()}` : "";
   const heroFigs = h(
     "dl",
     { class: "figs" },
     figure("calls, 30 days", h("span", { class: "num" }, String(stats.calls_30d))),
     figure("revenue, 30 days", h("span", { class: "num" }, `${amount(stats.revenue_30d)} `, h("span", { class: "unit" }, token.symbol))),
-    figure("payback estimate", h("span", { class: "num" }, paybackText(r)), `Price minus cash, over net revenue per day (gas at ${NEAR_PRICE_USD} USD/NEAR)`),
+    figure("cash in vault", h("span", { class: "num" }, `${amount(info.revenue)} `, h("span", { class: "unit" }, token.symbol)), "Withdrawable revenue; goes to the buyer with the deed"),
+    figure("payback", h("span", { class: "num" }, paybackText(r)), `Price minus cash, over net revenue per day (gas at ${NEAR_PRICE_USD} USD/NEAR)`),
   );
   const smallFigs = h(
     "dl",
     { class: "figs small" },
     figure("owner", link(`address/${info.owner_id}`, short(info.owner_id))),
     figure("price per call", h("span", { class: "num" }, `${amount(info.price_per_call, 6)} ${token.symbol}${pendingPrice}`)),
-    figure("cash in vault", h("span", { class: "num" }, `${amount(info.revenue)} ${token.symbol}`), "Withdrawable revenue; goes to the buyer with the deed"),
     figure("customer credit", h("span", { class: "num" }, `${amount(info.liabilities)} ${token.symbol}`), "Prepaid by customers; never withdrawable by the owner"),
     figure("gas spent, 30 days", h("span", { class: "num" }, `${near(stats.gas_spent_30d, 5)} NEAR`), "Estimated from the vault's NEAR balance at each charge"),
     figure("customers", h("span", { class: "num" }, String(info.customers))),
@@ -378,30 +379,49 @@ function card(r: Row): HTMLElement {
     figure("revenue, all time", h("span", { class: "num" }, `${amount(stats.revenue_total)} ${token.symbol}`)),
     figure("worker key", h("span", { class: "num", title: info.worker_key ?? "" }, short(info.worker_key))),
     figure("endpoint", h("span", { class: "num" }, info.endpoint || "none")),
+    figure("minted", h("span", { class: "num" }, new Date(Number(deed.minted_at_ms)).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }))),
   );
   const head = h(
-    "header",
-    { class: "card-head" },
-    h("h3", {}, deed.title),
+    "div",
+    { class: "entry-head" },
+    thumb,
     h(
-      "p",
-      { class: "meta" },
-      link(`address/${deed.vault_id}`, deed.vault_id),
-      ` · epoch ${info.owner_epoch} · minted ${new Date(Number(deed.minted_at_ms)).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}`,
-      info.locked ? h("span", { class: "tag quiet" }, "vault locked") : "",
-      deed.listing ? h("span", { class: "tag" }, "for sale") : "",
+      "div",
+      { class: "entry-title" },
+      h("h3", {}, deed.title),
+      h("span", { class: "meta" }, link(`address/${deed.vault_id}`, deed.vault_id)),
+    ),
+    h(
+      "div",
+      { class: "entry-stamps" },
+      deed.listing ? h("span", { class: "stamp" }, "for sale") : null,
+      info.locked ? h("span", { class: "stamp ink" }, "vault locked") : null,
+      h("span", { class: "stamp quiet" }, `epoch ${info.owner_epoch}`),
     ),
   );
-  const body = h("div", { class: "card-body" }, img, h("div", { class: "figures" }, heroFigs, spark(stats.days), smallFigs));
+  const body = h("div", { class: "entry-body" }, h("div", {}, heroFigs, smallFigs), spark(stats.days));
   const panels = [buyPanel(r, me), me && me === info.owner_id ? ownerPanel(r) : null, me ? customerPanel(r, me) : null].filter(
     (p): p is { summary: string; body: HTMLElement } => p !== null,
   );
   return h(
     "article",
-    { class: "card" },
+    { class: "entry" },
     head,
     body,
     ...panels.map((p) => h("details", { class: "panel" }, h("summary", {}, p.summary), p.body)),
+  );
+}
+
+/** The most active deed's certificate is the hero object: the one bright thing on the page. */
+function renderHeroCert(): void {
+  const stage = document.getElementById("hero-cert");
+  if (!stage) return;
+  const top = rows[0];
+  const media = top?.token?.metadata?.media;
+  if (!top || !media) return; // keep the quiet note until a certificate arrives
+  stage.replaceChildren(
+    h("img", { class: "cert-hero", src: media, alt: `Certificate of ${top.deed.title}` }),
+    h("span", { class: "stamp" }, top.deed.listing ? "for sale" : `epoch ${top.info.owner_epoch}`),
   );
 }
 
@@ -421,11 +441,12 @@ function renderKpis(): void {
 
 function render(): void {
   const list = $("deeds");
+  renderHeroCert();
   if (rows.length === 0) {
     list.replaceChildren(h("p", { class: "note" }, "No deeds yet."));
     return;
   }
-  list.replaceChildren(...rows.map(card));
+  list.replaceChildren(...rows.map(entry));
 }
 
 function renderWallet(account: string | null): void {

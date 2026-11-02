@@ -9,6 +9,11 @@ import { DEED_CONTRACT, EXPLORER, NEAR_PRICE_USD, REFRESH_MS } from "./config";
 import { connect, currentAccount, disconnect, initWallet, onAccount, send, type Call } from "./wallet";
 
 const rpc = new Rpc(TESTNET_RPC_URLS);
+// Two orders of the same public endpoints: with free-tier limits of ~0.5 req/s each,
+// alternating starts spreads the page's reads across both providers.
+const rpcAlt = new Rpc([...TESTNET_RPC_URLS].reverse());
+let rpcPicks = 0;
+const pickRpc = (): Rpc => (rpcPicks++ % 2 === 0 ? rpc : rpcAlt);
 const deedViews = new DeedViews(rpc, DEED_CONTRACT);
 const ONE_YOCTO = 1n;
 const NEAR = 10n ** 24n;
@@ -60,35 +65,110 @@ async function act(label: string, receiver: string, calls: Call[]): Promise<void
 
 // ---------------------------------------------------------------- data
 
+/** How many deeds get full detail (vault views) per load. Every extra deed costs RPC calls
+ *  against rate-limited public endpoints; the rest stay listed but unexpanded. */
+const DETAIL_LIMIT = 12;
+
+const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+/** Free-tier 429s are bursty: a short backoff usually clears them. */
+async function withBackoff<T>(fn: () => Promise<T>, tries = 4): Promise<T> {
+  let last: unknown;
+  for (let i = 0; i < tries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      last = e;
+      await sleep(1200 * (i + 1));
+    }
+  }
+  throw last;
+}
+
+async function fetchRow(deed: DeedView, me: string | null, withCert: boolean): Promise<Row> {
+  const vault = new VaultViews(pickRpc(), deed.vault_id);
+  // Sequential on purpose: two providers at ~0.5 req/s each cannot absorb bursts.
+  const info = await vault.info();
+  await sleep(500);
+  const stats = await vault.stats();
+  const mine = me ? (await sleep(500), await vault.customer(me)) : null;
+  const nft = withCert ? (await sleep(500), await deedViews.token(deed.token_id)) : null;
+  return { deed, info, stats, token: nft, me: mine };
+}
+
+let certBusy = false;
+
+/** Certificates are pure metadata: fill them in one at a time after the numbers are up. */
+async function loadCerts(): Promise<void> {
+  if (certBusy) return;
+  certBusy = true;
+  try {
+    for (const r of rows) {
+      if (!r.token) {
+        try {
+          r.token = await deedViews.token(r.deed.token_id);
+          render();
+        } catch {
+          // keep the placeholder
+        }
+        await new Promise((res) => setTimeout(res, 900));
+      }
+    }
+  } finally {
+    certBusy = false;
+  }
+}
+
+/** Public testnet RPC is rate-limited: fetch deeds a few at a time and render each row as it
+ *  arrives, so a fresh visitor sees cards appear progressively instead of one blank wait. */
 async function load(): Promise<void> {
-  const config = await deedViews.config();
+  const config = await withBackoff(() => deedViews.config());
   if (token.contract !== config.payment_token) {
-    const meta = await rpc.view<{ symbol: string; decimals: number }>(config.payment_token, "ft_metadata");
+    const meta = await withBackoff(() => rpc.view<{ symbol: string; decimals: number }>(config.payment_token, "ft_metadata"));
     token = { contract: config.payment_token, symbol: meta.symbol, decimals: meta.decimals };
   }
-  const deeds = await deedViews.deeds(0, 100);
+  const all = await withBackoff(() => deedViews.deeds(0, 100));
+  const wanted = [...all].sort((a, b) => Number(b.minted_at_ms) - Number(a.minted_at_ms)).slice(0, DETAIL_LIMIT);
   const me = currentAccount();
-  rows = await Promise.all(
-    deeds.map(async (deed) => {
-      const vault = new VaultViews(rpc, deed.vault_id);
-      const [info, stats, nft, mine] = await Promise.all([
-        vault.info(),
-        vault.stats(),
-        deedViews.token(deed.token_id),
-        me ? vault.customer(me) : Promise.resolve(null),
-      ]);
-      return { deed, info, stats, token: nft, me: mine };
-    }),
-  );
-  // Newest first.
-  rows.sort((a, b) => Number(b.deed.minted_at_ms) - Number(a.deed.minted_at_ms));
+  rows = [];
+  render();
+  renderKpis();
+  let next = 0;
+  const lane = async (): Promise<void> => {
+    const failed: DeedView[] = [];
+    while (next < wanted.length) {
+      const deed = wanted[next++];
+      if (!deed) break;
+      try {
+        rows.push(await fetchRow(deed, me, false));
+      } catch {
+        failed.push(deed);
+      }
+      rows.sort((a, b) => b.stats.calls_30d - a.stats.calls_30d || b.stats.calls_total - a.stats.calls_total);
+      render();
+      renderKpis();
+      await sleep(400);
+    }
+    for (const deed of failed) {
+      try {
+        rows.push(await withBackoff(() => fetchRow(deed, me, false)));
+        rows.sort((a, b) => b.stats.calls_30d - a.stats.calls_30d || b.stats.calls_total - a.stats.calls_total);
+        render();
+        renderKpis();
+      } catch {
+        // truly unreadable: leave it out
+      }
+    }
+  };
+  await lane();
+  void loadCerts();
 }
 
 async function refresh(): Promise<void> {
   try {
     await load();
     render();
-    $("updated").textContent = `updated ${new Date().toLocaleTimeString()}`;
+    renderKpis();
   } catch (e) {
     status(`could not read the chain: ${e instanceof Error ? e.message : String(e)}`, "error");
   }
@@ -141,10 +221,10 @@ function paybackText(r: Row): string {
   return p.paybackDays === null ? "never at current revenue" : `${p.paybackDays.toFixed(1)} days`;
 }
 
-function buyPanel(r: Row, me: string | null): HTMLElement | null {
+function buyPanel(r: Row, me: string | null): { summary: string; body: HTMLElement } | null {
   const l = r.deed.listing;
   if (!l) return null;
-  const panel = h("section", { class: "panel" }, h("h4", {}, "For sale"));
+  const panel = h("div", { class: "panel-body" });
   panel.append(
     h("p", { class: "note" }, `Listing #${l.listing_id} by ${l.seller} for `, h("span", { class: "num" }, `${amount(l.price)} ${token.symbol}`), l.active ? "." : " (activating)."),
     h("p", { class: "note" }, `The vault cash (${amount(r.info.revenue)} ${token.symbol}) comes with the deed. Customer credit stays owed to customers.`),
@@ -159,13 +239,13 @@ function buyPanel(r: Row, me: string | null): HTMLElement | null {
       h("p", { class: "note" }, "The purchase is pinned to this listing id, so a cancelled and re-listed deed is refused and refunded."),
     );
   }
-  return panel;
+  return { summary: `For sale · ${amount(l.price)} ${token.symbol}`, body: panel };
 }
 
-function ownerPanel(r: Row): HTMLElement {
+function ownerPanel(r: Row): { summary: string; body: HTMLElement } {
   const v = r.deed.vault_id;
   const locked = r.info.locked;
-  const panel = h("section", { class: "panel" }, h("h4", {}, "You own this business"));
+  const panel = h("div", { class: "panel-body" });
   if (locked) panel.append(h("p", { class: "note" }, "The vault is locked while the deed is listed: no withdraw, rotation, config or price change."));
   if (!r.deed.listing) {
     panel.append(form([{ name: "price", placeholder: `price in ${token.symbol}` }], "List for sale", (f) => {
@@ -202,13 +282,13 @@ function ownerPanel(r: Row): HTMLElement {
       (f) => void act("Set config", v, [{ method: "set_config", args: { endpoint: f.endpoint, image_hash: f.image }, gasTgas: 20, depositYocto: ONE_YOCTO }]),
     ),
   );
-  return panel;
+  return { summary: "Owner controls", body: panel };
 }
 
-function customerPanel(r: Row, me: string): HTMLElement {
+function customerPanel(r: Row, me: string): { summary: string; body: HTMLElement } {
   const v = r.deed.vault_id;
   const c = r.me;
-  const panel = h("section", { class: "panel" }, h("h4", {}, "Your relay credit"));
+  const panel = h("div", { class: "panel-body" });
   if (c) {
     panel.append(
       h(
@@ -247,7 +327,25 @@ function customerPanel(r: Row, me: string): HTMLElement {
     }
   }
   panel.prepend(h("p", { class: "note" }, `Signed in as ${me}.`));
-  return panel;
+  return { summary: "Customer credit", body: panel };
+}
+
+/** Activity sparkline from the vault's day buckets: real on-chain history, no invention. */
+function spark(days: { day: number; calls: number }[]): HTMLElement {
+  const last = days.slice(-30);
+  const max = Math.max(1, ...last.map((d) => d.calls));
+  const bars = h("div", { class: "bars", role: "img", "aria-label": "calls per day, last 30 days" });
+  for (const d of last) {
+    bars.append(h("span", { class: "bar", style: `height:${Math.max(4, Math.round((d.calls / max) * 100))}%`, title: `${new Date(d.day).toLocaleDateString()} · ${d.calls} calls` }));
+  }
+  const first = last[0]?.day ?? Date.now();
+  return h(
+    "div",
+    { class: "spark" },
+    h("p", { class: "note", style: "margin:0" }, "Calls per day"),
+    bars,
+    h("p", { class: "cap" }, `${new Date(first).toLocaleDateString()} – ${new Date(last[last.length - 1]?.day ?? Date.now()).toLocaleDateString()}`),
+  );
 }
 
 function card(r: Row): HTMLElement {
@@ -255,34 +353,66 @@ function card(r: Row): HTMLElement {
   const { deed, info, stats } = r;
   const img = r.token?.metadata?.media ? h("img", { class: "cert", src: r.token.metadata.media, alt: `Certificate of ${deed.title}` }) : h("div", { class: "cert empty" }, "no certificate");
   const pendingPrice = info.pending_price ? ` → ${amount(info.pending_price)} from ${new Date(Number(info.price_effective_at_ms)).toLocaleString()}` : "";
-  const figs = h(
+  const heroFigs = h(
     "dl",
     { class: "figs" },
-    figure("owner", link(`address/${info.owner_id}`, info.owner_id)),
-    figure("price per call", h("span", { class: "num" }, `${amount(info.price_per_call, 6)} ${token.symbol}${pendingPrice}`)),
     figure("calls, 30 days", h("span", { class: "num" }, String(stats.calls_30d))),
-    figure("revenue, 30 days", h("span", { class: "num" }, `${amount(stats.revenue_30d)} ${token.symbol}`)),
-    figure("gas spent, 30 days", h("span", { class: "num" }, `${near(stats.gas_spent_30d, 5)} NEAR`), "Estimated from the vault's NEAR balance at each charge"),
+    figure("revenue, 30 days", h("span", { class: "num" }, `${amount(stats.revenue_30d)} `, h("span", { class: "unit" }, token.symbol))),
+    figure("payback estimate", h("span", { class: "num" }, paybackText(r)), `Price minus cash, over net revenue per day (gas at ${NEAR_PRICE_USD} USD/NEAR)`),
+  );
+  const smallFigs = h(
+    "dl",
+    { class: "figs small" },
+    figure("owner", link(`address/${info.owner_id}`, short(info.owner_id))),
+    figure("price per call", h("span", { class: "num" }, `${amount(info.price_per_call, 6)} ${token.symbol}${pendingPrice}`)),
     figure("cash in vault", h("span", { class: "num" }, `${amount(info.revenue)} ${token.symbol}`), "Withdrawable revenue; goes to the buyer with the deed"),
     figure("customer credit", h("span", { class: "num" }, `${amount(info.liabilities)} ${token.symbol}`), "Prepaid by customers; never withdrawable by the owner"),
+    figure("gas spent, 30 days", h("span", { class: "num" }, `${near(stats.gas_spent_30d, 5)} NEAR`), "Estimated from the vault's NEAR balance at each charge"),
     figure("customers", h("span", { class: "num" }, String(info.customers))),
+    figure("calls, all time", h("span", { class: "num" }, String(stats.calls_total))),
+    figure("revenue, all time", h("span", { class: "num" }, `${amount(stats.revenue_total)} ${token.symbol}`)),
     figure("worker key", h("span", { class: "num", title: info.worker_key ?? "" }, short(info.worker_key))),
     figure("endpoint", h("span", { class: "num" }, info.endpoint || "none")),
-    figure("listed at", h("span", { class: "num" }, deed.listing ? `${amount(deed.listing.price)} ${token.symbol}` : "not listed")),
-    figure("payback estimate", h("span", { class: "num" }, paybackText(r)), `Price minus cash, over net revenue per day (gas at ${NEAR_PRICE_USD} USD/NEAR)`),
   );
   const head = h(
     "header",
     { class: "card-head" },
     h("h3", {}, deed.title),
-    h("p", { class: "meta" }, link(`address/${deed.vault_id}`, deed.vault_id), ` · epoch ${info.owner_epoch}`, info.locked ? " · locked" : "", deed.listing ? h("span", { class: "tag" }, "for sale") : ""),
+    h(
+      "p",
+      { class: "meta" },
+      link(`address/${deed.vault_id}`, deed.vault_id),
+      ` · epoch ${info.owner_epoch} · minted ${new Date(Number(deed.minted_at_ms)).toLocaleDateString()}`,
+      info.locked ? h("span", { class: "tag quiet" }, "vault locked") : "",
+      deed.listing ? h("span", { class: "tag" }, "for sale") : "",
+    ),
   );
-  const panels = h("div", { class: "panels" });
-  const buy = buyPanel(r, me);
-  if (buy) panels.append(buy);
-  if (me && me === info.owner_id) panels.append(ownerPanel(r));
-  if (me) panels.append(customerPanel(r, me));
-  return h("article", { class: "card" }, head, h("div", { class: "card-body" }, img, figs), panels);
+  const body = h("div", { class: "card-body" }, img, h("div", { class: "figures" }, heroFigs, spark(stats.days), smallFigs));
+  const panels = [buyPanel(r, me), me && me === info.owner_id ? ownerPanel(r) : null, me ? customerPanel(r, me) : null].filter(
+    (p): p is { summary: string; body: HTMLElement } => p !== null,
+  );
+  return h(
+    "article",
+    { class: "card" },
+    head,
+    body,
+    ...panels.map((p) => h("details", { class: "panel" }, h("summary", {}, p.summary), p.body)),
+  );
+}
+
+/** Live totals across all deeds, for the hero strip. */
+function renderKpis(): void {
+  const kpis = $("kpis");
+  const calls30 = rows.reduce((n, r) => n + r.stats.calls_30d, 0);
+  const rev30 = rows.reduce((n, r) => n + Number(r.stats.revenue_30d), 0);
+  const callsAll = rows.reduce((n, r) => n + r.stats.calls_total, 0);
+  kpis.replaceChildren(
+    h("dl", { class: "fig" }, h("dt", {}, "businesses live"), h("dd", {}, String(rows.length))),
+    h("dl", { class: "fig" }, h("dt", {}, "paid calls, 30 days"), h("dd", {}, String(calls30))),
+    h("dl", { class: "fig" }, h("dt", {}, "revenue, 30 days"), h("dd", {}, `${amount(String(rev30))} ${token.symbol}`)),
+    h("dl", { class: "fig" }, h("dt", {}, "paid calls, all time"), h("dd", {}, String(callsAll))),
+    h("dl", { class: "fig" }, h("dt", {}, "updated"), h("dd", {}, new Date().toLocaleTimeString())),
+  );
 }
 
 function render(): void {

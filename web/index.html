@@ -7,15 +7,18 @@
     <meta name="referrer" content="no-referrer" />
     <title>Deed · businesses as NFTs on NEAR testnet</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <header class="top">
       <div class="brand">
         <span class="seal" aria-hidden="true">D</span>
-        <div>
-          <h1>Deed</h1>
-          <p class="tagline">Each token owns a running paid API. Whoever holds it runs the business.</p>
-        </div>
+        <span class="word">Deed</span>
       </div>
       <div class="wallet-box">
         <span class="network">testnet</span>
@@ -24,22 +27,37 @@
     </header>
 
     <main>
-      <section class="intro">
-        <p>
-          Every deed below is an NFT on <span id="deed-link"></span>. Its business lives in its own vault sub-account:
-          treasury, price list, customer ledger and worker key. Buying the deed moves all of it to the buyer. The figures
-          are read live from the contract views.
+      <section class="hero">
+        <h1>A business you can hold.</h1>
+        <p class="lede">
+          Every deed is an NFT that owns a running paid API — a vault with its treasury, price list, customer
+          ledger and worker key. Buy the deed, the business is yours.
         </p>
-        <p class="note">Testnet only. The payment token is tUSDC, a test token without value. <span id="updated"></span></p>
+        <div class="mechs">
+          <div class="mech">
+            <strong>A cashier that can’t steal</strong>
+            <span>The worker key can only charge. Withdraw belongs to the deed owner alone.</span>
+          </div>
+          <div class="mech">
+            <strong>A sale that locks the vault</strong>
+            <span>While listed, no withdraw, no key change, no price change — the buyer sees exactly what runs.</span>
+          </div>
+          <div class="mech">
+            <strong>A handover without downtime</strong>
+            <span>One transaction rotates the worker; pending deliveries survive and follow the new owner.</span>
+          </div>
+        </div>
+        <dl class="kpis" id="kpis"></dl>
       </section>
+
       <div id="status" class="status" role="status" aria-live="polite"></div>
       <div id="deeds" class="deeds"><p class="note">Reading the chain …</p></div>
     </main>
 
     <footer>
       <p>
-        Open source under the MIT licence. No trackers, no analytics. Read-only calls go to public NEAR RPC nodes;
-        transactions are signed in your own wallet.
+        Live figures from the contract views on <span id="deed-link"></span>. The payment token is tUSDC, a
+        test token without value. Open source under the MIT licence — no trackers, no analytics.
       </p>
     </footer>
     <script type="module" src="./src/main.ts"></script>

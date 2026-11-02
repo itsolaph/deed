@@ -234,7 +234,7 @@ async function main() {
   // the traffic window while its transaction queues behind the RPC budget.
   const revEnd = Date.now() + 600_000;
   let rev = await view(VAULT, "get_info");
-  while (Number(rev.revenue) < 0.45 && Date.now() < revEnd) {
+  while (Number(rev.revenue) < 450_000 && Date.now() < revEnd) {
     await sleep(15_000);
     rev = await view(VAULT, "get_info");
     say(`charges landing: vault revenue ${fmt(rev.revenue)} tUSDC, ${rev.charged_items} charges`);

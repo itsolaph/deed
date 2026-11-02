@@ -46,7 +46,7 @@ const near = (v: string | bigint, digits = 4) => formatUnits(v, 24, digits);
 const short = (s: string | null, n = 10) => (s ? (s.length > n * 2 + 1 ? `${s.slice(0, n)}…${s.slice(-6)}` : s) : "none");
 const link = (path: string, text: string) => h("a", { href: `${EXPLORER}/${path}`, target: "_blank", rel: "noopener noreferrer" }, text);
 
-function status(text: string, kind: "info" | "ok" | "error" = "info", txHash?: string | null): void {
+function status(text: string, kind: "info" | "ok" | "error" | "quiet" = "info", txHash?: string | null): void {
   const box = $("status");
   box.className = `status ${kind}`;
   box.replaceChildren(text, txHash ? " " : "", txHash ? link(`txns/${txHash}`, "view transaction") : "");
@@ -169,8 +169,12 @@ async function refresh(): Promise<void> {
     await load();
     render();
     renderKpis();
+    $("status").replaceChildren();
+    $("status").className = "status";
   } catch (e) {
-    status(`could not read the chain: ${e instanceof Error ? e.message : String(e)}`, "error");
+    const msg = e instanceof Error ? e.message : String(e);
+    if (rows.length > 0) status(`refresh hiccupped (${msg}); showing the last good read — retrying`, "quiet");
+    else status(`could not read the chain: ${msg}`, "error");
   }
 }
 
@@ -334,17 +338,18 @@ function customerPanel(r: Row, me: string): { summary: string; body: HTMLElement
 function spark(days: { day: number; calls: number }[]): HTMLElement {
   const last = days.slice(-30);
   const max = Math.max(1, ...last.map((d) => d.calls));
+  const dayDate = (day: number) => new Date(day * 86_400_000).toLocaleDateString(undefined, { day: "numeric", month: "short" });
   const bars = h("div", { class: "bars", role: "img", "aria-label": "calls per day, last 30 days" });
   for (const d of last) {
-    bars.append(h("span", { class: "bar", style: `height:${Math.max(4, Math.round((d.calls / max) * 100))}%`, title: `${new Date(d.day).toLocaleDateString()} · ${d.calls} calls` }));
+    bars.append(h("span", { class: "bar", style: `height:${Math.max(4, Math.round((d.calls / max) * 100))}%`, title: `${dayDate(d.day)} · ${d.calls} calls` }));
   }
-  const first = last[0]?.day ?? Date.now();
+  const first = last[0]?.day ?? 0;
   return h(
     "div",
     { class: "spark" },
     h("p", { class: "note", style: "margin:0" }, "Calls per day"),
     bars,
-    h("p", { class: "cap" }, `${new Date(first).toLocaleDateString()} – ${new Date(last[last.length - 1]?.day ?? Date.now()).toLocaleDateString()}`),
+    h("p", { class: "cap" }, last.length > 0 ? `${dayDate(first)} – ${dayDate(last[last.length - 1]?.day ?? first)}` : "no activity yet"),
   );
 }
 
@@ -382,7 +387,7 @@ function card(r: Row): HTMLElement {
       "p",
       { class: "meta" },
       link(`address/${deed.vault_id}`, deed.vault_id),
-      ` · epoch ${info.owner_epoch} · minted ${new Date(Number(deed.minted_at_ms)).toLocaleDateString()}`,
+      ` · epoch ${info.owner_epoch} · minted ${new Date(Number(deed.minted_at_ms)).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}`,
       info.locked ? h("span", { class: "tag quiet" }, "vault locked") : "",
       deed.listing ? h("span", { class: "tag" }, "for sale") : "",
     ),
@@ -409,9 +414,8 @@ function renderKpis(): void {
   kpis.replaceChildren(
     h("dl", { class: "fig" }, h("dt", {}, "businesses live"), h("dd", {}, String(rows.length))),
     h("dl", { class: "fig" }, h("dt", {}, "paid calls, 30 days"), h("dd", {}, String(calls30))),
-    h("dl", { class: "fig" }, h("dt", {}, "revenue, 30 days"), h("dd", {}, `${amount(String(rev30))} ${token.symbol}`)),
+    h("dl", { class: "fig" }, h("dt", {}, "revenue, 30 days"), h("dd", {}, amount(String(rev30)), h("span", { class: "unit" }, token.symbol))),
     h("dl", { class: "fig" }, h("dt", {}, "paid calls, all time"), h("dd", {}, String(callsAll))),
-    h("dl", { class: "fig" }, h("dt", {}, "updated"), h("dd", {}, new Date().toLocaleTimeString())),
   );
 }
 

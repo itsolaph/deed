@@ -71,6 +71,7 @@ header.top {
 .word { font-size: 21px; font-weight: 600; letter-spacing: -0.01em; }
 
 .wallet-box { display: flex; align-items: center; gap: 12px; }
+.wallet-box #wallet { display: flex; align-items: center; gap: 10px; }
 .network {
   font-family: var(--font-num);
   font-size: 12.5px;
@@ -91,6 +92,7 @@ header.top {
   font-weight: 600;
   letter-spacing: -0.02em;
   max-width: 15ch;
+  text-wrap: balance;
 }
 .lede {
   margin: 0 0 34px;
@@ -124,6 +126,15 @@ header.top {
 }
 .kpis .fig dt { color: var(--faint); font-size: 13px; margin-bottom: 2px; }
 .kpis .fig dd { margin: 0; font-size: 22px; font-family: var(--font-num); font-weight: 500; }
+.kpis .fig dd .unit { font-size: 13px; color: var(--muted); margin-left: 4px; }
+
+/* A failed refresh with data on screen is a hiccup, not an alarm. */
+.status.quiet {
+  border-color: var(--border-soft);
+  color: var(--faint);
+  padding: 6px 12px;
+  font-size: 13px;
+}
 
 /* ---------------------------------------------------------------- status */
 .status {

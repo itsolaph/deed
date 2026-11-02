@@ -221,7 +221,7 @@ async function main() {
 
   // 4. Traffic: alice and bob start without credit, get 402, top up and keep sending.
   banner("4. traffic: alice and bob send deliveries (first call answers 402, the SDK tops up)");
-  const trafficArgs = ["--vault", VAULT, "--customers", `${A.alice},${A.bob}`, "--target", `http://127.0.0.1:${ECHO_PORT}/hook`, "--rate", "0.25", "--top-up", "5", "--track-ms", "15000", "--summary", path.join(LOGS, "traffic-summary.json")];
+  const trafficArgs = ["--vault", VAULT, "--customers", `${A.alice},${A.bob}`, "--target", `http://127.0.0.1:${ECHO_PORT}/hook`, "--rate", "0.4", "--top-up", "5", "--track-ms", "15000", "--summary", path.join(LOGS, "traffic-summary.json")];
   start("traffic", "agents/dist/src/traffic.js", trafficArgs);
   const tickEnd = Date.now() + TRAFFIC_SEC * 1000;
   while (Date.now() < tickEnd) {
@@ -232,9 +232,9 @@ async function main() {
   // Bank real recognized revenue before the story moves on: the buyer sizes
   // the business from charged revenue, and the first top-up can eat most of
   // the traffic window while its transaction queues behind the RPC budget.
-  const revEnd = Date.now() + 420_000;
+  const revEnd = Date.now() + 600_000;
   let rev = await view(VAULT, "get_info");
-  while (Number(rev.revenue) < 0.2 && Date.now() < revEnd) {
+  while (Number(rev.revenue) < 0.45 && Date.now() < revEnd) {
     await sleep(15_000);
     rev = await view(VAULT, "get_info");
     say(`charges landing: vault revenue ${fmt(rev.revenue)} tUSDC, ${rev.charged_items} charges`);

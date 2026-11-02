@@ -11,7 +11,7 @@ import type { ChargeItem, CustomerView } from "@deed/sdk";
 import type { VaultChain } from "./vault-chain.js";
 
 export const MAX_BATCH = 40;
-export const VIEW_MAX_AGE_MS = 10_000;
+export const VIEW_MAX_AGE_MS = 30_000;
 const MAX_SEQ_RETRIES = 3;
 
 export type RefusalReason = "unknown_customer" | "insufficient_balance" | "daily_cap_reached" | "refund_pending";

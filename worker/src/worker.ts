@@ -515,7 +515,9 @@ export class Worker {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify(doc),
-          signal: AbortSignal.timeout(15_000),
+          // The new worker may need a queued on-chain view (worker-key history) before it
+          // can accept; through a rate-shaped proxy that can take well over 15 s.
+          signal: AbortSignal.timeout(90_000),
         });
         if (res.ok) {
           const body = (await res.json()) as { results: ObligationResult[] };

@@ -52,6 +52,9 @@ async fn stats_push_drives_dynamic_metadata() -> Result<()> {
     assert!(svg.contains("8.77 tUSDC"));
     assert!(svg.contains("Figures as of"));
     assert!(svg.contains(env.seller.id().as_str()));
+    assert!(svg.contains("owner epoch 1"));
+    assert!(svg.contains("'Archivo','Helvetica Neue',Arial,sans-serif"));
+    assert_eq!(svg.matches("#ff4b00").count(), 1, "one orange stamp");
     let description = token["metadata"]["description"].as_str().unwrap();
     assert!(description.contains("123 calls"));
     assert!(!token["metadata"]["updated_at"].is_null());

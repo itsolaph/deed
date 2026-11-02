@@ -19,7 +19,8 @@ use crate::{Deed, DeedExt, TokenRecord, GAS_RESOLVE_TRANSFER};
 const DEFAULT_PAGE: u64 = 50;
 const MAX_PAGE: u64 = 100;
 
-const CONTRACT_ICON: &str = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZjNlYWQzIi8+PHJlY3QgeD0iNiIgeT0iNiIgd2lkdGg9IjUyIiBoZWlnaHQ9IjUyIiBmaWxsPSJub25lIiBzdHJva2U9IiMxZjFjMTciIHN0cm9rZS13aWR0aD0iMyIvPjxjaXJjbGUgY3g9IjMyIiBjeT0iMzIiIHI9IjEzIiBmaWxsPSIjN2ExZjFmIi8+PC9zdmc+";
+/// White plate, ink frame, one orange square on a hard ink offset (the certificate's stamp).
+const CONTRACT_ICON: &str = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZmZmIi8+PHJlY3QgeD0iNSIgeT0iNSIgd2lkdGg9IjU0IiBoZWlnaHQ9IjU0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxMzEzMTMiIHN0cm9rZS13aWR0aD0iNCIvPjxyZWN0IHg9IjIxIiB5PSIyMSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjMTMxMzEzIi8+PHJlY3QgeD0iMTgiIHk9IjE4IiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIGZpbGw9IiNmZjRiMDAiLz48L3N2Zz4=";
 
 impl Deed {
     pub(crate) fn render_metadata(&self, token_id: &str, r: &TokenRecord) -> TokenMetadata {

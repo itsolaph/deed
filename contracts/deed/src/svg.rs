@@ -4,12 +4,14 @@ use near_sdk::base64::{engine::general_purpose::STANDARD, Engine};
 
 pub const TOKEN_DECIMALS: u32 = 6;
 
-const PAPER: &str = "#f3ead3";
-const INK: &str = "#1f1c17";
-const FADED_INK: &str = "#5b5040";
-const RULE: &str = "#9a8761";
-const SEAL: &str = "#7a1f1f";
-const SEAL_LIGHT: &str = "#ead9b2";
+// The palette of the web app's exchange board: white plate, true ink, one signal orange.
+const PLATE: &str = "#ffffff";
+const INK: &str = "#131313";
+const INK_2: &str = "#55575a";
+const HAIR: &str = "#e6e6e3";
+const SIGNAL: &str = "#ff4b00";
+/// Archivo when the viewer has it, otherwise the nearest grotesque a wallet will have.
+const SANS: &str = "'Archivo','Helvetica Neue',Arial,sans-serif";
 
 pub struct Certificate<'a> {
     pub title: &'a str,
@@ -97,25 +99,20 @@ fn shorten(s: &str, max: usize) -> String {
     format!("{head}...{tail}")
 }
 
-/// 16-point star for the seal centred at (548, 300), outer radius 46, inner 39. Precomputed
-/// so the contract needs no floating point.
-const SEAL_STAR: &str = "548.0,254.0 555.6,261.7 565.6,257.5 569.7,267.6 580.5,267.5 \
-580.4,278.3 590.5,282.4 586.3,292.4 594.0,300.0 586.3,307.6 590.5,317.6 580.4,321.7 \
-580.5,332.5 569.7,332.4 565.6,342.5 555.6,338.3 548.0,346.0 540.4,338.3 530.4,342.5 \
-526.3,332.4 515.5,332.5 515.6,321.7 505.5,317.6 509.7,307.6 502.0,300.0 509.7,292.4 \
-505.5,282.4 515.6,278.3 515.5,267.5 526.3,267.6 530.4,257.5 540.4,261.7";
-
-/// Title font size: 30px up to 26 characters, then shrinks so 64 characters still fit.
+/// Title font size: 40px up to 22 characters, then shrinks so 64 characters still fit.
 fn title_font_size(title: &str) -> usize {
-    const FULL_SIZE_CHARS: usize = 26;
+    const FULL_SIZE_CHARS: usize = 22;
     let n = title.chars().count().max(1);
     if n <= FULL_SIZE_CHARS {
-        30
+        40
     } else {
-        (30 * FULL_SIZE_CHARS / n).max(14)
+        (40 * FULL_SIZE_CHARS / n).max(14)
     }
 }
 
+/// Layout, 640 x 400: a 3px ink frame; a header band with the ink "D" mark, the deed line and
+/// the owner epoch tag; a heavy title and the vault; six figure rows on hairlines; the one
+/// orange element, a square DEED stamp on a hard ink offset; token and date along the foot.
 pub fn render(c: &Certificate) -> String {
     let amount = |v: u128| format!("{} {}", format_amount(v, TOKEN_DECIMALS), escape_xml(c.symbol));
     let rows: [(&str, String); 6] = [
@@ -128,47 +125,63 @@ pub fn render(c: &Certificate) -> String {
     ];
     let mut body = String::new();
     for (i, (label, value)) in rows.iter().enumerate() {
-        let y = 182 + i as u32 * 30;
+        let y = 196 + i as u32 * 27;
         body.push_str(&format!(
-            "<text x=\"64\" y=\"{y}\" class=\"l\">{label}</text>\
-             <line x1=\"64\" y1=\"{ly}\" x2=\"470\" y2=\"{ly}\" stroke=\"{RULE}\" stroke-width=\"0.5\" stroke-dasharray=\"1 3\"/>\
-             <text x=\"470\" y=\"{y}\" class=\"v\" text-anchor=\"end\">{value}</text>",
-            ly = y + 6,
+            "<text x=\"36\" y=\"{y}\" class=\"l\">{label}</text><text x=\"456\" y=\"{y}\" class=\"v\">{value}</text>"
         ));
+        if i + 1 < rows.len() {
+            body.push_str(&format!("<path d=\"M36 {ly}.5H456\" stroke=\"{HAIR}\"/>", ly = y + 9));
+        }
     }
     let updated = match c.updated_at_ms {
         Some(ms) => format!("Figures as of {}", format_utc(ms)),
         None => "No figures reported yet".to_string(),
     };
-    let star = SEAL_STAR;
+    // The epoch tag grows with the number so it never overflows its box.
+    let epoch = c.owner_epoch.to_string();
+    let tag_w = 92 + 8 * epoch.len();
 
-    format!(
-        "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 400\" width=\"640\" height=\"400\">\
-<style>.l{{font:italic 15px Georgia,'Times New Roman',serif;fill:{FADED_INK}}}\
-.v{{font:15px 'Courier New',monospace;fill:{INK}}}\
-.s{{font:11px Georgia,serif;letter-spacing:3px;fill:{FADED_INK}}}</style>\
-<rect width=\"640\" height=\"400\" fill=\"{PAPER}\"/>\
-<rect x=\"12\" y=\"12\" width=\"616\" height=\"376\" fill=\"none\" stroke=\"{INK}\" stroke-width=\"2.5\"/>\
-<rect x=\"20\" y=\"20\" width=\"600\" height=\"360\" fill=\"none\" stroke=\"{INK}\" stroke-width=\"0.8\"/>\
-<path d=\"M20 34L34 20M606 20L620 34M20 366L34 380M606 380L620 366\" stroke=\"{INK}\" stroke-width=\"0.8\"/>\
-<text x=\"320\" y=\"58\" text-anchor=\"middle\" class=\"s\">DEED OF TITLE TO A RUNNING BUSINESS</text>\
-<text x=\"320\" y=\"100\" text-anchor=\"middle\" style=\"font:600 {title_size}px Georgia,'Times New Roman',serif;fill:{INK}\">{title}</text>\
-<text x=\"320\" y=\"126\" text-anchor=\"middle\" style=\"font:13px 'Courier New',monospace;fill:{FADED_INK}\">vault {vault}</text>\
-<path d=\"M64 146H290M350 146H576\" stroke=\"{RULE}\" stroke-width=\"1\"/>\
-<path d=\"M320 140L326 146L320 152L314 146Z\" fill=\"{SEAL}\"/>\
-{body}\
-<polygon points=\"{star}\" fill=\"{SEAL}\"/>\
-<circle cx=\"548\" cy=\"300\" r=\"33\" fill=\"none\" stroke=\"{SEAL_LIGHT}\" stroke-width=\"1\" stroke-dasharray=\"2 2\"/>\
-<text x=\"548\" y=\"297\" text-anchor=\"middle\" style=\"font:700 12px Georgia,serif;letter-spacing:2px;fill:{SEAL_LIGHT}\">DEED</text>\
-<text x=\"548\" y=\"312\" text-anchor=\"middle\" style=\"font:9px Georgia,serif;letter-spacing:1px;fill:{SEAL_LIGHT}\">NO. {epoch}</text>\
-<text x=\"64\" y=\"360\" style=\"font:11px 'Courier New',monospace;fill:{FADED_INK}\">token {token} · {updated}</text>\
-</svg>",
+    let mut svg = String::with_capacity(3_200);
+    svg.push_str("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 400\" width=\"640\" height=\"400\">");
+    svg.push_str(&format!(
+        "<style>text{{font-family:{SANS};font-variant-numeric:tabular-nums;fill:{INK}}}\
+         .l{{font-size:14px;font-weight:500;fill:{INK_2}}}\
+         .v{{font-size:15px;font-weight:700;text-anchor:end}}\
+         .s{{font-size:12px;fill:{INK_2}}}</style>"
+    ));
+    svg.push_str(&format!(
+        "<rect width=\"640\" height=\"400\" fill=\"{PLATE}\"/>\
+         <rect x=\"11.5\" y=\"11.5\" width=\"617\" height=\"377\" fill=\"none\" stroke=\"{INK}\" stroke-width=\"3\"/>\
+         <rect x=\"36\" y=\"32\" width=\"24\" height=\"24\" fill=\"{INK}\"/>\
+         <text x=\"48\" y=\"50\" text-anchor=\"middle\" style=\"font-size:15px;font-weight:900;fill:{PLATE}\">D</text>\
+         <text x=\"72\" y=\"49\" style=\"font-size:14px;font-weight:700\">Deed of title to a running business</text>"
+    ));
+    svg.push_str(&format!(
+        "<rect x=\"{x}\" y=\"32.75\" width=\"{tag_w}\" height=\"22.5\" fill=\"none\" stroke=\"{INK}\" stroke-width=\"1.5\"/>\
+         <text x=\"{mid}\" y=\"48.5\" text-anchor=\"middle\" style=\"font-size:12px;font-weight:600\">owner epoch {epoch}</text>\
+         <path d=\"M13 72H627\" stroke=\"{INK}\" stroke-width=\"2\"/>",
+        x = 604 - tag_w,
+        mid = 604 - tag_w / 2,
+    ));
+    svg.push_str(&format!(
+        "<text x=\"36\" y=\"124\" style=\"font-size:{size}px;font-weight:900;letter-spacing:-0.02em\">{title}</text>\
+         <text x=\"36\" y=\"150\" class=\"s\">vault {vault}</text>\
+         <path d=\"M36 170.5H604\" stroke=\"{INK}\"/>",
+        size = title_font_size(c.title),
         title = escape_xml(c.title),
-        title_size = title_font_size(c.title),
         vault = escape_xml(c.vault_id),
+    ));
+    svg.push_str(&body);
+    svg.push_str(&format!(
+        "<rect x=\"490\" y=\"190\" width=\"110\" height=\"110\" fill=\"{INK}\"/>\
+         <rect x=\"485\" y=\"185\" width=\"110\" height=\"110\" fill=\"{SIGNAL}\"/>\
+         <text x=\"540\" y=\"251\" text-anchor=\"middle\" style=\"font-size:29px;font-weight:900;letter-spacing:-0.02em;fill:{PLATE}\">DEED</text>\
+         <path d=\"M36 344.5H604\" stroke=\"{INK}\"/>\
+         <text x=\"36\" y=\"368\" class=\"s\">token {token}</text>\
+         <text x=\"604\" y=\"368\" class=\"s\" text-anchor=\"end\">{updated}</text></svg>",
         token = escape_xml(c.token_id),
-        epoch = c.owner_epoch,
-    )
+    ));
+    svg
 }
 
 pub fn data_uri(svg: &str) -> String {
@@ -229,13 +242,36 @@ mod tests {
         assert!(svg.contains("Relay &lt;&amp;&gt; &quot;Co&quot;"));
         assert!(!svg.contains("<&>"));
         assert!(svg.contains("0.002 tUSDC"));
-        assert!(svg.contains("12,345"));
+        assert!(svg.contains(">12,345<"));
         assert!(svg.contains("24.69 tUSDC"));
         assert!(svg.contains("1.50 tUSDC"));
         assert!(svg.contains("10.00 tUSDC"));
         assert!(svg.contains("deedlab-seller.testnet"));
+        assert!(svg.contains("vault relay.deed.deedlab.testnet"));
+        assert!(svg.contains("token relay"));
         assert!(svg.contains("2026-10-30 05:00 UTC"));
-        assert!(svg.contains("NO. 3"));
+        assert!(svg.contains("owner epoch 3"));
+    }
+
+    #[test]
+    fn svg_uses_the_board_style() {
+        let svg = render(&sample());
+        assert!(svg.contains("fill=\"#ffffff\""), "white plate");
+        assert!(svg.contains("'Archivo','Helvetica Neue',Arial,sans-serif"), "sans stack with fallbacks");
+        assert!(svg.contains("tabular-nums"));
+        assert_eq!(svg.matches(SIGNAL).count(), 1, "exactly one orange element");
+        for gone in ["Georgia", "Times", ",serif", "Courier", "#f3ead3", "#7a1f1f", "polygon", "circle", "\u{b7}"] {
+            assert!(!svg.contains(gone), "{gone} belongs to the old certificate");
+        }
+    }
+
+    #[test]
+    fn epoch_tag_fits_long_numbers() {
+        let mut c = sample();
+        c.owner_epoch = u64::MAX;
+        let svg = render(&c);
+        assert!(svg.contains(&format!("owner epoch {}", u64::MAX)));
+        assert!(svg.contains("width=\"252\""), "tag widens with the digits");
     }
 
     #[test]
@@ -249,6 +285,11 @@ mod tests {
     }
 
     #[test]
+    fn svg_stays_small() {
+        assert!(render(&sample()).len() < 3_200);
+    }
+
+    #[test]
     fn svg_without_stats() {
         let mut c = sample();
         c.updated_at_ms = None;
@@ -257,9 +298,9 @@ mod tests {
 
     #[test]
     fn long_titles_get_smaller_type() {
-        assert_eq!(title_font_size("Webhook Relay"), 30);
-        assert_eq!(title_font_size(&"t".repeat(26)), 30);
-        assert!(title_font_size(&"t".repeat(40)) < 30);
+        assert_eq!(title_font_size("Webhook Relay"), 40);
+        assert_eq!(title_font_size(&"t".repeat(22)), 40);
+        assert!(title_font_size(&"t".repeat(40)) < 40);
         assert_eq!(title_font_size(&"t".repeat(64)), 14);
     }
 

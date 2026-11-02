@@ -139,26 +139,26 @@ pub fn render(c: &Certificate) -> String {
     };
     // The epoch tag grows with the number so it never overflows its box.
     let epoch = c.owner_epoch.to_string();
-    let tag_w = 92 + 8 * epoch.len();
+    let tag_w = 100 + 9 * epoch.len();
 
     let mut svg = String::with_capacity(3_200);
     svg.push_str("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 400\" width=\"640\" height=\"400\">");
     svg.push_str(&format!(
         "<style>text{{font-family:{SANS};font-variant-numeric:tabular-nums;fill:{INK}}}\
-         .l{{font-size:14px;font-weight:500;fill:{INK_2}}}\
-         .v{{font-size:15px;font-weight:700;text-anchor:end}}\
-         .s{{font-size:12px;fill:{INK_2}}}</style>"
+         .l{{font-size:16px;font-weight:500;fill:{INK_2}}}\
+         .v{{font-size:17px;font-weight:700;text-anchor:end}}\
+         .s{{font-size:13.5px;fill:{INK_2}}}</style>"
     ));
     svg.push_str(&format!(
         "<rect width=\"640\" height=\"400\" fill=\"{PLATE}\"/>\
          <rect x=\"11.5\" y=\"11.5\" width=\"617\" height=\"377\" fill=\"none\" stroke=\"{INK}\" stroke-width=\"3\"/>\
          <rect x=\"36\" y=\"32\" width=\"24\" height=\"24\" fill=\"{INK}\"/>\
          <text x=\"48\" y=\"50\" text-anchor=\"middle\" style=\"font-size:15px;font-weight:900;fill:{PLATE}\">D</text>\
-         <text x=\"72\" y=\"49\" style=\"font-size:14px;font-weight:700\">Deed of title to a running business</text>"
+         <text x=\"72\" y=\"50\" style=\"font-size:16px;font-weight:700\">Deed of title to a running business</text>"
     ));
     svg.push_str(&format!(
-        "<rect x=\"{x}\" y=\"32.75\" width=\"{tag_w}\" height=\"22.5\" fill=\"none\" stroke=\"{INK}\" stroke-width=\"1.5\"/>\
-         <text x=\"{mid}\" y=\"48.5\" text-anchor=\"middle\" style=\"font-size:12px;font-weight:600\">owner epoch {epoch}</text>\
+        "<rect x=\"{x}\" y=\"31.75\" width=\"{tag_w}\" height=\"24.5\" fill=\"none\" stroke=\"{INK}\" stroke-width=\"1.5\"/>\
+         <text x=\"{mid}\" y=\"48.5\" text-anchor=\"middle\" style=\"font-size:13.5px;font-weight:600\">owner epoch {epoch}</text>\
          <path d=\"M13 72H627\" stroke=\"{INK}\" stroke-width=\"2\"/>",
         x = 604 - tag_w,
         mid = 604 - tag_w / 2,
@@ -271,7 +271,7 @@ mod tests {
         c.owner_epoch = u64::MAX;
         let svg = render(&c);
         assert!(svg.contains(&format!("owner epoch {}", u64::MAX)));
-        assert!(svg.contains("width=\"252\""), "tag widens with the digits");
+        assert!(svg.contains("width=\"280\""), "tag widens with the digits");
     }
 
     #[test]

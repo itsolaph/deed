@@ -17,9 +17,9 @@
   },
   "code_hashes": {
     "deed": {
-      "sha256_base58": "7wjvJ4S1PjVkp4jZphPRKhBsEgJhUY1MS7czEG4XmJ1c",
-      "sha256_hex": "672c0385f288e0450d98d1845509f71ce8cf18bcc03a666ad3a6894ce2427467",
-      "size_bytes": 531351
+      "sha256_base58": "Hs5cS5MsJQKqVo3HASKcXGhCRoxLGaBSUDTrkumS5Pso",
+      "sha256_hex": "fa8f3eadc7e4e35f5027aa25e8e4f2d3b93448d92aca7470d60ad1cc2fe748ca",
+      "size_bytes": 531346
     },
     "vault": {
       "sha256_base58": "B6DFjQMSgKMRU4awG8gsX2boKQSd5HZ23C4EYYJb2rre",
@@ -33,7 +33,7 @@
     }
   },
   "mint_cost_yocto": "2879770000000000000000000",
-  "updated_at": "2026-11-02T13:43:15.782Z",
+  "updated_at": "2026-11-02T13:49:27.710Z",
   "superseded": [
     {
       "deed": "deed.deedlab.testnet",
@@ -362,6 +362,13 @@
       "link": "https://testnet.nearblocks.io/txns/65JXvhSYmK34x6zsiTmMNYLwJHAFcG8xPKigf9CnHVvS",
       "success": true,
       "at": "2026-11-02T13:43:15.782Z"
+    },
+    {
+      "step": "redeploy deed2.deedlab.testnet",
+      "hash": "3JDkJESJ2iaCH5RgDtg1yUYSZT5rUvUvksJrGkyyaT7G",
+      "link": "https://testnet.nearblocks.io/txns/3JDkJESJ2iaCH5RgDtg1yUYSZT5rUvUvksJrGkyyaT7G",
+      "success": true,
+      "at": "2026-11-02T13:49:27.710Z"
     }
   ],
   "smoke": {

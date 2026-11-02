@@ -170,7 +170,7 @@ test("charger pre-accounting never accepts more than balance and cap, and batche
 
 });
 
-test("a customer with a pending refund is refused, and fresh views are read after 10 s", async () => {
+test("a customer with a pending refund is refused, and fresh views are read after 30 s", async () => {
   const fake = new FakeVault();
   fake.setWorker("ed25519:worker");
   fake.addCustomer("bob.test", "k", 10n ** 6n);
@@ -181,7 +181,7 @@ test("a customer with a pending refund is refused, and fresh views are read afte
   assert.equal((await charger.admit("bob.test", 1n, make)).ok, true);
   fake.customers.get("bob.test")!.refundRequestedAt = 1;
   assert.equal((await charger.admit("bob.test", 1n, make)).ok, true, "cached view");
-  clock += 11_000;
+  clock += 31_000;
   const leaving = await charger.admit("bob.test", 1n, make);
   assert.equal(!leaving.ok && leaving.reason, "refund_pending");
 });

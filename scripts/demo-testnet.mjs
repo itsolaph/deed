@@ -221,7 +221,8 @@ async function main() {
 
   // 4. Traffic: alice and bob start without credit, get 402, top up and keep sending.
   banner("4. traffic: alice and bob send deliveries (first call answers 402, the SDK tops up)");
-  start("traffic", "agents/dist/src/traffic.js", ["--vault", VAULT, "--customers", `${A.alice},${A.bob}`, "--target", `http://127.0.0.1:${ECHO_PORT}/hook`, "--rate", "0.25", "--top-up", "5", "--track-ms", "10000", "--summary", path.join(LOGS, "traffic-summary.json")]);
+  const trafficArgs = ["--vault", VAULT, "--customers", `${A.alice},${A.bob}`, "--target", `http://127.0.0.1:${ECHO_PORT}/hook`, "--rate", "0.25", "--top-up", "5", "--track-ms", "10000", "--summary", path.join(LOGS, "traffic-summary.json")];
+  start("traffic", "agents/dist/src/traffic.js", trafficArgs);
   const tickEnd = Date.now() + TRAFFIC_SEC * 1000;
   while (Date.now() < tickEnd) {
     await sleep(15_000);
@@ -234,6 +235,11 @@ async function main() {
   const chargesA = chargeTxs("worker-a");
   if (chargesA.length > 0) step(`worker A charges a batch (${chargesA[0].charged} items, signed by the worker key)`, { tx: chargesA[0].tx, success: chargesA[0].charged > 0 });
   record.worker_a_charge_txs = chargesA.map((c) => c.tx);
+  // The shared public-RPC budget is tight; pause the customers while the
+  // owner and buyer do their transactions, then bring them back for the
+  // outage beat where deliveries must pile up in worker A's queue.
+  stop("traffic");
+  await waitExit("traffic", 120_000);
 
   // 5. Dynamic NFT: push the stats so the certificate shows the numbers.
   banner("5. stats pushed to the deed; the NFT certificate updates");
@@ -276,7 +282,8 @@ async function main() {
   // 9. Worker B: start it first, then rotate key and endpoint in one transaction.
   banner("9. buyer starts worker B and rotates key and endpoint in one transaction");
   // A short outage at the target, so worker A holds paid but undelivered obligations at the
-  // moment of the handover.
+  // moment of the handover. The customers come back too: their deliveries are what piles up.
+  start("traffic", "agents/dist/src/traffic.js", trafficArgs);
   fs.writeFileSync(OUTAGE_FILE, "");
   say("the echo target is down for a while (simulated outage): deliveries pile up in worker A's queue");
   await sleep(15_000);

@@ -93,26 +93,33 @@ async function fetchRow(deed: DeedView, me: string | null, withCert: boolean): P
   const stats = await vault.stats();
   const mine = me ? (await sleep(500), await vault.customer(me)) : null;
   const nft = withCert ? (await sleep(500), await deedViews.token(deed.token_id)) : null;
-  return { deed, info, stats, token: nft, me: mine };
+  return { deed, info, stats, token: nft ?? certCache.get(deed.token_id) ?? null, me: mine };
 }
 
 let certBusy = false;
+/** Certificates survive refreshes: a token's metadata is fetched once per page life. */
+const certCache = new Map<string, NftToken>();
 
 /** Certificates are pure metadata: fill them in one at a time after the numbers are up. */
 async function loadCerts(): Promise<void> {
   if (certBusy) return;
   certBusy = true;
   try {
-    for (const r of rows) {
-      if (!r.token) {
-        try {
-          r.token = await deedViews.token(r.deed.token_id);
-          render();
-        } catch {
-          // keep the placeholder
-        }
-        await new Promise((res) => setTimeout(res, 900));
+    for (const r of [...rows]) {
+      const cached = certCache.get(r.deed.token_id);
+      if (cached) {
+        r.token = cached;
+        continue;
       }
+      try {
+        const t = await deedViews.token(r.deed.token_id);
+        if (t) certCache.set(r.deed.token_id, t);
+        for (const x of rows) if (x.deed.token_id === r.deed.token_id) x.token = t;
+        render();
+      } catch {
+        // keep the placeholder
+      }
+      await new Promise((res) => setTimeout(res, 900));
     }
   } finally {
     certBusy = false;
@@ -298,7 +305,7 @@ function buyPanel(r: Row, me: string | null): { summary: string; body: HTMLEleme
       h("p", { class: "note" }, "The purchase is pinned to this listing id, so a cancelled and re-listed deed is refused and refunded."),
     );
   }
-  return { summary: `For sale · ${amount(l.price)} ${token.symbol}`, body: panel };
+  return { summary: `For sale, ${amount(l.price)} ${token.symbol}`, body: panel };
 }
 
 function ownerPanel(r: Row): { summary: string; body: HTMLElement } {
@@ -391,25 +398,28 @@ function customerPanel(r: Row, me: string): { summary: string; body: HTMLElement
 
 /** Activity sparkline from the vault's day buckets: real on-chain history, no invention. */
 function spark(days: { day: number; calls: number }[]): HTMLElement {
-  const last = days.slice(-30);
+  // Always 30 slots ending today: quiet days are real zeros, so one busy day reads as one bar, not a slab.
+  const byDay = new Map(days.map((d) => [d.day, d.calls]));
+  const today = Math.floor(Date.now() / 86_400_000);
+  const last = Array.from({ length: 30 }, (_, k) => ({ day: today - 29 + k, calls: byDay.get(today - 29 + k) ?? 0 }));
   const max = Math.max(1, ...last.map((d) => d.calls));
   const dayDate = (day: number) => new Date(day * 86_400_000).toLocaleDateString(undefined, { day: "numeric", month: "short" });
   const bars = h("div", { class: "bars", role: "img", "aria-label": "calls per day, last 30 days" });
   let i = 0;
   for (const d of last) {
-    bars.append(h("span", { class: "bar", style: `height:${Math.max(4, Math.round((d.calls / max) * 100))}%; --i:${i++}`, title: `${dayDate(d.day)} · ${d.calls} calls` }));
+    bars.append(h("span", { class: d.calls ? "bar" : "bar zero", style: `height:${d.calls ? Math.max(6, Math.round((d.calls / max) * 100)) : 0}%; --i:${i++}`, title: `${dayDate(d.day)}, ${d.calls} calls` }));
   }
   const first = last[0]?.day ?? 0;
   return h(
     "div",
     { class: "spark" },
-    h("p", { class: "note", style: "margin:0" }, "Calls per day"),
+    h("p", { class: "note", style: "margin:0" }, "Calls per day, 30 days"),
     bars,
-    h("p", { class: "cap" }, last.length > 0 ? `${dayDate(first)} – ${dayDate(last[last.length - 1]?.day ?? first)}` : "no activity yet"),
+    h("p", { class: "cap" }, `${dayDate(first)} – ${dayDate(last[last.length - 1]?.day ?? first)}`),
   );
 }
 
-function entry(r: Row): HTMLElement {
+function entry(r: Row, rank: number): HTMLElement {
   const me = currentAccount();
   const { deed, info, stats } = r;
   const media = r.token?.metadata?.media;
@@ -421,7 +431,7 @@ function entry(r: Row): HTMLElement {
     figure("calls, 30 days", h("span", { class: "num" }, String(stats.calls_30d))),
     figure("revenue, 30 days", h("span", { class: "num" }, `${amount(stats.revenue_30d)} `, h("span", { class: "unit" }, token.symbol))),
     figure("cash in vault", h("span", { class: "num" }, `${amount(info.revenue)} `, h("span", { class: "unit" }, token.symbol)), "Withdrawable revenue; goes to the buyer with the deed"),
-    figure("payback", h("span", { class: "num" }, paybackText(r)), `Price minus cash, over net revenue per day (gas at ${NEAR_PRICE_USD} USD/NEAR)`),
+    figure("payback", h("span", { class: r.deed.listing ? "num" : "num muted" }, paybackText(r)), `Price minus cash, over net revenue per day (gas at ${NEAR_PRICE_USD} USD/NEAR)`),
   );
   const smallFigs = h(
     "dl",
@@ -440,6 +450,7 @@ function entry(r: Row): HTMLElement {
   const head = h(
     "div",
     { class: "entry-head" },
+    h("div", { class: "rank", "aria-label": "rank" }, String(rank + 1).padStart(2, "0")),
     thumb,
     h(
       "div",
@@ -497,9 +508,10 @@ let heroImg: HTMLImageElement | null = null;
 function renderHeroCert(): void {
   const stage = document.getElementById("hero-cert");
   if (!stage) return;
-  const top = rows[0];
+  const top = rows.find((r) => r.token?.metadata?.media);
   const media = top?.token?.metadata?.media;
   if (!top || !media) return; // keep the quiet placeholder until a certificate arrives
+  if (heroImg && heroImg.getAttribute("src") === media && stage.contains(heroImg)) return;
   heroImg = h("img", { class: "cert-hero", src: media, alt: `Certificate of ${top.deed.title}` });
   stage.replaceChildren(
     heroImg,
@@ -569,8 +581,8 @@ function render(): void {
     const key = el.dataset.token ?? "";
     before.set(key, { el, open: [...el.querySelectorAll("details")].map((d) => d.open) });
   }
-  const fresh = rows.map((r) => {
-    const el = entry(r);
+  const fresh = rows.map((r, i) => {
+    const el = entry(r, i);
     const old = before.get(r.deed.token_id);
     if (old) {
       el.classList.add("no-anim");

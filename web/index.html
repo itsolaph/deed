@@ -5,24 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Deed: an NFT that owns a running paid API on NEAR testnet." />
     <meta name="referrer" content="no-referrer" />
-    <title>Deed — a business you can hold</title>
+    <title>Deed, a business you can hold</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;800;900&display=swap"
       rel="stylesheet"
     />
   </head>
   <body>
     <header class="top">
       <div class="brand">
-        <span class="seal" aria-hidden="true">D</span>
+        <span class="mark" aria-hidden="true">D</span>
         <span class="word">Deed</span>
-        <span class="where">registry · testnet</span>
+        <span class="where">registry, testnet</span>
       </div>
       <div class="wallet-box">
-        <div class="live" id="live" hidden><span class="dot" aria-hidden="true"></span>reading registry</div>
+        <div class="live" id="live" hidden><span class="dot" aria-hidden="true"></span>reading</div>
         <div id="wallet"></div>
       </div>
     </header>
@@ -30,36 +30,37 @@
     <main>
       <section class="hero">
         <div class="copy">
-          <h1>A business<br />you can hold</h1>
+          <h1>A business you can hold</h1>
           <p class="lede">
-            Every deed is an NFT that owns a running paid API — a vault with its treasury, price list,
+            Every deed is an NFT that owns a running paid API: a vault with its treasury, price list,
             customer ledger and worker key. Buy the deed and the business is yours, in one transaction.
           </p>
-          <dl class="ledger" id="kpis"></dl>
-          <p class="mechs">
-            <span><strong>The cashier can only charge</strong> — its key can never withdraw.</span>
-            <span><strong>A listing locks the vault</strong> — the buyer sees exactly what runs.</span>
-            <span><strong>The sale rotates the worker</strong> — deliveries survive, no downtime.</span>
-          </p>
-          <a class="cue" href="#registry">open the registry <span class="arr" aria-hidden="true">↓</span></a>
+          <div class="board" id="kpis" aria-label="Registry totals"></div>
+          <ul class="mechs">
+            <li><strong>The cashier can only charge.</strong> Its key can never withdraw.</li>
+            <li><strong>A listing locks the vault.</strong> The buyer sees exactly what runs.</li>
+            <li><strong>The sale rotates the worker.</strong> Deliveries survive, no downtime.</li>
+          </ul>
+          <a class="cue" href="#registry">Open the listings</a>
         </div>
         <div class="stage" id="hero-cert">
           <div class="stage-ph" aria-hidden="true"></div>
-          <p class="stage-note">the newest certificate arrives shortly</p>
+          <p class="stage-note">certificate arrives shortly</p>
         </div>
       </section>
 
       <div id="status" class="status" role="status" aria-live="polite"></div>
       <section class="entries" id="registry">
-        <h2 class="book">Registry</h2>
-        <div id="deeds"><p class="note">Reading the chain …</p></div>
+        <h2 class="book">Listings, ranked by paid calls</h2>
+        <div id="deeds"><p class="note">Reading the chain</p></div>
       </section>
     </main>
 
     <footer>
       <p>
         Live figures from the contract views on <span id="deed-link"></span>. The payment token is tUSDC, a
-        test token without value. Open source under the MIT licence — no trackers, no analytics.
+        test token without value. Open source under the MIT licence, no trackers, no analytics. Design
+        method: frontend-design (anthropics/skills) and web-design-engineer (anLl), both MIT.
       </p>
     </footer>
     <script type="module" src="./src/main.ts"></script>

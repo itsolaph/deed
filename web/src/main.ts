@@ -5,7 +5,9 @@ import "./style.css";
 import { Rpc, TESTNET_RPC_URLS } from "../../sdk/src/chain.js";
 import { formatUnits, fromUnits, payback, toUnits, type PaybackResult } from "../../sdk/src/payback.js";
 import { DeedViews, VaultViews, type CustomerView, type DeedView, type NftToken, type VaultInfo, type VaultStatsView } from "../../sdk/src/views.js";
-import { DEED_CONTRACT, EXPLORER, NEAR_PRICE_USD, REFRESH_MS } from "./config";
+import { reconcile, type Epoch } from "../../sdk/src/history.js";
+import { DEED_CONTRACT, EXPLORER, NEAR_PRICE_USD, REFRESH_MS, TX_INDEX } from "./config";
+import { canReadAgain, historyState, onHistory, wantHistory, type HistoryState } from "./earnings";
 import { connect, currentAccount, disconnect, initWallet, onAccount, send, type Call } from "./wallet";
 
 const rpc = new Rpc(TESTNET_RPC_URLS);
@@ -573,6 +575,214 @@ function spark(stats: VaultStatsView): HTMLElement {
   );
 }
 
+// ---------------------------------------------------------------- earnings history
+
+const dayTime = (ms: number) => new Date(ms).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+const clock = (ms: number) => new Date(ms).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+const sameDay = (a: number, b: number) => new Date(a).toDateString() === new Date(b).toDateString();
+
+function span(ms: number): string {
+  const m = Math.max(1, Math.round(ms / 60_000));
+  if (m < 60) return `${m} min`;
+  const hrs = Math.round(m / 60);
+  if (hrs < 48) return `${hrs} h`;
+  return `${Math.round(hrs / 24)} days`;
+}
+
+const txLink = (hash: string, text: string) => {
+  const a = link(`txns/${hash}`, text);
+  a.title = `Transaction ${hash}`;
+  return a;
+};
+
+const OPENED: Record<Epoch["openedBy"], string> = { mint: "minted", sale: "bought", transfer: "received", unknown: "" };
+
+/** One ledger row per ownership epoch. */
+function epochRow(ep: Epoch, r: Row, me: string | null): HTMLTableRowElement {
+  const current = ep.toMs === null;
+  const cell = (cls: string, label: string, ...kids: Child[]) => h("td", { class: cls, "data-label": label }, ...kids);
+  const held =
+    ep.fromMs === null
+      ? h("span", { class: "muted" }, "start not read")
+      : current
+        ? [`${dayTime(ep.fromMs)} to now`, h("span", { class: "sub" }, `held ${span(Date.now() - ep.fromMs)}`)]
+        : [
+            `${dayTime(ep.fromMs)} to ${sameDay(ep.fromMs, ep.toMs!) ? clock(ep.toMs!) : dayTime(ep.toMs!)}`,
+            h("span", { class: "sub" }, `held ${span(ep.toMs! - ep.fromMs)}`),
+          ];
+  let sold: Child[];
+  if (ep.ended?.by === "sale") sold = [`${amount(ep.ended.price)}`, h("span", { class: "sub" }, `to ${ep.ended.buyer}`)];
+  else if (ep.ended?.by === "transfer") sold = [h("span", { class: "muted" }, "no sale"), h("span", { class: "sub" }, `transferred to ${ep.ended.to}`)];
+  else if (r.deed.listing) sold = [h("span", { class: "muted" }, `listed at ${amount(r.deed.listing.price)}`)];
+  else sold = [h("span", { class: "muted" }, "still held")];
+
+  const proof: Child[] = [];
+  if (ep.opened && ep.openedBy !== "unknown") proof.push(txLink(ep.opened.tx, OPENED[ep.openedBy]));
+  ep.payouts.slice(0, 3).forEach((p, i) => proof.push(txLink(p.tx, ep.payouts.length > 1 ? `payout ${i + 1}` : "payout")));
+  if (ep.payouts.length > 3) proof.push(h("span", { class: "muted" }, `+${ep.payouts.length - 3} payouts`));
+  const ch = ep.chargeTxs;
+  if (ch.length === 1) proof.push(txLink(ch[0]!.tx, "charge"));
+  else if (ch.length > 1) proof.push(txLink(ch[0]!.tx, "first charge"), txLink(ch[ch.length - 1]!.tx, "last charge"));
+  if (ep.ended?.by === "sale") proof.push(txLink(ep.ended.tx, "sale"));
+  else if (ep.ended?.by === "transfer") proof.push(txLink(ep.ended.tx, "transfer"));
+
+  const payoutNote = ep.payouts.length > 0 && ep.payouts.some((p) => p.receiver !== ep.holder) ? h("span", { class: "sub" }, `to ${[...new Set(ep.payouts.map((p) => p.receiver))].join(", ")}`) : null;
+  const left = !current && BigInt(ep.cashOut) > 0n ? h("span", { class: "sub" }, `${amount(ep.cashOut)} left in the vault, went with the deed`) : null;
+  return h(
+    "tr",
+    { class: current ? "ep now" : "ep" },
+    h("th", { scope: "row", class: "l-ep" }, h("span", { class: "ep-n", "aria-label": `epoch ${ep.epoch}${current ? ", current" : ""}` }, String(ep.epoch))),
+    cell(
+      "l-holder",
+      "holder",
+      ep.holder ? Object.assign(link(`address/${ep.holder}`, ep.holder), { title: ep.holder }) : h("span", { class: "muted" }, "not read"),
+      me && me === ep.holder ? h("span", { class: "you" }, " you") : null,
+      h("span", { class: "sub" }, ep.openedBy === "unknown" ? "how it was acquired was not read" : `${OPENED[ep.openedBy]} the deed`),
+    ),
+    cell("l-held", "held", ...[held].flat()),
+    cell("l-num", "paid calls", fmtInt(ep.calls)),
+    cell("l-num", "revenue", amount(ep.revenue)),
+    cell("l-num", "paid out", amount(ep.withdrawn), payoutNote, left),
+    cell("l-num l-sold", "sold for", ...sold),
+    cell("l-proof", "proof", h("span", { class: "proofs" }, ...proof)),
+  );
+}
+
+/** The ledger plus the check against the contract's own counters. */
+function fillHistory(box: HTMLElement, r: Row): void {
+  const vault = r.deed.vault_id;
+  const s: HistoryState | null = historyState(vault);
+  const me = currentAccount();
+  const head = h(
+    "div",
+    { class: "hist-head" },
+    h("h3", { class: "hist-title", id: `hist-${r.deed.token_id}` }, "Earnings history"),
+    h("p", { class: "hist-lede" }, `Each holder, what the business earned while they held it, what they paid out, and what they sold it for. Newest first, amounts in ${token.symbol}.`),
+  );
+  // A click inside the minimum gap repaints from the cache without a request.
+  const again = button(s?.status === "loading" ? "Reading" : "Read again", () => (canReadAgain(historyState(vault)) ? wantHistory(vault, true) : fillHistory(box, r)), "small");
+  again.disabled = s?.status === "loading";
+  head.append(again);
+  const parts: Child[] = [head];
+
+  if (!s || (s.status === "loading" && !s.history)) {
+    parts.push(h("p", { class: "hist-wait" }, h("span", { class: "dot", "aria-hidden": "true" }), "Reading the vault's event log"));
+  } else if (s.status === "error" && !s.history) {
+    parts.push(
+      h(
+        "div",
+        { class: "hist-off" },
+        h("p", {}, "History unavailable right now, the live figures above come straight from the contract."),
+        h("p", { class: "note fine" }, `The transaction index (${new URL(TX_INDEX).host}) did not answer: ${s.error ?? "no reason given"}. `, link(`address/${vault}`, "See the vault on NearBlocks"), "."),
+      ),
+    );
+  } else if (s.history && s.history.epochs.length === 0) {
+    parts.push(h("p", { class: "hist-off" }, s.listed === 0 ? "The index lists no transactions for this vault yet. A new vault usually shows up within a minute." : "No mint, sale, charge or payout events were found in this vault's transactions yet."));
+  } else if (s.history) {
+    const hist = s.history;
+    const t = hist.totals;
+    const first = hist.epochs[hist.epochs.length - 1];
+    const table = h(
+      "table",
+      { class: "ledger", "aria-labelledby": `hist-${r.deed.token_id}` },
+      h(
+        "thead",
+        {},
+        h(
+          "tr",
+          {},
+          h("th", { scope: "col", class: "l-ep" }, "epoch"),
+          h("th", { scope: "col" }, "holder"),
+          h("th", { scope: "col" }, "held"),
+          h("th", { scope: "col", class: "l-num" }, "paid calls"),
+          h("th", { scope: "col", class: "l-num" }, "revenue"),
+          h("th", { scope: "col", class: "l-num" }, "paid out"),
+          h("th", { scope: "col", class: "l-num" }, "sold for"),
+          h("th", { scope: "col" }, "proof"),
+        ),
+      ),
+      h("tbody", {}, ...hist.epochs.map((ep) => epochRow(ep, r, me))),
+      h(
+        "tfoot",
+        {},
+        h(
+          "tr",
+          {},
+          h("th", { scope: "row", class: "l-ep" }, "all"),
+          h("td", { class: "l-holder", "data-label": "holders" }, `${t.holders} ${t.holders === 1 ? "holder" : "holders"}`),
+          h("td", { class: "l-held", "data-label": "held" }, hist.fromMint && first?.fromMs ? `since ${dayTime(first.fromMs)}` : "since the oldest event read"),
+          h("td", { class: "l-num", "data-label": "paid calls" }, fmtInt(t.calls)),
+          h("td", { class: "l-num", "data-label": "revenue" }, amount(t.revenue)),
+          h("td", { class: "l-num", "data-label": "paid out" }, amount(t.withdrawn)),
+          h("td", { class: "l-num", "data-label": "sold for" }, ...(t.sales === 0 ? [h("span", { class: "muted" }, "no sales")] : [amount(t.salesVolume), h("span", { class: "sub" }, `${t.sales} ${t.sales === 1 ? "sale" : "sales"}`)])),
+          h("td", { class: "l-proof" }),
+        ),
+      ),
+    );
+    parts.push(h("div", { class: "ledger-wrap" }, table));
+
+    // The audit line: the event log against the vault's own all-time counters.
+    const rec = reconcile(hist, { callsTotal: r.stats.calls_total, revenueTotal: r.stats.revenue_total, cash: r.info.revenue, inFlight: r.info.in_flight });
+    const paidOut = BigInt(r.stats.revenue_total) - BigInt(r.info.revenue) - BigInt(r.info.in_flight);
+    const counters = `${fmtInt(r.stats.calls_total)} paid calls, ${amount(r.stats.revenue_total)} ${token.symbol} earned, ${amount(paidOut)} paid out, ${amount(r.info.revenue)} in the vault`;
+    if (rec.matches && hist.fromMint) {
+      parts.push(h("p", { class: "hist-check ok" }, h("strong", {}, "Adds up."), ` The vault's own counters say ${counters}.`));
+    } else {
+      const gaps: string[] = [];
+      if (rec.calls !== 0 || rec.revenue !== 0n) gaps.push(`${fmtInt(Math.abs(rec.calls))} paid calls and ${amount(rec.revenue < 0n ? -rec.revenue : rec.revenue)} ${token.symbol} of revenue`);
+      if (rec.withdrawn !== 0n) gaps.push(`${amount(rec.withdrawn < 0n ? -rec.withdrawn : rec.withdrawn)} ${token.symbol} of payouts`);
+      const why =
+        !hist.fromMint
+          ? "The mint was not read, so the oldest figures are missing."
+          : rec.calls > 0 || rec.revenue > 0n || rec.withdrawn > 0n
+            ? "The newest transactions are not in the index yet; read again in a minute."
+            : "The contract figures above are older than the log; they update on the next refresh.";
+      parts.push(h("p", { class: "hist-check" }, h("strong", {}, "Not complete yet."), ` The vault's own counters say ${counters}. ${gaps.length ? `The log read so far differs by ${gaps.join(" and ")}. ` : ""}${why}`));
+    }
+
+    const notes: string[] = [];
+    if (s.unread > 0) notes.push(`${s.unread} newer transactions are still unread; Read again continues.`);
+    if (s.status === "error") notes.push(`The last read failed (${s.error ?? "no answer"}); this is the read from ${clock(s.readAt)}.`);
+    parts.push(
+      h(
+        "p",
+        { class: "note fine hist-src" },
+        `From the vault's NEP-297 events (vault_charge, vault_withdraw, vault_owner) and the deed's deed_sold, read through ${new URL(TX_INDEX).host}: ${s.listed} transactions, read at ${clock(s.readAt)}. Revenue is exact per epoch: a charge belongs to whoever held the deed when it executed. Proof links open on NearBlocks. `,
+        notes.join(" "),
+      ),
+    );
+  }
+  box.replaceChildren(...parts.filter((x): x is Node | string => !!x));
+  box.setAttribute("aria-busy", String(s?.status === "loading"));
+}
+
+function historySection(r: Row): HTMLElement {
+  const box = h("section", { class: "history", "data-history": r.deed.vault_id, "aria-label": "Earnings history" });
+  fillHistory(box, r);
+  return box;
+}
+
+/** A finished read repaints only the history sections of that vault: rows are not rebuilt. */
+onHistory((vault) => {
+  for (const box of document.querySelectorAll<HTMLElement>(`[data-history="${CSS.escape(vault)}"]`)) {
+    const r = rows.find((x) => x.deed.vault_id === vault);
+    if (r) fillHistory(box, r);
+  }
+});
+
+/** Opens a deed's row on the board (switching tab if needed) and brings its history into view. */
+function openHistory(key: string): void {
+  const r = rows.find((x) => x.deed.token_id === key);
+  if (!r) return;
+  if (activeTab() === "sale" && !r.deed.listing) setTab("all");
+  const art = document.querySelector<HTMLElement>(`#deeds [data-token="${CSS.escape(key)}"]`);
+  const btn = art?.querySelector<HTMLButtonElement>(":scope > button.row");
+  if (!art || !btn) return;
+  if (!openKeys.has(key)) btn.click();
+  else wantHistory(r.deed.vault_id);
+  art.querySelector<HTMLElement>(".history")?.scrollIntoView({ block: "start", behavior: reduceMotion() ? "auto" : "smooth" });
+}
+
 function certImage(r: Row, cls: string): HTMLElement {
   const media = r.token?.metadata?.media;
   return media
@@ -740,6 +950,7 @@ function entry(r: Row, rank: number, me: string | null): HTMLElement {
       ),
       h("figure", { class: "detail-cert" }, certImage(r, "cert")),
     ),
+    historySection(r),
     salePanel(r, me, p),
     ...panels.map((x) => h("details", { class: "panel" }, h("summary", {}, x.summary), x.body)),
   );
@@ -755,6 +966,7 @@ function entry(r: Row, rank: number, me: string | null): HTMLElement {
     art.classList.toggle("open", open);
     if (open) {
       wantCert(key);
+      wantHistory(deed.vault_id);
       if (!reduceMotion()) {
         detail.classList.add("opening");
         detail.addEventListener("animationend", () => detail.classList.remove("opening"), { once: true });
@@ -886,12 +1098,18 @@ function renderHero(): void {
     );
   }
   const action = forSale ? buyButton(r, me) : null;
+  const hist = h("a", { class: "feat-hist", href: `#detail-${r.deed.token_id}` }, "See what it earned under each holder");
+  hist.addEventListener("click", (e) => {
+    e.preventDefault();
+    openHistory(r.deed.token_id);
+  });
   const parts: (HTMLElement | null)[] = [
     h("h2", { class: "feat-h" }, forSale ? "Featured listing" : "Most active business"),
     certImage(r, "feat-cert"),
     h("p", { class: "feat-id" }, h("strong", {}, id), ` ${r.deed.title}`),
     figs,
     action,
+    hist,
     forSale && me && l && me === l.seller ? h("p", { class: "note" }, "This is your listing. Cancel it from the board.") : null,
     forSale ? h("p", { class: "note fine" }, `Ranked first of ${counts().sale} for sale by paid calls in 30 days.`) : h("p", { class: "note fine" }, "Nothing is for sale right now. This is the deed with the most paid calls in 30 days."),
   ];

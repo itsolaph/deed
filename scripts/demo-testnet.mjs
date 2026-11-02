@@ -229,6 +229,16 @@ async function main() {
     const info = await view(VAULT, "get_info");
     say(`revenue ticking: vault revenue ${fmt(info.revenue)} tUSDC, customer credit ${fmt(info.liabilities)}, ${info.customers} customers, ${info.charged_items} charges`);
   }
+  // Bank real recognized revenue before the story moves on: the buyer sizes
+  // the business from charged revenue, and the first top-up can eat most of
+  // the traffic window while its transaction queues behind the RPC budget.
+  const revEnd = Date.now() + 300_000;
+  let rev = await view(VAULT, "get_info");
+  while (Number(rev.revenue) < 0.2 && Date.now() < revEnd) {
+    await sleep(15_000);
+    rev = await view(VAULT, "get_info");
+    say(`charges landing: vault revenue ${fmt(rev.revenue)} tUSDC, ${rev.charged_items} charges`);
+  }
   const deposits = [...logText("traffic").matchAll(/topped up .* (https:\/\/\S+)/g)].map((m) => m[1]);
   record.links.customer_deposits = deposits;
   for (const link of deposits) step("customer deposit after a 402 (ft_transfer_call)", { tx: link.split("/").pop(), success: true });
@@ -257,16 +267,6 @@ async function main() {
   await sleep(20_000); // a little more revenue accrues to the vault while listed
 
   // 7. The buyer agent decides and buys.
-  // The buyer sizes the business from charged revenue, and charge batches can
-  // queue behind the shared RPC budget; let them land before the appraisal.
-  const revEnd = Date.now() + 240_000;
-  let rev = await view(VAULT, "get_info");
-  while (Number(rev.revenue) < 0.2 && Date.now() < revEnd) {
-    await sleep(15_000);
-    rev = await view(VAULT, "get_info");
-    say(`charges landing: vault revenue ${fmt(rev.revenue)} tUSDC, ${rev.charged_items} charges`);
-  }
-
   banner("7. buyer agent reads the vault, computes payback, gets a dry 1Click funding quote, buys");
   const buy = await run("agents/dist/src/buyer.js", ["--account", A.buyer, "--token-id", SLUG, "--max-payback-days", "30", "--fund-from", "eth:usdc", "--refund-to", "0x1111111111111111111111111111111111111111", "--mint-if-short"], "07-buyer");
   step(`buyer agent buys ${SLUG}`, { tx: buy.buy_tx, success: buy.bought === true, note: buy.evaluated?.[0] ? `payback ${Number(buy.evaluated[0].payback_days).toFixed(2)} days` : undefined });

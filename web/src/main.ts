@@ -3,7 +3,7 @@
 
 import "./style.css";
 import { Rpc, TESTNET_RPC_URLS } from "../../sdk/src/chain.js";
-import { formatUnits, fromUnits, payback } from "../../sdk/src/payback.js";
+import { formatUnits, fromUnits, payback, toUnits, type PaybackResult } from "../../sdk/src/payback.js";
 import { DeedViews, VaultViews, type CustomerView, type DeedView, type NftToken, type VaultInfo, type VaultStatsView } from "../../sdk/src/views.js";
 import { DEED_CONTRACT, EXPLORER, NEAR_PRICE_USD, REFRESH_MS } from "./config";
 import { connect, currentAccount, disconnect, initWallet, onAccount, send, type Call } from "./wallet";
@@ -28,6 +28,9 @@ interface Row {
 
 let token = { contract: "", symbol: "tUSDC", decimals: 6 };
 let rows: Row[] = [];
+/** The deeds of the latest read (newest first, at most DETAIL_LIMIT): drives the tab counts. */
+let deedList: DeedView[] = [];
+let totalDeeds = 0;
 
 // ---------------------------------------------------------------- tiny DOM helpers
 
@@ -45,6 +48,9 @@ const amount = (v: string | bigint, digits = 4) => formatUnits(v, token.decimals
 const near = (v: string | bigint, digits = 4) => formatUnits(v, 24, digits);
 const short = (s: string | null, n = 10) => (s ? (s.length > n * 2 + 1 ? `${s.slice(0, n)}…${s.slice(-6)}` : s) : "none");
 const link = (path: string, text: string) => h("a", { href: `${EXPLORER}/${path}`, target: "_blank", rel: "noopener noreferrer" }, text);
+/** The deed ID people read on the board: the vault sub-account prefix, e.g. relay-1102fin2. */
+const deedId = (d: DeedView) => d.vault_id.split(".")[0] || d.token_id;
+const byCalls = (a: Row, b: Row) => b.stats.calls_30d - a.stats.calls_30d || b.stats.calls_total - a.stats.calls_total;
 
 function status(text: string, kind: "info" | "ok" | "error" | "quiet" = "info", txHash?: string | null): void {
   const box = $("status");
@@ -57,7 +63,7 @@ async function act(label: string, receiver: string, calls: Call[]): Promise<void
     status(`${label}: confirm in your wallet …`);
     const hash = await send(receiver, calls);
     status(`${label}: sent.`, "ok", hash);
-    setTimeout(() => void refresh(), 2500);
+    setTimeout(() => void refresh(true), 2500);
   } catch (e) {
     status(`${label} failed: ${e instanceof Error ? e.message : String(e)}`, "error");
   }
@@ -66,7 +72,7 @@ async function act(label: string, receiver: string, calls: Call[]): Promise<void
 // ---------------------------------------------------------------- data
 
 /** How many deeds get full detail (vault views) per load. Every extra deed costs RPC calls
- *  against rate-limited public endpoints; the rest stay listed but unexpanded. */
+ *  against rate-limited public endpoints. */
 const DETAIL_LIMIT = 12;
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
@@ -85,49 +91,74 @@ async function withBackoff<T>(fn: () => Promise<T>, tries = 4): Promise<T> {
   throw last;
 }
 
-async function fetchRow(deed: DeedView, me: string | null, withCert: boolean): Promise<Row> {
+async function fetchRow(deed: DeedView, me: string | null): Promise<Row> {
   const vault = new VaultViews(pickRpc(), deed.vault_id);
   // Sequential on purpose: two providers at ~0.5 req/s each cannot absorb bursts.
   const info = await vault.info();
   await sleep(500);
   const stats = await vault.stats();
   const mine = me ? (await sleep(500), await vault.customer(me)) : null;
-  const nft = withCert ? (await sleep(500), await deedViews.token(deed.token_id)) : null;
-  return { deed, info, stats, token: nft ?? certCache.get(deed.token_id) ?? null, me: mine };
+  return { deed, info, stats, token: certCache.get(deed.token_id) ?? null, me: mine };
 }
 
-let certBusy = false;
-/** Certificates survive refreshes: a token's metadata is fetched once per page life. */
-const certCache = new Map<string, NftToken>();
+/** What the page saw at each read of a deed. Paid calls are only known per day on chain, but a
+ *  rise in calls between two reads proves a paid call landed after the earlier read. */
+interface Seen {
+  calls30: number;
+  callsTotal: number;
+  readAt: number;
+  /** A paid call landed after this time (the read before the rise), or null if none seen yet. */
+  callAfter: number | null;
+}
+const seen = new Map<string, Seen>();
+/** Rows whose 30-day calls rose in the latest read: flashed once by the next render. */
+const flashKeys = new Set<string>();
 
-/** Certificates are pure metadata: fill them in one at a time after the numbers are up. */
-async function loadCerts(): Promise<void> {
+function observe(r: Row): void {
+  const key = r.deed.token_id;
+  const prev = seen.get(key);
+  let callAfter = prev?.callAfter ?? null;
+  if (prev && r.stats.calls_total > prev.callsTotal) callAfter = prev.readAt;
+  if (prev && r.stats.calls_30d > prev.calls30) flashKeys.add(key);
+  seen.set(key, { calls30: r.stats.calls_30d, callsTotal: r.stats.calls_total, readAt: Date.now(), callAfter });
+}
+
+/** Certificates survive refreshes: a token's metadata is fetched once per page life, and only
+ *  for the deeds someone looks at (the featured one and opened rows). */
+const certCache = new Map<string, NftToken>();
+const certWanted: string[] = [];
+let certBusy = false;
+
+function wantCert(key: string): void {
+  if (certCache.has(key) || certWanted.includes(key)) return;
+  certWanted.push(key);
+  void pumpCerts();
+}
+
+async function pumpCerts(): Promise<void> {
   if (certBusy) return;
   certBusy = true;
   try {
-    for (const r of [...rows]) {
-      const cached = certCache.get(r.deed.token_id);
-      if (cached) {
-        r.token = cached;
-        continue;
-      }
+    while (certWanted.length > 0) {
+      const key = certWanted.shift()!;
+      if (certCache.has(key)) continue;
       try {
-        const t = await deedViews.token(r.deed.token_id);
-        if (t) certCache.set(r.deed.token_id, t);
-        for (const x of rows) if (x.deed.token_id === r.deed.token_id) x.token = t;
+        const t = await withBackoff(() => deedViews.token(key), 3);
+        if (t) certCache.set(key, t);
+        for (const r of rows) if (r.deed.token_id === key) r.token = t;
         render();
       } catch {
         // keep the placeholder
       }
-      await new Promise((res) => setTimeout(res, 900));
+      await sleep(900);
     }
   } finally {
     certBusy = false;
   }
 }
 
-/** Public testnet RPC is rate-limited: fetch deeds a few at a time and render each row as it
- *  arrives, so a fresh visitor sees cards appear progressively instead of one blank wait. */
+/** Public testnet RPC is rate-limited: deeds are read one at a time. The first load paints
+ *  rows as they arrive; later loads update rows in place, so the board never blanks. */
 async function load(): Promise<void> {
   const live = document.getElementById("live");
   live?.removeAttribute("hidden");
@@ -146,42 +177,56 @@ async function loadInner(): Promise<void> {
   }
   const all = await withBackoff(() => deedViews.deeds(0, 100));
   const wanted = [...all].sort((a, b) => Number(b.minted_at_ms) - Number(a.minted_at_ms)).slice(0, DETAIL_LIMIT);
+  totalDeeds = all.length;
+  deedList = wanted;
+  // Listing, owner and epoch come with the deed list: show them before the vault reads land.
+  const fresh = new Map(wanted.map((d) => [d.token_id, d]));
+  rows = rows.filter((r) => fresh.has(r.deed.token_id));
+  for (const r of rows) r.deed = fresh.get(r.deed.token_id)!;
   const me = currentAccount();
-  rows = [];
   render();
   renderKpis();
-  let next = 0;
-  const lane = async (): Promise<void> => {
-    const failed: DeedView[] = [];
-    while (next < wanted.length) {
-      const deed = wanted[next++];
-      if (!deed) break;
-      try {
-        rows.push(await fetchRow(deed, me, false));
-      } catch {
-        failed.push(deed);
-      }
-      rows.sort((a, b) => b.stats.calls_30d - a.stats.calls_30d || b.stats.calls_total - a.stats.calls_total);
-      render();
-      renderKpis();
-      await sleep(400);
-    }
-    for (const deed of failed) {
-      try {
-        rows.push(await withBackoff(() => fetchRow(deed, me, false)));
-        rows.sort((a, b) => b.stats.calls_30d - a.stats.calls_30d || b.stats.calls_total - a.stats.calls_total);
-        render();
-        renderKpis();
-      } catch {
-        // truly unreadable: leave it out
-      }
-    }
+  const upsert = (row: Row): void => {
+    observe(row);
+    const i = rows.findIndex((r) => r.deed.token_id === row.deed.token_id);
+    if (i >= 0) rows[i] = row;
+    else rows.push(row);
+    rows.sort(byCalls);
+    render();
+    renderKpis();
   };
-  await lane();
-  void loadCerts();
+  const failed: DeedView[] = [];
+  for (const deed of wanted) {
+    try {
+      upsert(await fetchRow(deed, me));
+    } catch {
+      failed.push(deed);
+    }
+    await sleep(400);
+  }
+  for (const deed of failed) {
+    try {
+      upsert(await withBackoff(() => fetchRow(deed, me)));
+    } catch {
+      // truly unreadable: an earlier read (if any) stays on the board
+    }
+  }
+  const top = featured();
+  if (top) wantCert(top.row.deed.token_id);
 }
 
-async function refresh(): Promise<void> {
+let loading = false;
+let again = false;
+let lastLoadAt = 0;
+
+/** One load at a time, and none while the tab is hidden: a background tab spends no RPC. */
+async function refresh(force = false): Promise<void> {
+  if (loading) {
+    again = again || force;
+    return;
+  }
+  if (!force && document.hidden) return;
+  loading = true;
   try {
     await load();
     render();
@@ -190,20 +235,118 @@ async function refresh(): Promise<void> {
     $("status").className = "status";
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (rows.length > 0) status(`refresh hiccupped (${msg}); showing the last good read — retrying`, "quiet");
-    else status(`could not read the chain: ${msg}`, "error");
+    if (rows.length > 0) status(`Refresh failed (${msg}). Showing the last good read; retrying in ${REFRESH_MS / 1000} s.`, "quiet");
+    else status(`Could not read the chain: ${msg}. Retrying in ${REFRESH_MS / 1000} s.`, "error");
+  } finally {
+    loading = false;
+    lastLoadAt = Date.now();
+  }
+  if (again) {
+    again = false;
+    void refresh(true);
   }
 }
 
-// ---------------------------------------------------------------- rendering
+// ---------------------------------------------------------------- derived figures
+
+const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+const fmtInt = (n: number) => Math.round(n).toLocaleString();
+const fmtAmt = (digits: number) => (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: digits });
+const fmtNum = (n: number) => fmtAmt(4)(n);
+
+function paybackOf(r: Row): PaybackResult | null {
+  if (!r.deed.listing) return null;
+  return payback({
+    price: BigInt(r.deed.listing.price),
+    cash: BigInt(r.info.revenue),
+    revenue30d: BigInt(r.stats.revenue_30d),
+    gasSpent30dYocto: BigInt(r.stats.gas_spent_30d),
+    vaultCreatedAtMs: Number(r.info.created_at_ms),
+    nowMs: Date.now(),
+    nearPrice: NEAR_PRICE_USD,
+    tokenDecimals: token.decimals,
+  });
+}
+
+/** The rule in words, worded after sdk/src/payback.ts. */
+const paybackRule = (): string =>
+  `est. payback = (price − vault cash, at least 0) ÷ net revenue per day, where net revenue per day = ` +
+  `(revenue, 30 days − gas, 30 days at ${NEAR_PRICE_USD} USD/NEAR) ÷ days since the vault opened (1 to 30)`;
+
+function paybackText(p: PaybackResult | null): string {
+  if (!p) return "–";
+  return p.paybackDays === null ? "no payback at current revenue" : `${p.paybackDays.toFixed(1)} days`;
+}
+
+/** The same rule with this deed's numbers, so anyone can redo the division. */
+function paybackMath(r: Row, p: PaybackResult): string {
+  const l = r.deed.listing!;
+  const price = toUnits(BigInt(l.price), token.decimals);
+  const cash = toUnits(BigInt(r.info.revenue), token.decimals);
+  const days = p.windowDays;
+  const rev = p.revenuePerDay * days;
+  const gas = p.gasPerDay * days;
+  const head = `(${fmtNum(price)} − ${fmtNum(cash)}) ÷ ((${fmtNum(rev)} − ${fmtNum(gas)}) ÷ ${days.toFixed(1)} days)`;
+  return p.paybackDays === null
+    ? `${head}: net revenue is not above zero, so no payback at current revenue`
+    : `${head} = ${p.paybackDays.toFixed(1)} days`;
+}
+
+function ago(ms: number): string {
+  const s = Math.max(1, Math.ceil(ms / 1000));
+  if (s < 60) return `${s} s`;
+  const m = Math.ceil(s / 60);
+  if (m < 60) return `${m} min`;
+  return `${Math.ceil(m / 60)} h`;
+}
+
+const ACTIVE_MS = 10 * 60_000;
+
+/** Worker status from data already read: the page's own reads, else the vault's day buckets. */
+function workerText(r: Row, now = Date.now()): string {
+  const s = seen.get(r.deed.token_id);
+  if (s?.callAfter) {
+    const since = now - s.callAfter;
+    const text = `last paid call under ${ago(since)} ago`;
+    return since < ACTIVE_MS ? `Worker active, ${text}` : text[0]!.toUpperCase() + text.slice(1);
+  }
+  const busy = r.stats.days.filter((d) => d.calls > 0).map((d) => d.day);
+  if (busy.length === 0) return "No paid calls in 30 days";
+  const d = r.stats.today - Math.max(...busy);
+  if (d <= 0) return "Last paid call today (UTC)";
+  if (d === 1) return "Last paid call yesterday (UTC)";
+  return `Last paid call ${d} days ago`;
+}
+
+function workerActive(r: Row): boolean {
+  const s = seen.get(r.deed.token_id);
+  return !!s?.callAfter && Date.now() - s.callAfter < ACTIVE_MS;
+}
+
+/** Relative times tick in place between reads, so "under 40 s" never goes stale. */
+function workerLine(r: Row): HTMLElement {
+  return h("p", { class: workerActive(r) ? "worker on" : "worker", "data-worker": r.deed.token_id }, workerText(r));
+}
+
+function tickWorkers(): void {
+  for (const el of document.querySelectorAll<HTMLElement>("[data-worker]")) {
+    const r = rows.find((x) => x.deed.token_id === el.dataset.worker);
+    if (!r) continue;
+    const text = workerText(r);
+    if (el.textContent !== text) el.textContent = text;
+    el.classList.toggle("on", workerActive(r));
+  }
+}
+
+const isLoopback = (url: string) => /^https?:\/\/(127\.\d+\.\d+\.\d+|localhost|\[::1\])(:\d+)?(\/|$)/i.test(url);
+
+// ---------------------------------------------------------------- small pieces
 
 function figure(label: string, value: Child, title?: string): HTMLElement {
   return h("div", { class: "fig", ...(title ? { title } : {}) }, h("dt", {}, label), h("dd", {}, value));
 }
 
-const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-/** Numbers that roll up on first sight: the registry feels alive without faking data.
+/** Numbers that roll up on first sight: the board feels alive without faking data.
  *  The final value is painted synchronously — rAF never runs in a hidden tab — and the
  *  roll-up only decorates a visible page. The unit span is never touched by the loop. */
 function countUp(target: number, format: (n: number) => string): HTMLElement {
@@ -227,20 +370,12 @@ function countUp(target: number, format: (n: number) => string): HTMLElement {
   return dd;
 }
 
-const fmtInt = (n: number) => Math.round(n).toLocaleString();
-const fmtAmt = (digits: number) => (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: digits });
-
-/** Skeleton rows so the layout lands before the rate-limited reads do. */
+/** Skeleton rows so the board's shape lands before the rate-limited reads do. */
 function skeleton(n: number): HTMLElement {
-  const box = h("div", {});
+  const box = h("div", { "aria-hidden": "true" });
   for (let i = 0; i < n; i++) {
     box.append(
-      h(
-        "div",
-        { class: "skel", style: `animation-delay:${i * 60}ms`, "aria-hidden": "true" },
-        h("div", { class: "row" }, h("div", { class: "b thumb-b" }), h("div", {}, h("div", { class: "b t1" }), h("div", { class: "b t2" }))),
-        h("div", { class: "figs-b" }, h("div", { class: "b f" }), h("div", { class: "b f" }), h("div", { class: "b f" }), h("div", { class: "b f" })),
-      ),
+      h("div", { class: "skel", style: `animation-delay:${i * 60}ms` }, h("div", { class: "b r" }), h("div", { class: "b t" }), h("div", { class: "b f" }), h("div", { class: "b f" })),
     );
   }
   return box;
@@ -272,40 +407,49 @@ function button(text: string, onClick: () => void, cls = ""): HTMLButtonElement 
   return b;
 }
 
-function paybackText(r: Row): string {
-  if (!r.deed.listing) return "not listed";
-  const p = payback({
-    price: BigInt(r.deed.listing.price),
-    cash: BigInt(r.info.revenue),
-    revenue30d: BigInt(r.stats.revenue_30d),
-    gasSpent30dYocto: BigInt(r.stats.gas_spent_30d),
-    vaultCreatedAtMs: Number(r.info.created_at_ms),
-    nowMs: Date.now(),
-    nearPrice: NEAR_PRICE_USD,
-    tokenDecimals: token.decimals,
-  });
-  return p.paybackDays === null ? "never at current revenue" : `${p.paybackDays.toFixed(1)} days`;
+// ---------------------------------------------------------------- buying
+
+/** Disconnected, the buy button opens the wallet; connected, it sends the purchase. */
+function buy(r: Row): void {
+  const l = r.deed.listing;
+  if (!l) return;
+  if (!currentAccount()) {
+    void connect().catch((e) => status(String(e), "error"));
+    return;
+  }
+  const msg = JSON.stringify({ buy: { token_id: r.deed.token_id, max_price: l.price, listing_id: l.listing_id } });
+  void act("Buy", token.contract, [{ method: "ft_transfer_call", args: { receiver_id: DEED_CONTRACT, amount: l.price, msg }, gasTgas: 250, depositYocto: ONE_YOCTO }]);
 }
 
-function buyPanel(r: Row, me: string | null): { summary: string; body: HTMLElement } | null {
+/** The one primary action of the page, in the featured block and in every sale panel. */
+function buyButton(r: Row, me: string | null): HTMLElement | null {
   const l = r.deed.listing;
   if (!l) return null;
-  const panel = h("div", { class: "panel-body" });
-  panel.append(
-    h("p", { class: "note" }, `Listing #${l.listing_id} by ${l.seller} for `, h("span", { class: "num" }, `${amount(l.price)} ${token.symbol}`), l.active ? "." : " (activating)."),
-    h("p", { class: "note" }, `The vault cash (${amount(r.info.revenue)} ${token.symbol}) comes with the deed. Customer credit stays owed to customers.`),
-  );
-  if (!me) panel.append(h("p", { class: "note" }, "Connect a wallet to buy."));
-  else if (me === l.seller) {
-    panel.append(button("Cancel listing", () => void act("Cancel listing", DEED_CONTRACT, [{ method: "cancel_listing", args: { token_id: r.deed.token_id }, gasTgas: 100, depositYocto: ONE_YOCTO }])));
-  } else if (l.active) {
-    const msg = JSON.stringify({ buy: { token_id: r.deed.token_id, max_price: l.price, listing_id: l.listing_id } });
-    panel.append(
-      button(`Buy for ${amount(l.price)} ${token.symbol}`, () => void act("Buy", token.contract, [{ method: "ft_transfer_call", args: { receiver_id: DEED_CONTRACT, amount: l.price, msg }, gasTgas: 250, depositYocto: ONE_YOCTO }]), "primary"),
-      h("p", { class: "note" }, "The purchase is pinned to this listing id, so a cancelled and re-listed deed is refused and refunded."),
-    );
+  if (me && me === l.seller) return null;
+  const b = button(`Buy this business, ${amount(l.price)} ${token.symbol}`, () => buy(r), "primary buy");
+  if (!l.active) {
+    b.disabled = true;
+    b.textContent = "Listing activating";
   }
-  return { summary: `For sale, ${amount(l.price)} ${token.symbol}`, body: panel };
+  return b;
+}
+
+function salePanel(r: Row, me: string | null, p: PaybackResult | null): HTMLElement | null {
+  const l = r.deed.listing;
+  if (!l || !p) return null;
+  const box = h(
+    "section",
+    { class: "sale", "aria-label": "Sale" },
+    h("p", { class: "sale-head" }, `For sale, ${amount(l.price)} ${token.symbol}`, h("span", { class: "sale-by" }, ` Listing #${l.listing_id} by ${l.seller}${l.active ? "" : ", activating"}.`)),
+    h("p", { class: "note" }, `The vault cash (${amount(r.info.revenue)} ${token.symbol}) comes with the deed. Customer credit (${amount(r.info.liabilities)} ${token.symbol}) stays owed to customers.`),
+    h("p", { class: "note math", title: paybackRule() }, `est. payback: ${paybackMath(r, p)}`),
+  );
+  const buyBtn = buyButton(r, me);
+  if (buyBtn) box.append(buyBtn, h("p", { class: "note fine" }, `The purchase is pinned to listing #${l.listing_id}, so a cancelled and re-listed deed is refused and refunded.`));
+  else if (me && me === l.seller) {
+    box.append(button("Cancel listing", () => void act("Cancel listing", DEED_CONTRACT, [{ method: "cancel_listing", args: { token_id: r.deed.token_id }, gasTgas: 100, depositYocto: ONE_YOCTO }])));
+  }
+  return box;
 }
 
 function ownerPanel(r: Row): { summary: string; body: HTMLElement } {
@@ -359,7 +503,7 @@ function customerPanel(r: Row, me: string): { summary: string; body: HTMLElement
     panel.append(
       h(
         "dl",
-        { class: "figs small" },
+        { class: "figs" },
         figure("balance", h("span", { class: "num" }, `${amount(c.balance)} ${token.symbol}`)),
         figure("daily cap", h("span", { class: "num" }, amount(c.daily_cap))),
         figure("spent today", h("span", { class: "num" }, amount(c.spent_today))),
@@ -396,162 +540,383 @@ function customerPanel(r: Row, me: string): { summary: string; body: HTMLElement
   return { summary: "Customer credit", body: panel };
 }
 
-/** Activity sparkline from the vault's day buckets: real on-chain history, no invention. */
-function spark(days: { day: number; calls: number }[]): HTMLElement {
-  // Always 30 slots ending today: quiet days are real zeros, so one busy day reads as one bar, not a slab.
-  const byDay = new Map(days.map((d) => [d.day, d.calls]));
-  const today = Math.floor(Date.now() / 86_400_000);
+/** 30 daily bars from the vault's day buckets: quiet days are real zeros (a 2px tick), active
+ *  days carry the signal, and the peak is labeled. Real on-chain history, no invention. */
+function spark(stats: VaultStatsView): HTMLElement {
+  const byDay = new Map(stats.days.map((d) => [d.day, d.calls]));
+  const today = stats.today;
   const last = Array.from({ length: 30 }, (_, k) => ({ day: today - 29 + k, calls: byDay.get(today - 29 + k) ?? 0 }));
-  const max = Math.max(1, ...last.map((d) => d.calls));
-  const dayDate = (day: number) => new Date(day * 86_400_000).toLocaleDateString(undefined, { day: "numeric", month: "short" });
-  const bars = h("div", { class: "bars", role: "img", "aria-label": "calls per day, last 30 days" });
-  let i = 0;
-  for (const d of last) {
-    bars.append(h("span", { class: d.calls ? "bar" : "bar zero", style: `height:${d.calls ? Math.max(6, Math.round((d.calls / max) * 100)) : 0}%; --i:${i++}`, title: `${dayDate(d.day)}, ${d.calls} calls` }));
-  }
-  const first = last[0]?.day ?? 0;
+  const max = Math.max(0, ...last.map((d) => d.calls));
+  const peakAt = max > 0 ? last.findIndex((d) => d.calls === max) : -1;
+  const dayDate = (day: number) => new Date(day * 86_400_000).toLocaleDateString(undefined, { day: "numeric", month: "short", timeZone: "UTC" });
+  const label = max > 0 ? `Calls per day, last 30 days; peak ${max} on ${dayDate(last[peakAt]!.day)}` : "Calls per day, last 30 days; none";
+  const bars = h("div", { class: "bars", role: "img", "aria-label": label });
+  last.forEach((d, i) => {
+    const bar = h("span", {
+      class: d.calls ? "bar on" : "bar",
+      style: d.calls ? `height:${Math.max(6, Math.round((d.calls / max) * 100))}%` : "",
+      title: `${dayDate(d.day)}, ${d.calls} calls`,
+    });
+    if (i === peakAt) {
+      bar.classList.add("peak");
+      bar.append(h("i", { class: i > 24 ? "peak-label end" : "peak-label" }, fmtInt(max)));
+    }
+    bars.append(bar);
+  });
+  const first = last[0]?.day ?? today;
   return h(
     "div",
     { class: "spark" },
-    h("p", { class: "note", style: "margin:0" }, "Calls per day, 30 days"),
+    h("p", { class: "spark-title" }, "Calls per day, 30 days"),
     bars,
-    h("p", { class: "cap" }, `${dayDate(first)} – ${dayDate(last[last.length - 1]?.day ?? first)}`),
+    h("p", { class: "cap" }, h("span", {}, dayDate(first)), h("span", {}, dayDate(today))),
   );
 }
 
-function entry(r: Row, rank: number): HTMLElement {
-  const me = currentAccount();
-  const { deed, info, stats } = r;
+function certImage(r: Row, cls: string): HTMLElement {
   const media = r.token?.metadata?.media;
-  const thumb = media ? h("img", { class: "thumb", src: media, alt: `Certificate of ${deed.title}` }) : h("div", { class: "thumb empty" }, "cert");
-  const pendingPrice = info.pending_price ? ` → ${amount(info.pending_price)} from ${new Date(Number(info.price_effective_at_ms)).toLocaleString()}` : "";
-  const heroFigs = h(
-    "dl",
-    { class: "figs" },
-    figure("calls, 30 days", h("span", { class: "num" }, String(stats.calls_30d))),
-    figure("revenue, 30 days", h("span", { class: "num" }, `${amount(stats.revenue_30d)} `, h("span", { class: "unit" }, token.symbol))),
-    figure("cash in vault", h("span", { class: "num" }, `${amount(info.revenue)} `, h("span", { class: "unit" }, token.symbol)), "Withdrawable revenue; goes to the buyer with the deed"),
-    figure("payback", h("span", { class: r.deed.listing ? "num" : "num muted" }, paybackText(r)), `Price minus cash, over net revenue per day (gas at ${NEAR_PRICE_USD} USD/NEAR)`),
-  );
-  const smallFigs = h(
-    "dl",
-    { class: "figs small" },
-    figure("owner", link(`address/${info.owner_id}`, short(info.owner_id))),
-    figure("price per call", h("span", { class: "num" }, `${amount(info.price_per_call, 6)} ${token.symbol}${pendingPrice}`)),
-    figure("customer credit", h("span", { class: "num" }, `${amount(info.liabilities)} ${token.symbol}`), "Prepaid by customers; never withdrawable by the owner"),
-    figure("gas spent, 30 days", h("span", { class: "num" }, `${near(stats.gas_spent_30d, 5)} NEAR`), "Estimated from the vault's NEAR balance at each charge"),
-    figure("customers", h("span", { class: "num" }, String(info.customers))),
-    figure("calls, all time", h("span", { class: "num" }, String(stats.calls_total))),
-    figure("revenue, all time", h("span", { class: "num" }, `${amount(stats.revenue_total)} ${token.symbol}`)),
-    figure("worker key", h("span", { class: "num", title: info.worker_key ?? "" }, short(info.worker_key))),
-    figure("endpoint", h("span", { class: "num" }, info.endpoint || "none")),
-    figure("minted", h("span", { class: "num" }, new Date(Number(deed.minted_at_ms)).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }))),
-  );
-  const head = h(
-    "div",
-    { class: "entry-head" },
-    h("div", { class: "rank", "aria-label": "rank" }, String(rank + 1).padStart(2, "0")),
-    thumb,
-    h(
-      "div",
-      { class: "entry-title" },
-      h("h3", {}, deed.title),
-      h("span", { class: "meta" }, link(`address/${deed.vault_id}`, deed.vault_id)),
-    ),
-    h(
-      "div",
-      { class: "entry-stamps" },
-      deed.listing ? h("span", { class: "stamp" }, "for sale") : null,
-      info.locked ? h("span", { class: "stamp ink" }, "vault locked") : null,
-      h("span", { class: "stamp quiet" }, `epoch ${info.owner_epoch}`),
-    ),
-  );
-  const body = h("div", { class: "entry-body" }, h("div", {}, heroFigs, smallFigs), spark(stats.days));
-  const panels = [buyPanel(r, me), me && me === info.owner_id ? ownerPanel(r) : null, me ? customerPanel(r, me) : null].filter(
-    (p): p is { summary: string; body: HTMLElement } => p !== null,
-  );
-  // The whole head row opens the first available action panel — a big, obvious target.
-  const art = h(
-    "article",
-    { class: "entry", "data-token": deed.token_id },
-    head,
-    body,
-    ...panels.map((p) => h("details", { class: "panel" }, h("summary", {}, p.summary), p.body)),
-  );
-  const firstPanel = art.querySelector("details");
-  if (firstPanel) {
-    head.classList.add("is-toggle");
-    const toggle = (): void => {
-      firstPanel.open = !firstPanel.open;
-      head.setAttribute("aria-expanded", String(firstPanel.open));
-      if (firstPanel.open) firstPanel.scrollIntoView({ block: "nearest", behavior: reduceMotion() ? "auto" : "smooth" });
-    };
-    head.setAttribute("role", "button");
-    head.setAttribute("tabindex", "0");
-    head.setAttribute("aria-expanded", String(firstPanel.open));
-    head.addEventListener("click", (e) => {
-      if ((e.target as HTMLElement).closest("a, button, input, summary")) return;
-      toggle();
-    });
-    head.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
+  return media
+    ? h("img", { class: cls, src: media, alt: `Certificate of ${deedId(r.deed)}, ${r.deed.title}`, width: "640", height: "400" })
+    : h("div", { class: `${cls} cert-ph`, role: "img", "aria-label": "Certificate loading" }, h("span", {}, "Certificate loading"));
+}
+
+// ---------------------------------------------------------------- the board
+
+type Tab = "sale" | "all";
+const TAB_KEY = "deed.board.tab";
+
+function readTab(): Tab | null {
+  if (location.hash === "#for-sale") return "sale";
+  if (location.hash === "#all") return "all";
+  try {
+    const v = localStorage.getItem(TAB_KEY);
+    return v === "sale" || v === "all" ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+let chosenTab: Tab | null = readTab();
+
+function counts(): { sale: number; all: number } {
+  const list = deedList.length > 0 ? deedList : rows.map((r) => r.deed);
+  return { sale: list.filter((d) => d.listing).length, all: list.length };
+}
+
+/** "For sale" is the default whenever something is for sale. */
+function activeTab(): Tab {
+  if (counts().sale === 0) return "all";
+  return chosenTab ?? "sale";
+}
+
+function setTab(tab: Tab, focus = false): void {
+  chosenTab = tab;
+  try {
+    localStorage.setItem(TAB_KEY, tab);
+  } catch {
+    // private mode: the hash still carries it
+  }
+  history.replaceState(null, "", tab === "sale" ? "#for-sale" : "#all");
+  render(false);
+  if (focus) document.querySelector<HTMLElement>(`#tabs [data-tab="${tab}"]`)?.focus();
+}
+
+function renderTabs(): void {
+  const box = $("tabs");
+  const c = counts();
+  const tab = activeTab();
+  const make = (key: Tab, label: string, n: number): HTMLButtonElement => {
+    const selected = key === tab;
+    const b = h("button", {
+      type: "button",
+      role: "tab",
+      class: "tab",
+      "data-tab": key,
+      id: `tab-${key}`,
+      "aria-selected": String(selected),
+      "aria-controls": "deeds",
+      tabindex: selected ? "0" : "-1",
+    }, label, h("span", { class: "n" }, `(${n})`));
+    if (key === "sale" && n === 0) b.disabled = true;
+    b.addEventListener("click", () => setTab(key));
+    b.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
         e.preventDefault();
-        toggle();
+        const other: Tab = key === "sale" ? "all" : "sale";
+        if (other === "sale" && c.sale === 0) return;
+        setTab(other, true);
       }
     });
-  }
+    return b;
+  };
+  const sig = `${tab}|${c.sale}|${c.all}`;
+  if (box.dataset.sig === sig) return;
+  const hadFocus = box.contains(document.activeElement);
+  box.dataset.sig = sig;
+  box.replaceChildren(make("sale", "For sale ", c.sale), make("all", "All ", c.all));
+  $("deeds").setAttribute("aria-labelledby", `tab-${tab}`);
+  if (hadFocus) box.querySelector<HTMLElement>(`[data-tab="${tab}"]`)?.focus();
+}
+
+/** Which rows are open survives every refresh and re-render. */
+const openKeys = new Set<string>();
+
+function rowSig(r: Row, me: string | null): string {
+  const s = seen.get(r.deed.token_id);
+  return JSON.stringify([r.deed, r.info, r.stats, r.me, me, token.symbol, !!r.token?.metadata?.media, s?.callAfter ?? null]);
+}
+
+function entry(r: Row, rank: number, me: string | null): HTMLElement {
+  const { deed, info, stats } = r;
+  const key = deed.token_id;
+  const id = deedId(deed);
+  const p = paybackOf(r);
+  const l = deed.listing;
+  const unit = () => h("span", { class: "unit" }, token.symbol);
+  const cell = (cls: string, label: string, ...value: Child[]) => h("span", { class: `c ${cls}` }, h("span", { class: "lbl" }, label), h("span", { class: "val" }, ...value));
+  const chip = l
+    ? h("span", { class: "chip" }, "For sale", info.locked ? h("span", { class: "chip-lock" }, "locked") : null)
+    : info.locked
+      ? h("span", { class: "chip ink" }, "Locked")
+      : null;
+  const rowBtn = h(
+    "button",
+    {
+      type: "button",
+      class: "row",
+      id: `row-${key}`,
+      "aria-expanded": String(openKeys.has(key)),
+      "aria-controls": `detail-${key}`,
+      "aria-label": `${id}, ${deed.title}. ${stats.calls_30d} paid calls in 30 days. ${l ? `For sale at ${amount(l.price)} ${token.symbol}, est. payback ${paybackText(p)}` : "Not listed"}. Show details.`,
+    },
+    h("span", { class: "c c-rank" }, String(rank + 1).padStart(2, "0")),
+    h("span", { class: "c c-id" }, h("span", { class: "id" }, id), h("span", { class: "sub" }, deed.title)),
+    cell("c-calls", "calls, 30d", fmtInt(stats.calls_30d)),
+    cell("c-rev", "revenue, 30d", amount(stats.revenue_30d, 2), " ", unit()),
+    l ? cell("c-price", "price", amount(l.price), " ", unit()) : cell("c-price muted", "price", "not listed"),
+    h(
+      "span",
+      { class: `c c-pay${p?.paybackDays == null ? " muted" : ""}`, title: l ? paybackRule() : "Not listed" },
+      h("span", { class: "lbl" }, "est. payback"),
+      h("span", { class: "val" }, paybackText(p)),
+    ),
+    h("span", { class: "c c-status" }, chip),
+    h("span", { class: "c c-act", "aria-hidden": "true" }),
+  );
+
+  const endpoint = info.endpoint || "none";
+  const facts = h(
+    "dl",
+    { class: "figs" },
+    figure("owner", link(`address/${info.owner_id}`, short(info.owner_id))),
+    figure("price per call", h("span", { class: "num" }, `${amount(info.price_per_call, 6)} ${token.symbol}`, info.pending_price ? `, ${amount(info.pending_price, 6)} from ${new Date(Number(info.price_effective_at_ms)).toLocaleString()}` : "")),
+    figure("customer credit", h("span", { class: "num" }, `${amount(info.liabilities)} ${token.symbol}`), "Prepaid by customers; never withdrawable by the owner"),
+    figure("cash in vault", h("span", { class: "num" }, `${amount(info.revenue)} ${token.symbol}`), "Withdrawable revenue; goes to the buyer with the deed"),
+    figure("gas spent, 30 days", h("span", { class: "num" }, `${near(stats.gas_spent_30d, 5)} NEAR`), "Estimated from the vault's NEAR balance at each charge"),
+    figure("customers", h("span", { class: "num" }, String(info.customers))),
+    figure("calls, all time", h("span", { class: "num" }, fmtInt(stats.calls_total))),
+    figure("revenue, all time", h("span", { class: "num" }, `${amount(stats.revenue_total)} ${token.symbol}`)),
+    figure("owner epoch", h("span", { class: "num" }, String(info.owner_epoch)), "1 at mint, +1 each time the deed changes hands (sale or transfer)"),
+    figure("worker key", h("span", { class: "num", title: info.worker_key ?? "" }, short(info.worker_key))),
+    figure("minted", h("span", { class: "num" }, new Date(Number(deed.minted_at_ms)).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }))),
+    figure("vault", link(`address/${deed.vault_id}`, short(deed.vault_id, 8))),
+  );
+  const panels = [me && me === info.owner_id ? ownerPanel(r) : null, me ? customerPanel(r, me) : null].filter(
+    (x): x is { summary: string; body: HTMLElement } => x !== null,
+  );
+  const detail = h(
+    "div",
+    { class: "detail", id: `detail-${key}`, role: "region", "aria-labelledby": `row-${key}` },
+    h(
+      "div",
+      { class: "detail-grid" },
+      h(
+        "div",
+        { class: "detail-main" },
+        workerLine(r),
+        facts,
+        spark(stats),
+        h("p", { class: "endpoint" }, isLoopback(endpoint) ? "endpoint (local demo worker) " : "endpoint ", h("span", { class: "num" }, endpoint)),
+      ),
+      h("figure", { class: "detail-cert" }, certImage(r, "cert")),
+    ),
+    salePanel(r, me, p),
+    ...panels.map((x) => h("details", { class: "panel" }, h("summary", {}, x.summary), x.body)),
+  );
+  if (!openKeys.has(key)) detail.hidden = true;
+
+  const art = h("article", { class: l ? "entry listed" : "entry", "data-token": key }, rowBtn, detail);
+  rowBtn.addEventListener("click", () => {
+    const open = !openKeys.has(key);
+    if (open) openKeys.add(key);
+    else openKeys.delete(key);
+    rowBtn.setAttribute("aria-expanded", String(open));
+    detail.hidden = !open;
+    art.classList.toggle("open", open);
+    if (open) {
+      wantCert(key);
+      if (!reduceMotion()) {
+        detail.classList.add("opening");
+        detail.addEventListener("animationend", () => detail.classList.remove("opening"), { once: true });
+      }
+      detail.scrollIntoView({ block: "nearest", behavior: reduceMotion() ? "auto" : "smooth" });
+    }
+  });
+  art.classList.toggle("open", openKeys.has(key));
   return art;
 }
 
-/** The most active deed's certificate is the hero object: the one bright thing on the page. */
-let heroImg: HTMLImageElement | null = null;
-function renderHeroCert(): void {
-  const stage = document.getElementById("hero-cert");
-  if (!stage) return;
-  const top = rows.find((r) => r.token?.metadata?.media);
-  const media = top?.token?.metadata?.media;
-  if (!top || !media) return; // keep the quiet placeholder until a certificate arrives
-  if (heroImg && heroImg.getAttribute("src") === media && stage.contains(heroImg)) return;
-  heroImg = h("img", { class: "cert-hero", src: media, alt: `Certificate of ${top.deed.title}` });
-  stage.replaceChildren(
-    heroImg,
-    h("span", { class: "stamp" }, top.deed.listing ? "for sale" : `epoch ${top.info.owner_epoch}`),
-  );
-  // A whisper of parallax on precise pointers: the paper answers the hand.
-  if (matchMedia("(hover: hover) and (pointer: fine)").matches && !reduceMotion() && !stage.dataset.tilt) {
-    stage.dataset.tilt = "1";
-    stage.addEventListener("pointermove", (e) => {
-      if (!heroImg) return;
-      const r = stage.getBoundingClientRect();
-      const dx = (e.clientX - r.left) / r.width - 0.5;
-      const dy = (e.clientY - r.top) / r.height - 0.5;
-      heroImg.classList.add("tilt");
-      heroImg.style.transform = `rotate(0.6deg) rotateY(${dx * 5}deg) rotateX(${dy * -4}deg)`;
-    });
-    stage.addEventListener("pointerleave", () => {
-      if (!heroImg) return;
-      heroImg.classList.remove("tilt");
-      heroImg.style.transform = "";
-    });
+/** Keyed render. A row whose data did not change keeps its element (no flicker, typed inputs
+ *  survive); open rows and panels stay open; a row whose 30-day calls rose flashes once; a
+ *  rank change slides rows into place (FLIP). Untouched rows never re-animate. */
+function render(animate = true): void {
+  renderHero();
+  renderTabs();
+  const list = $("deeds");
+  const me = currentAccount();
+  const tab = activeTab();
+  const visible = tab === "sale" ? rows.filter((r) => r.deed.listing) : rows;
+  const expected = tab === "sale" ? counts().sale : counts().all;
+  renderNote();
+  if (visible.length === 0) {
+    if (expected > 0 || rows.length === 0) {
+      if (!list.querySelector(".skel")) list.replaceChildren(skeleton(Math.min(5, Math.max(1, expected || 5))));
+    } else {
+      list.replaceChildren(h("p", { class: "empty" }, "No deeds yet. Mint one with the seller agent, then reload."));
+    }
+    flashKeys.clear();
+    return;
   }
+  const before = new Map<string, { el: HTMLElement; index: number; top: number }>();
+  [...list.querySelectorAll<HTMLElement>(":scope > .entry")].forEach((el, index) => {
+    before.set(el.dataset.token ?? "", { el, index, top: el.getBoundingClientRect().top });
+  });
+  const firstPaint = before.size === 0;
+  const fresh = visible.map((r, i) => {
+    const key = r.deed.token_id;
+    const sig = rowSig(r, me);
+    const old = before.get(key);
+    const typing = old && old.el.contains(document.activeElement) && document.activeElement?.tagName === "INPUT";
+    let el: HTMLElement;
+    if (old && (old.el.dataset.sig === sig || typing)) {
+      el = old.el;
+      const rank = el.querySelector(".c-rank");
+      if (rank) rank.textContent = String(i + 1).padStart(2, "0");
+    } else {
+      el = entry(r, i, me);
+      el.dataset.sig = sig;
+      if (old) {
+        // Same row, new numbers: carry over which owner/customer panels were open.
+        const was = [...old.el.querySelectorAll("details")].map((d) => d.open);
+        [...el.querySelectorAll("details")].forEach((d, k) => (d.open = was[k] ?? false));
+      } else if (animate) {
+        el.classList.add("new");
+        el.style.setProperty("--d", `${Math.min(i, 8) * 45}ms`);
+      }
+    }
+    return el;
+  });
+  // Swap only when something changed, so a quiet refresh touches nothing.
+  const same = fresh.length === list.children.length && fresh.every((el, i) => list.children[i] === el);
+  if (!same) list.replaceChildren(...fresh);
+  if (!animate || firstPaint || reduceMotion()) {
+    flashKeys.clear();
+    return;
+  }
+  // Slide only a true reorder of the same rows; rows arriving or leaving just take their place.
+  const sameRows = fresh.length === before.size && fresh.every((el) => before.has(el.dataset.token ?? ""));
+  fresh.forEach((el, i) => {
+    const key = el.dataset.token ?? "";
+    const old = before.get(key);
+    if (sameRows && old && old.index !== i) {
+      const dy = old.top - el.getBoundingClientRect().top;
+      if (Math.abs(dy) > 1) el.animate([{ transform: `translateY(${dy}px)` }, { transform: "none" }], { duration: 300, easing: "cubic-bezier(0.16, 1, 0.3, 1)" });
+    }
+    if (flashKeys.has(key)) {
+      el.classList.remove("flash");
+      void el.offsetWidth;
+      el.classList.add("flash");
+      el.addEventListener("animationend", () => el.classList.remove("flash"), { once: true });
+    }
+  });
+  flashKeys.clear();
 }
 
-/** Live totals across all deeds, for the hero strip. Figures roll up once, then tick when the chain moves them. */
+function renderNote(): void {
+  const note = $("board-note");
+  const text = totalDeeds > deedList.length ? `Showing the ${deedList.length} newest of ${totalDeeds} deeds.` : "";
+  if (note.textContent !== text) note.textContent = text;
+}
+
+// ---------------------------------------------------------------- hero
+
+function featured(): { row: Row; forSale: boolean } | null {
+  const sale = rows.find((r) => r.deed.listing);
+  if (sale) return { row: sale, forSale: true };
+  return rows[0] ? { row: rows[0], forSale: false } : null;
+}
+
+/** The featured listing: the top deed for sale by paid calls (else the most active deed),
+ *  its certificate, the three numbers a buyer weighs, and the page's one primary action. */
+function renderHero(): void {
+  const box = document.getElementById("featured");
+  if (!box) return;
+  const f = featured();
+  if (!f) return; // keep the placeholder until the first row lands
+  const { row: r, forSale } = f;
+  const me = currentAccount();
+  const sig = `${rowSig(r, me)}|${forSale}`;
+  if (box.dataset.sig === sig) return;
+  box.dataset.sig = sig;
+  const l = r.deed.listing;
+  const p = paybackOf(r);
+  const id = deedId(r.deed);
+  const figs = h("dl", { class: "feat-figs" });
+  if (l && p) {
+    figs.append(
+      h("div", { class: p.paybackDays === null ? "fig big none" : "fig big", title: paybackRule() }, h("dt", {}, "est. payback"), h("dd", {}, paybackText(p))),
+      figure("price", h("span", { class: "num" }, `${amount(l.price)} ${token.symbol}`)),
+      figure("vault cash, comes with it", h("span", { class: "num" }, `${amount(r.info.revenue)} ${token.symbol}`)),
+    );
+  } else {
+    figs.append(
+      h("div", { class: "fig big" }, h("dt", {}, "paid calls, 30 days"), h("dd", {}, fmtInt(r.stats.calls_30d))),
+      figure("price", h("span", { class: "num muted" }, "not for sale")),
+      figure("vault cash", h("span", { class: "num" }, `${amount(r.info.revenue)} ${token.symbol}`)),
+    );
+  }
+  const action = forSale ? buyButton(r, me) : null;
+  const parts: (HTMLElement | null)[] = [
+    h("h2", { class: "feat-h" }, forSale ? "Featured listing" : "Most active business"),
+    certImage(r, "feat-cert"),
+    h("p", { class: "feat-id" }, h("strong", {}, id), ` ${r.deed.title}`),
+    figs,
+    action,
+    forSale && me && l && me === l.seller ? h("p", { class: "note" }, "This is your listing. Cancel it from the board.") : null,
+    forSale ? h("p", { class: "note fine" }, `Ranked first of ${counts().sale} for sale by paid calls in 30 days.`) : h("p", { class: "note fine" }, "Nothing is for sale right now. This is the deed with the most paid calls in 30 days."),
+  ];
+  box.replaceChildren(...parts.filter((x): x is HTMLElement => x !== null));
+}
+
+/** Live totals across the deeds on the board. Figures roll up once, then tick when the chain moves them. */
 let kpiSeen = false;
 const kpiLast: Record<string, number> = {};
 function renderKpis(): void {
   const kpis = $("kpis");
   const calls30 = rows.reduce((n, r) => n + r.stats.calls_30d, 0);
-  const rev30 = rows.reduce((n, r) => n + Number(r.stats.revenue_30d), 0);
-  const callsAll = rows.reduce((n, r) => n + r.stats.calls_total, 0);
-  const items: [string, number, (n: number) => string][] = [
-    ["businesses live", rows.length, fmtInt],
-    ["paid calls, 30 days", calls30, fmtInt],
-    ["revenue, 30 days", Number(rev30) / 10 ** token.decimals, fmtAmt(2)],
-    ["paid calls, all time", callsAll, fmtInt],
+  const rev30 = rows.reduce((n, r) => n + BigInt(r.stats.revenue_30d), 0n);
+  const cash = rows.reduce((n, r) => n + BigInt(r.info.revenue), 0n);
+  const items: [string, number, (n: number) => string, boolean][] = [
+    ["businesses live", rows.length, fmtInt, false],
+    ["paid calls, 30d", calls30, fmtInt, false],
+    ["revenue, 30d", toUnits(rev30, token.decimals), fmtAmt(2), true],
+    ["cash in vaults", toUnits(cash, token.decimals), fmtAmt(2), true],
   ];
+  const sig = items.map((i) => i[1]).join("|") + token.symbol;
+  if (kpis.dataset.sig === sig) return;
+  kpis.dataset.sig = sig;
   kpis.replaceChildren(
-    ...items.map(([label, value, fmt]) => {
+    ...items.map(([label, value, fmt, unit]) => {
       const changed = kpiSeen && kpiLast[label] !== undefined && kpiLast[label] !== value;
       kpiLast[label] = value;
       const dd = countUp(value, fmt);
@@ -559,73 +924,59 @@ function renderKpis(): void {
         dd.classList.add("tick");
         dd.addEventListener("animationend", () => dd.classList.remove("tick"), { once: true });
       }
-      if (label === "revenue, 30 days") {
-        dd.append(h("span", { class: "unit" }, token.symbol));
-      }
-      return h("dl", { class: "fig" }, h("dt", {}, label), dd);
+      if (unit) dd.append(h("span", { class: "unit" }, token.symbol));
+      return h("div", { class: "fig" }, h("dt", {}, label), dd);
     }),
   );
   kpiSeen = true;
 }
 
-function render(): void {
-  const list = $("deeds");
-  renderHeroCert();
-  if (rows.length === 0) {
-    if (!list.querySelector(".skel")) list.replaceChildren(skeleton(5));
-    return;
-  }
-  // Keyed by token id: a row already on screen keeps its open panels and does not re-animate.
-  const before = new Map<string, { el: HTMLElement; open: boolean[] }>();
-  for (const el of [...list.querySelectorAll<HTMLElement>(".entry")]) {
-    const key = el.dataset.token ?? "";
-    before.set(key, { el, open: [...el.querySelectorAll("details")].map((d) => d.open) });
-  }
-  const fresh = rows.map((r, i) => {
-    const el = entry(r, i);
-    const old = before.get(r.deed.token_id);
-    if (old) {
-      el.classList.add("no-anim");
-      [...el.querySelectorAll("details")].forEach((d, i) => (d.open = old.open[i] ?? false));
-    } else {
-      el.classList.add("new");
-    }
-    return el;
-  });
-  // Stagger only the rows arriving in this pass.
-  let k = 0;
-  for (const el of fresh) if (!el.classList.contains("no-anim")) el.style.setProperty("--d", `${Math.min(k++, 8) * 55}ms`);
-  list.replaceChildren(...fresh);
-}
-
 function renderWallet(account: string | null): void {
   const box = $("wallet");
   box.replaceChildren(
-    account
-      ? h("span", { class: "who" }, account)
-      : h("span", { class: "who muted" }, "not connected"),
+    account ? h("span", { class: "who", title: account }, short(account, 8)) : "",
     account ? button("Disconnect", () => void disconnect()) : button("Connect wallet", () => void connect().catch((e) => status(String(e), "error")), "primary"),
   );
 }
 
 async function main(): Promise<void> {
   $("deed-link").replaceChildren(link(`address/${DEED_CONTRACT}`, DEED_CONTRACT));
-  $("deeds").replaceChildren(skeleton(5)); // the layout lands before the first read returns
+  $("deeds").replaceChildren(skeleton(5)); // the board's shape lands before the first read returns
   renderWallet(null);
   onAccount((a) => {
     renderWallet(a);
-    void refresh();
+    void refresh(true);
   });
-  await refresh();
+  addEventListener("hashchange", () => {
+    const t = readTab();
+    if (t) {
+      setTab(t);
+      $("registry").scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth" });
+    }
+  });
+  if (location.hash === "#for-sale" || location.hash === "#all") $("registry").scrollIntoView();
+  // The secondary hero action: the board, on the For sale tab (works even when the hash is already set).
+  document.querySelector(".cue")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    setTab("sale");
+    $("registry").scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth" });
+  });
+  await refresh(true);
   void initWallet().catch(() => undefined);
-  setInterval(() => void refresh(), REFRESH_MS);
-  // The header anchors once the visitor scrolls into the registry.
+  // The next read starts REFRESH_MS after the last one ended, so slow reads never stack up.
+  const loop = async (): Promise<void> => {
+    await sleep(REFRESH_MS);
+    await refresh();
+    void loop();
+  };
+  void loop();
+  setInterval(tickWorkers, 5000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && Date.now() - lastLoadAt > REFRESH_MS) void refresh();
+  });
+  // The header anchors once the visitor scrolls into the board.
   const top = document.querySelector("header.top");
-  addEventListener(
-    "scroll",
-    () => top?.classList.toggle("scrolled", scrollY > 8),
-    { passive: true },
-  );
+  addEventListener("scroll", () => top?.classList.toggle("scrolled", scrollY > 8), { passive: true });
 }
 
 void main();

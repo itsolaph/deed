@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;800;900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
   </head>
@@ -19,40 +19,48 @@
       <div class="brand">
         <span class="mark" aria-hidden="true">D</span>
         <span class="word">Deed</span>
-        <span class="where">registry, testnet</span>
+        <span class="badge">testnet</span>
       </div>
       <div class="wallet-box">
-        <div class="live" id="live" hidden><span class="dot" aria-hidden="true"></span>reading</div>
+        <div class="live" id="live" hidden><span class="dot" aria-hidden="true"></span><span class="live-text">reading</span></div>
         <div id="wallet"></div>
       </div>
     </header>
 
     <main>
       <section class="hero">
-        <div class="copy">
-          <h1>A business you can hold</h1>
-          <p class="lede">
-            Every deed is an NFT that owns a running paid API: a vault with its treasury, price list,
-            customer ledger and worker key. Buy the deed and the business is yours, in one transaction.
-          </p>
-          <div class="board" id="kpis" aria-label="Registry totals"></div>
-          <ul class="mechs">
-            <li><strong>The cashier can only charge.</strong> Its key can never withdraw.</li>
-            <li><strong>A listing locks the vault.</strong> The buyer sees exactly what runs.</li>
-            <li><strong>The sale rotates the worker.</strong> Deliveries survive, no downtime.</li>
-          </ul>
-          <a class="cue" href="#registry">Open the listings</a>
+        <div class="hero-left">
+          <div class="copy">
+            <h1>A business you can hold</h1>
+            <p class="lede">
+              Every deed is an NFT that owns a running paid API: a vault with its treasury, price list,
+              customer ledger and worker key. Buy the deed and the business is yours, in one transaction.
+            </p>
+            <ul class="mechs">
+              <li><strong>The cashier can only charge.</strong> Its key can never withdraw.</li>
+              <li><strong>A listing locks the vault.</strong> The buyer sees exactly what runs.</li>
+              <li><strong>The sale rotates the worker.</strong> Deliveries survive, no downtime.</li>
+            </ul>
+          </div>
+          <dl class="board" id="kpis" aria-label="Totals across the deeds on the board"></dl>
+          <a class="cue" href="#for-sale">See every business for sale</a>
         </div>
-        <div class="stage" id="hero-cert">
-          <div class="stage-ph" aria-hidden="true"></div>
-          <p class="stage-note">certificate arrives shortly</p>
-        </div>
+        <aside class="featured" id="featured" aria-label="Featured listing">
+          <div class="feat-cert cert-ph" aria-hidden="true"><span>Reading the chain</span></div>
+        </aside>
       </section>
 
       <div id="status" class="status" role="status" aria-live="polite"></div>
-      <section class="entries" id="registry">
-        <h2 class="book">Listings, ranked by paid calls</h2>
-        <div id="deeds"><p class="note">Reading the chain</p></div>
+      <section class="entries" id="registry" aria-labelledby="board-title">
+        <div class="board-top">
+          <h2 class="book" id="board-title">Listings, ranked by paid calls</h2>
+          <div class="tabs" id="tabs" role="tablist" aria-label="Which deeds to show"></div>
+        </div>
+        <div class="board-head" aria-hidden="true">
+          <span>#</span><span>deed</span><span>calls, 30d</span><span>revenue, 30d</span><span>price</span><span>est. payback</span><span>status</span><span></span>
+        </div>
+        <div id="deeds" role="tabpanel"></div>
+        <p class="note board-note" id="board-note"></p>
       </section>
     </main>
 

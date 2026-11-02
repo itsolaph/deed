@@ -22,6 +22,7 @@
         <span class="where">registry · testnet</span>
       </div>
       <div class="wallet-box">
+        <div class="live" id="live" hidden><span class="dot" aria-hidden="true"></span>reading registry</div>
         <div id="wallet"></div>
       </div>
     </header>
@@ -40,14 +41,16 @@
             <span><strong>A listing locks the vault</strong> — the buyer sees exactly what runs.</span>
             <span><strong>The sale rotates the worker</strong> — deliveries survive, no downtime.</span>
           </p>
+          <a class="cue" href="#registry">open the registry <span class="arr" aria-hidden="true">↓</span></a>
         </div>
         <div class="stage" id="hero-cert">
-          <p class="stage-note">the registry opens below</p>
+          <div class="stage-ph" aria-hidden="true"></div>
+          <p class="stage-note">the newest certificate arrives shortly</p>
         </div>
       </section>
 
       <div id="status" class="status" role="status" aria-live="polite"></div>
-      <section class="entries">
+      <section class="entries" id="registry">
         <h2 class="book">Registry</h2>
         <div id="deeds"><p class="note">Reading the chain …</p></div>
       </section>

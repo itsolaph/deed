@@ -283,9 +283,94 @@ button.primary:hover { background: var(--oxblood-deep); }
 footer { padding-block: 22px 40px; border-top: 1px solid var(--line); }
 footer p { color: var(--ink-3); font-size: 12.5px; margin: 0; max-width: 78ch; }
 
-/* ---------------------------------------------------------------- motion + responsive */
-main { animation: enter 0.5s var(--ease) both; }
-@keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+/* ---------------------------------------------------------------- fluid pass
+   Motion budget: entrances (once), one hover feedback per interactive element,
+   a live pulse while reading. No loops, no parallax on touch, reduced-motion kills all. */
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes fold { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes slam { 0% { opacity: 0; transform: rotate(-7deg) scale(1.7); } 60% { opacity: 1; transform: rotate(-7deg) scale(0.94); } 100% { transform: rotate(-7deg) scale(1); } }
+@keyframes shimmer { from { background-position: -420px 0; } to { background-position: 420px 0; } }
+@keyframes draw { from { height: 2px; } }
+@keyframes tick { 0% { box-shadow: inset 0 -2px 0 var(--oxblood); } 100% { box-shadow: inset 0 -2px 0 transparent; } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+/* entries cascade in; .no-anim marks rows that were already on screen */
+.entry { animation: rise 0.45s var(--ease) both; }
+.entry.new { animation-delay: var(--d, 0ms); }
+.entry.no-anim, .entry.no-anim * { animation: none !important; }
+.entry-head { transition: background-color 0.2s var(--ease); }
+.entry:hover .entry-head { background: rgba(251, 248, 239, 0.6); }
+.entry-head.is-toggle { cursor: pointer; }
+.entry:hover .thumb { transform: rotate(-1.2deg); }
+.thumb { transition: transform 0.25s var(--ease); }
+
+/* panels: smooth fold-out + clearer verbs */
+details.panel summary { transition: color 0.15s var(--ease); }
+details.panel summary:hover { color: var(--oxblood); }
+details[open] > .panel-body { animation: fold 0.28s var(--ease); }
+
+/* sparkline draws from the baseline */
+.spark .bar { animation: draw 0.5s var(--ease) both; animation-delay: calc(var(--i, 0) * 18ms); }
+
+/* figures: value ticks when the chain moves them */
+.fig dd { border-radius: 2px; }
+.fig dd.tick { animation: tick 1.6s var(--ease); }
+
+/* header: quiet until you scroll, then it anchors */
+header.top { position: sticky; top: 0; z-index: 10; background: rgba(246, 241, 230, 0.92); backdrop-filter: blur(6px); transition: box-shadow 0.25s var(--ease); }
+header.top.scrolled { box-shadow: 0 1px 0 var(--line), 0 8px 24px -18px rgba(32, 27, 20, 0.5); }
+
+/* live pulse while a read is in flight */
+.live { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); }
+.live .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--oxblood); animation: pulse 1.2s ease-in-out infinite; }
+.live[hidden] { display: none; }
+
+/* skeleton rows: the layout arrives before the data does */
+.skel { border-bottom: 1px solid var(--line); padding: 18px 0; animation: rise 0.4s var(--ease) both; }
+.skel .row { display: flex; align-items: center; gap: 18px; }
+.skel .b {
+  height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--paper-sunk) 25%, #f3ecdc 45%, var(--paper-sunk) 65%);
+  background-size: 840px 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+.skel .thumb-b { width: 72px; height: 72px; border-radius: 3px; flex: none; }
+.skel .t1 { width: 34%; }
+.skel .t2 { width: 22%; margin-top: 10px; }
+.skel .figs-b { display: flex; gap: 26px; margin: 16px 0 0 90px; }
+.skel .f { width: 90px; height: 26px; }
+
+/* hero certificate: placeholder keeps the layout still, then the cert slams its stamp */
+.stage-ph { width: min(100%, 340px); aspect-ratio: 8 / 5; border-radius: 3px; border: 1px dashed var(--line); background: var(--paper-sunk); }
+.stage .cert-hero { animation: rise 0.6s var(--ease) both; will-change: transform; }
+.stage .stamp { animation: slam 0.5s var(--ease) 0.55s both; }
+@media (hover: hover) and (pointer: fine) {
+  .stage { perspective: 900px; }
+  .stage .cert-hero.tilt { transition: none; }
+}
+
+/* scroll cue */
+.cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--ink-2);
+  border-bottom: none;
+}
+.cue:hover { color: var(--oxblood); }
+.cue .arr { transition: transform 0.2s var(--ease); }
+.cue:hover .arr { transform: translateY(3px); }
+
+html { scroll-behavior: smooth; }
+a, button, summary, .thumb, .entry-head { will-change: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
 
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; }

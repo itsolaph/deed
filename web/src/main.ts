@@ -122,6 +122,16 @@ async function loadCerts(): Promise<void> {
 /** Public testnet RPC is rate-limited: fetch deeds a few at a time and render each row as it
  *  arrives, so a fresh visitor sees cards appear progressively instead of one blank wait. */
 async function load(): Promise<void> {
+  const live = document.getElementById("live");
+  live?.removeAttribute("hidden");
+  try {
+    await loadInner();
+  } finally {
+    live?.setAttribute("hidden", "");
+  }
+}
+
+async function loadInner(): Promise<void> {
   const config = await withBackoff(() => deedViews.config());
   if (token.contract !== config.payment_token) {
     const meta = await withBackoff(() => rpc.view<{ symbol: string; decimals: number }>(config.payment_token, "ft_metadata"));
@@ -182,6 +192,51 @@ async function refresh(): Promise<void> {
 
 function figure(label: string, value: Child, title?: string): HTMLElement {
   return h("div", { class: "fig", ...(title ? { title } : {}) }, h("dt", {}, label), h("dd", {}, value));
+}
+
+const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** Numbers that roll up on first sight: the registry feels alive without faking data.
+ *  The final value is painted synchronously — rAF never runs in a hidden tab — and the
+ *  roll-up only decorates a visible page. The unit span is never touched by the loop. */
+function countUp(target: number, format: (n: number) => string): HTMLElement {
+  const roll = h("span", { class: "roll" }, format(target));
+  const dd = h("dd", {}, roll);
+  if (reduceMotion() || document.visibilityState !== "visible") return dd;
+  const t0 = performance.now();
+  const dur = 650;
+  const step = (t: number): void => {
+    if (document.visibilityState !== "visible") {
+      roll.replaceChildren(format(target));
+      return;
+    }
+    const p = Math.min(1, (t - t0) / dur);
+    const eased = 1 - Math.pow(1 - p, 3);
+    roll.replaceChildren(format(target * eased));
+    if (p < 1) requestAnimationFrame(step);
+    else roll.replaceChildren(format(target));
+  };
+  requestAnimationFrame(step);
+  return dd;
+}
+
+const fmtInt = (n: number) => Math.round(n).toLocaleString();
+const fmtAmt = (digits: number) => (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: digits });
+
+/** Skeleton rows so the layout lands before the rate-limited reads do. */
+function skeleton(n: number): HTMLElement {
+  const box = h("div", {});
+  for (let i = 0; i < n; i++) {
+    box.append(
+      h(
+        "div",
+        { class: "skel", style: `animation-delay:${i * 60}ms`, "aria-hidden": "true" },
+        h("div", { class: "row" }, h("div", { class: "b thumb-b" }), h("div", {}, h("div", { class: "b t1" }), h("div", { class: "b t2" }))),
+        h("div", { class: "figs-b" }, h("div", { class: "b f" }), h("div", { class: "b f" }), h("div", { class: "b f" }), h("div", { class: "b f" })),
+      ),
+    );
+  }
+  return box;
 }
 
 function form(fields: { name: string; placeholder: string; value?: string }[], button: string, onSubmit: (values: Record<string, string>) => void): HTMLFormElement {
@@ -340,8 +395,9 @@ function spark(days: { day: number; calls: number }[]): HTMLElement {
   const max = Math.max(1, ...last.map((d) => d.calls));
   const dayDate = (day: number) => new Date(day * 86_400_000).toLocaleDateString(undefined, { day: "numeric", month: "short" });
   const bars = h("div", { class: "bars", role: "img", "aria-label": "calls per day, last 30 days" });
+  let i = 0;
   for (const d of last) {
-    bars.append(h("span", { class: "bar", style: `height:${Math.max(4, Math.round((d.calls / max) * 100))}%`, title: `${dayDate(d.day)} · ${d.calls} calls` }));
+    bars.append(h("span", { class: "bar", style: `height:${Math.max(4, Math.round((d.calls / max) * 100))}%; --i:${i++}`, title: `${dayDate(d.day)} · ${d.calls} calls` }));
   }
   const first = last[0]?.day ?? 0;
   return h(
@@ -403,50 +459,131 @@ function entry(r: Row): HTMLElement {
   const panels = [buyPanel(r, me), me && me === info.owner_id ? ownerPanel(r) : null, me ? customerPanel(r, me) : null].filter(
     (p): p is { summary: string; body: HTMLElement } => p !== null,
   );
-  return h(
+  // The whole head row opens the first available action panel — a big, obvious target.
+  const art = h(
     "article",
-    { class: "entry" },
+    { class: "entry", "data-token": deed.token_id },
     head,
     body,
     ...panels.map((p) => h("details", { class: "panel" }, h("summary", {}, p.summary), p.body)),
   );
+  const firstPanel = art.querySelector("details");
+  if (firstPanel) {
+    head.classList.add("is-toggle");
+    const toggle = (): void => {
+      firstPanel.open = !firstPanel.open;
+      head.setAttribute("aria-expanded", String(firstPanel.open));
+      if (firstPanel.open) firstPanel.scrollIntoView({ block: "nearest", behavior: reduceMotion() ? "auto" : "smooth" });
+    };
+    head.setAttribute("role", "button");
+    head.setAttribute("tabindex", "0");
+    head.setAttribute("aria-expanded", String(firstPanel.open));
+    head.addEventListener("click", (e) => {
+      if ((e.target as HTMLElement).closest("a, button, input, summary")) return;
+      toggle();
+    });
+    head.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggle();
+      }
+    });
+  }
+  return art;
 }
 
 /** The most active deed's certificate is the hero object: the one bright thing on the page. */
+let heroImg: HTMLImageElement | null = null;
 function renderHeroCert(): void {
   const stage = document.getElementById("hero-cert");
   if (!stage) return;
   const top = rows[0];
   const media = top?.token?.metadata?.media;
-  if (!top || !media) return; // keep the quiet note until a certificate arrives
+  if (!top || !media) return; // keep the quiet placeholder until a certificate arrives
+  heroImg = h("img", { class: "cert-hero", src: media, alt: `Certificate of ${top.deed.title}` });
   stage.replaceChildren(
-    h("img", { class: "cert-hero", src: media, alt: `Certificate of ${top.deed.title}` }),
+    heroImg,
     h("span", { class: "stamp" }, top.deed.listing ? "for sale" : `epoch ${top.info.owner_epoch}`),
   );
+  // A whisper of parallax on precise pointers: the paper answers the hand.
+  if (matchMedia("(hover: hover) and (pointer: fine)").matches && !reduceMotion() && !stage.dataset.tilt) {
+    stage.dataset.tilt = "1";
+    stage.addEventListener("pointermove", (e) => {
+      if (!heroImg) return;
+      const r = stage.getBoundingClientRect();
+      const dx = (e.clientX - r.left) / r.width - 0.5;
+      const dy = (e.clientY - r.top) / r.height - 0.5;
+      heroImg.classList.add("tilt");
+      heroImg.style.transform = `rotate(0.6deg) rotateY(${dx * 5}deg) rotateX(${dy * -4}deg)`;
+    });
+    stage.addEventListener("pointerleave", () => {
+      if (!heroImg) return;
+      heroImg.classList.remove("tilt");
+      heroImg.style.transform = "";
+    });
+  }
 }
 
-/** Live totals across all deeds, for the hero strip. */
+/** Live totals across all deeds, for the hero strip. Figures roll up once, then tick when the chain moves them. */
+let kpiSeen = false;
+const kpiLast: Record<string, number> = {};
 function renderKpis(): void {
   const kpis = $("kpis");
   const calls30 = rows.reduce((n, r) => n + r.stats.calls_30d, 0);
   const rev30 = rows.reduce((n, r) => n + Number(r.stats.revenue_30d), 0);
   const callsAll = rows.reduce((n, r) => n + r.stats.calls_total, 0);
+  const items: [string, number, (n: number) => string][] = [
+    ["businesses live", rows.length, fmtInt],
+    ["paid calls, 30 days", calls30, fmtInt],
+    ["revenue, 30 days", Number(rev30) / 10 ** token.decimals, fmtAmt(2)],
+    ["paid calls, all time", callsAll, fmtInt],
+  ];
   kpis.replaceChildren(
-    h("dl", { class: "fig" }, h("dt", {}, "businesses live"), h("dd", {}, String(rows.length))),
-    h("dl", { class: "fig" }, h("dt", {}, "paid calls, 30 days"), h("dd", {}, String(calls30))),
-    h("dl", { class: "fig" }, h("dt", {}, "revenue, 30 days"), h("dd", {}, amount(String(rev30)), h("span", { class: "unit" }, token.symbol))),
-    h("dl", { class: "fig" }, h("dt", {}, "paid calls, all time"), h("dd", {}, String(callsAll))),
+    ...items.map(([label, value, fmt]) => {
+      const changed = kpiSeen && kpiLast[label] !== undefined && kpiLast[label] !== value;
+      kpiLast[label] = value;
+      const dd = countUp(value, fmt);
+      if (changed) {
+        dd.classList.add("tick");
+        dd.addEventListener("animationend", () => dd.classList.remove("tick"), { once: true });
+      }
+      if (label === "revenue, 30 days") {
+        dd.append(h("span", { class: "unit" }, token.symbol));
+      }
+      return h("dl", { class: "fig" }, h("dt", {}, label), dd);
+    }),
   );
+  kpiSeen = true;
 }
 
 function render(): void {
   const list = $("deeds");
   renderHeroCert();
   if (rows.length === 0) {
-    list.replaceChildren(h("p", { class: "note" }, "No deeds yet."));
+    if (!list.querySelector(".skel")) list.replaceChildren(skeleton(5));
     return;
   }
-  list.replaceChildren(...rows.map(entry));
+  // Keyed by token id: a row already on screen keeps its open panels and does not re-animate.
+  const before = new Map<string, { el: HTMLElement; open: boolean[] }>();
+  for (const el of [...list.querySelectorAll<HTMLElement>(".entry")]) {
+    const key = el.dataset.token ?? "";
+    before.set(key, { el, open: [...el.querySelectorAll("details")].map((d) => d.open) });
+  }
+  const fresh = rows.map((r) => {
+    const el = entry(r);
+    const old = before.get(r.deed.token_id);
+    if (old) {
+      el.classList.add("no-anim");
+      [...el.querySelectorAll("details")].forEach((d, i) => (d.open = old.open[i] ?? false));
+    } else {
+      el.classList.add("new");
+    }
+    return el;
+  });
+  // Stagger only the rows arriving in this pass.
+  let k = 0;
+  for (const el of fresh) if (!el.classList.contains("no-anim")) el.style.setProperty("--d", `${Math.min(k++, 8) * 55}ms`);
+  list.replaceChildren(...fresh);
 }
 
 function renderWallet(account: string | null): void {
@@ -461,6 +598,7 @@ function renderWallet(account: string | null): void {
 
 async function main(): Promise<void> {
   $("deed-link").replaceChildren(link(`address/${DEED_CONTRACT}`, DEED_CONTRACT));
+  $("deeds").replaceChildren(skeleton(5)); // the layout lands before the first read returns
   renderWallet(null);
   onAccount((a) => {
     renderWallet(a);
@@ -469,6 +607,13 @@ async function main(): Promise<void> {
   await refresh();
   void initWallet().catch(() => undefined);
   setInterval(() => void refresh(), REFRESH_MS);
+  // The header anchors once the visitor scrolls into the registry.
+  const top = document.querySelector("header.top");
+  addEventListener(
+    "scroll",
+    () => top?.classList.toggle("scrolled", scrollY > 8),
+    { passive: true },
+  );
 }
 
 void main();

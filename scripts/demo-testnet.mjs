@@ -215,13 +215,13 @@ async function main() {
   // 3. Echo target and worker A.
   banner("3. echo target and worker A start");
   start("echo", "agents/dist/src/echo-target.js", ["--port", String(ECHO_PORT), "--fail-rate", "0.3", "--outage-file", OUTAGE_FILE]);
-  start("worker-a", "worker/dist/src/cli.js", ["--vault", VAULT, "--network", "testnet", "--port", String(PORT_A), "--key-file", KEY_A, "--allow-target", `127.0.0.1:${ECHO_PORT}`, "--flush-ms", "15000", "--data-dir", path.join(LOGS, "worker-a-data")]);
+  start("worker-a", "worker/dist/src/cli.js", ["--vault", VAULT, "--network", "testnet", "--port", String(PORT_A), "--key-file", KEY_A, "--allow-target", `127.0.0.1:${ECHO_PORT}`, "--flush-ms", "15000", "--watch-ms", "10000", "--data-dir", path.join(LOGS, "worker-a-data")]);
   const healthA = await waitHealth(ENDPOINT_A, 60_000);
   say(`worker A healthy: key ${healthA.worker_public_key}, price ${healthA.price_per_call}`);
 
   // 4. Traffic: alice and bob start without credit, get 402, top up and keep sending.
   banner("4. traffic: alice and bob send deliveries (first call answers 402, the SDK tops up)");
-  start("traffic", "agents/dist/src/traffic.js", ["--vault", VAULT, "--customers", `${A.alice},${A.bob}`, "--target", `http://127.0.0.1:${ECHO_PORT}/hook`, "--rate", "0.25", "--top-up", "5", "--track-ms", "6000", "--summary", path.join(LOGS, "traffic-summary.json")]);
+  start("traffic", "agents/dist/src/traffic.js", ["--vault", VAULT, "--customers", `${A.alice},${A.bob}`, "--target", `http://127.0.0.1:${ECHO_PORT}/hook`, "--rate", "0.25", "--top-up", "5", "--track-ms", "10000", "--summary", path.join(LOGS, "traffic-summary.json")]);
   const tickEnd = Date.now() + TRAFFIC_SEC * 1000;
   while (Date.now() < tickEnd) {
     await sleep(15_000);
@@ -251,6 +251,16 @@ async function main() {
   await sleep(20_000); // a little more revenue accrues to the vault while listed
 
   // 7. The buyer agent decides and buys.
+  // The buyer sizes the business from charged revenue, and charge batches can
+  // queue behind the shared RPC budget; let them land before the appraisal.
+  const revEnd = Date.now() + 240_000;
+  let rev = await view(VAULT, "get_info");
+  while (Number(rev.revenue) < 0.2 && Date.now() < revEnd) {
+    await sleep(15_000);
+    rev = await view(VAULT, "get_info");
+    say(`charges landing: vault revenue ${fmt(rev.revenue)} tUSDC, ${rev.charged_items} charges`);
+  }
+
   banner("7. buyer agent reads the vault, computes payback, gets a dry 1Click funding quote, buys");
   const buy = await run("agents/dist/src/buyer.js", ["--account", A.buyer, "--token-id", SLUG, "--max-payback-days", "30", "--fund-from", "eth:usdc", "--refund-to", "0x1111111111111111111111111111111111111111", "--mint-if-short"], "07-buyer");
   step(`buyer agent buys ${SLUG}`, { tx: buy.buy_tx, success: buy.bought === true, note: buy.evaluated?.[0] ? `payback ${Number(buy.evaluated[0].payback_days).toFixed(2)} days` : undefined });
@@ -272,7 +282,7 @@ async function main() {
   await sleep(15_000);
   const kg = await run("agents/dist/src/owner.js", ["keygen", "--as", A.buyer, "--vault", VAULT, "--key-file", KEY_B], "09-keygen");
   record.worker_b_key = kg.public_key;
-  start("worker-b", "worker/dist/src/cli.js", ["--vault", VAULT, "--network", "testnet", "--port", String(PORT_B), "--key-file", KEY_B, "--allow-target", `127.0.0.1:${ECHO_PORT}`, "--flush-ms", "15000", "--wait-for-key", "180", "--data-dir", path.join(LOGS, "worker-b-data")]);
+  start("worker-b", "worker/dist/src/cli.js", ["--vault", VAULT, "--network", "testnet", "--port", String(PORT_B), "--key-file", KEY_B, "--allow-target", `127.0.0.1:${ECHO_PORT}`, "--flush-ms", "15000", "--watch-ms", "10000", "--wait-for-key", "180", "--data-dir", path.join(LOGS, "worker-b-data")]);
   const rotB = await run("agents/dist/src/owner.js", ["rotate", "--as", A.buyer, "--vault", VAULT, "--endpoint", ENDPOINT_B, "--key-file", KEY_B], "09-rotate");
   step("buyer rotates the worker key and endpoint in one transaction", { tx: rotB.tx, success: rotB.success });
   await waitHealth(ENDPOINT_B, 90_000);

@@ -7,6 +7,7 @@ dist/
 # Local run output: worker journals and demo logs
 .deed-worker/
 demo-logs/
+examples/.receipts/
 
 # Local keys and env files: never commit
 .env

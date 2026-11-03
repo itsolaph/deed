@@ -6,5 +6,6 @@ export * from "./chain.js";
 export * from "./views.js";
 export * from "./payback.js";
 export * from "./history.js";
+export * from "./appraisal.js";
 export * from "./relay.js";
 export * from "./client.js";

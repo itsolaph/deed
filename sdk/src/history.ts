@@ -9,7 +9,8 @@
 // Events used (contracts/vault/src, contracts/deed/src):
 //   vault_init      {owner_id, owner_epoch: 1}                   opens epoch 1 (the mint)
 //   vault_owner     {previous, owner_id, epoch}                  opens a new epoch (sale or transfer)
-//   vault_charge    {price, earned, items[{units, cost, status}]} paid calls and revenue
+//   vault_charge    {price, earned, items[{customer, units, cost, status}]} paid calls and revenue
+//   vault_deposit   {customer, sender, amount}                   customer credit and who paid it in
 //   vault_withdraw  {receiver_id, amount, owner_epoch}           a payout, tagged with its epoch
 //   deed_sold       {token_id, seller, buyer, price, epoch}      the sale that opened `epoch`
 // Logs of failed receipts are ignored: NEAR keeps them, but their state changes were rolled back.
@@ -26,6 +27,10 @@ export interface IndexedAccountTx {
   tx_block_height: number;
   /** Nanoseconds, as a decimal string. */
   tx_block_timestamp: string;
+  /** The account signed the transaction. */
+  is_signer?: boolean;
+  /** The account only appears in an event log of the transaction (for example as a token receiver). */
+  is_event_log?: boolean;
 }
 
 export interface IndexedOutcome {
@@ -60,9 +65,17 @@ interface EventBase {
 export type HistoryEvent =
   | (EventBase & { kind: "init"; owner: string; epoch: number })
   | (EventBase & { kind: "owner"; previous: string; owner: string; epoch: number })
-  | (EventBase & { kind: "charge"; calls: number; earned: string })
+  | (EventBase & { kind: "charge"; calls: number; earned: string; items?: ChargedItem[] })
+  | (EventBase & { kind: "deposit"; customer: string; sender: string; amount: string })
   | (EventBase & { kind: "withdraw"; receiver: string; amount: string; epoch: number })
   | (EventBase & { kind: "sold"; seller: string; buyer: string; price: string; epoch: number });
+
+/** One item of a `vault_charge` that moved money (status "charged"): who paid and how much. */
+export interface ChargedItem {
+  customer: string;
+  units: number;
+  cost: string;
+}
 
 export interface Nep297 {
   standard: string;
@@ -121,8 +134,12 @@ export function eventsFromTransactions(txs: IndexedTransaction[], vault: string)
           else if (e.event === "vault_withdraw") ev = { ...base, kind: "withdraw", receiver: str(d.receiver_id), amount: str(d.amount), epoch: num(d.owner_epoch) };
           else if (e.event === "vault_charge") {
             const items = Array.isArray(d.items) ? (d.items as Record<string, unknown>[]) : [];
-            const calls = items.reduce((n, it) => (str(it.cost) !== "" && BigInt(str(it.cost)) > 0n ? n + (num(it.units) || 0) : n), 0);
-            ev = { ...base, kind: "charge", calls, earned: str(d.earned) || "0" };
+            const paid = items.filter((it) => str(it.cost) !== "" && BigInt(str(it.cost)) > 0n);
+            const calls = paid.reduce((n, it) => n + (num(it.units) || 0), 0);
+            const charged: ChargedItem[] = paid.map((it) => ({ customer: str(it.customer), units: num(it.units) || 0, cost: str(it.cost) }));
+            ev = { ...base, kind: "charge", calls, earned: str(d.earned) || "0", items: charged };
+          } else if (e.event === "vault_deposit") {
+            ev = { ...base, kind: "deposit", customer: str(d.customer), sender: str(d.sender), amount: str(d.amount) || "0" };
           }
         } else if (e.event === "deed_sold" && d.token_id === tokenId) {
           ev = { ...base, kind: "sold", seller: str(d.seller), buyer: str(d.buyer), price: str(d.price), epoch: num(d.epoch) };

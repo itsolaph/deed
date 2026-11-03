@@ -1,4 +1,12 @@
 // Payback math for a listed deed. Used by the buyer agent and the web app. Pure functions.
+//
+// "Payback on chain-visible costs": net per day is revenue per day minus the vault's on-chain
+// gas per day. Hosting, bandwidth and operator time are off chain and NOT included, so the
+// figure is a lower bound on the real payback time. The buyer agent feeds it independent revenue
+// only (see appraisal.ts); the web board shows it on all revenue and says so.
+
+export const PAYBACK_LABEL = "payback on chain-visible costs";
+export const PAYBACK_COSTS_NOTE = "net per day = revenue minus on-chain gas; hosting, bandwidth and operator time are not included";
 
 export const DAY_MS = 86_400_000;
 export const STATS_WINDOW_DAYS = 30;

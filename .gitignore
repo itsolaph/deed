@@ -11,6 +11,7 @@ demo-logs/
 # Local keys and env files: never commit
 .env
 .env.*
+!.env.example
 *.key
 *.pem
 .near-credentials/

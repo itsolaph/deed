@@ -1,5 +1,8 @@
 #!/usr/bin/env node
-// Theft-proof check for the demo video (scene 4a). Standalone: it never touches the demo run.
+// Unauthorized-actions check for the demo video (scene 4a): six actions that would move vault
+// money without the owner, each rejected on testnet. The file name is historical; it shows the
+// tested actions only and does not prove that no other path exists. Standalone: it never touches
+// the demo run.
 //
 // It loads a vault's worker key (the key the hosted API server holds) and tries every way that
 // key could move money out of the vault. NEAR rejects each attempt before or during execution.
@@ -109,7 +112,7 @@ async function main() {
   const perm = ak.permission?.FunctionCall ?? ak.permission?.functionCall ?? ak.permission;
   const ftBefore = await view(info.payment_token, "ft_balance_of", { account_id: VAULT });
 
-  await say(bold(`Deed theft-proof check, ${VAULT}`));
+  await say(bold(`Unauthorized actions against ${VAULT}, each tried on testnet`));
   await say(`owner ${info.owner_id}, owner epoch ${info.owner_epoch}`);
   await say(`withdrawable revenue ${bold(tusdc(info.revenue))}, vault token balance ${tusdc(ftBefore)}`);
   await say();
@@ -164,14 +167,14 @@ async function main() {
   const after = await view(VAULT, "get_info", {});
   const ftAfter = await view(info.payment_token, "ft_balance_of", { account_id: VAULT });
   const fundsKept = BigInt(ftAfter) >= BigInt(ftBefore) && BigInt(after.revenue) >= BigInt(info.revenue);
-  await say(bold(`${blocked}/${total} attempts blocked.`));
+  await say(bold(`${blocked} of ${total} unauthorized actions rejected on testnet.`));
   await say(`withdrawable revenue ${tusdc(info.revenue)} → ${tusdc(after.revenue)}, vault token balance ${tusdc(ftBefore)} → ${tusdc(ftAfter)}`);
   if (strangerHash) await say(dim(`proof: ${txLink(strangerHash)}`));
-  await say(fundsKept ? green(bold("Only the deed owner can move the money.")) : red(bold("Funds moved, investigate.")));
+  await say(fundsKept ? green(bold("No funds moved. These are the tested actions only, not a proof that no other path exists.")) : red(bold("Funds moved, investigate.")));
   process.exit(blocked === total && fundsKept ? 0 : 1);
 }
 
 main().catch((e) => {
-  console.error(red(`theft-proof: ${e.message ?? e}`));
+  console.error(red(`unauthorized-actions check: ${e.message ?? e}`));
   process.exit(2);
 });

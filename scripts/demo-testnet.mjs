@@ -14,6 +14,7 @@
 // DEMO_AFTER_SEC (default 45), DEMO_SELLER, DEMO_BUYER, DEMO_ALICE, DEMO_BOB,
 // NEAR_CREDENTIALS_DIR.
 
+import "./lib/env.mjs";
 import { spawn, spawnSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -267,10 +268,12 @@ async function main() {
   await sleep(20_000); // a little more revenue accrues to the vault while listed
 
   // 7. The buyer agent decides and buys.
-  banner("7. buyer agent reads the vault, computes payback, gets a dry 1Click funding quote, buys");
-  const buy = await run("agents/dist/src/buyer.js", ["--account", A.buyer, "--token-id", SLUG, "--max-payback-days", "30", "--fund-from", "eth:usdc", "--refund-to", "0x1111111111111111111111111111111111111111", "--mint-if-short"], "07-buyer");
-  step(`buyer agent buys ${SLUG}`, { tx: buy.buy_tx, success: buy.bought === true, note: buy.evaluated?.[0] ? `payback ${Number(buy.evaluated[0].payback_days).toFixed(2)} days` : undefined });
-  record.buyer = { decision: buy.decision, evaluated: buy.evaluated, funding_quote: buy.funding_quote?.quote ?? null, funding_quote_error: buy.funding_quote_error ?? null };
+  banner("7. buyer agent appraises independent revenue (demo policy), computes payback on chain-visible costs, gets a 1Click mainnet dry quote (nothing executed), buys");
+  // The demo policy relaxes the thresholds for a 10-minute run (2 customers, 80% share, no
+  // minimum age); the agent prints that every time. The default policy is strict.
+  const buy = await run("agents/dist/src/buyer.js", ["--account", A.buyer, "--token-id", SLUG, "--policy", "demo", "--max-payback-days", "30", "--fund-from", "eth:usdc", "--refund-to", "0x1111111111111111111111111111111111111111", "--mint-if-short"], "07-buyer");
+  step(`buyer agent buys ${SLUG}`, { tx: buy.buy_tx, success: buy.bought === true, note: buy.evaluated?.[0] ? `payback on chain-visible costs ${Number(buy.evaluated[0].payback_days).toFixed(2)} days on independent revenue ${fmt(buy.evaluated[0].independent_revenue_30d ?? "0")} tUSDC, policy ${buy.policy?.name}` : undefined });
+  record.buyer = { decision: buy.decision, policy: buy.policy ?? null, evaluated: buy.evaluated, funding_quote_label: "mainnet dry quote (dry:true), nothing executed", funding_quote: buy.funding_quote?.quote ?? null, funding_quote_error: buy.funding_quote_error ?? null };
   if (!buy.bought) throw new Error("the buyer did not buy");
 
   // 8. Revenue now accrues to the buyer; the seller's withdraw reverts.

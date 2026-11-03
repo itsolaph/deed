@@ -508,7 +508,9 @@ export class Worker {
   private async handoff(endpoint: string, entries: ObligationEntry[]): Promise<void> {
     const envelope: HandoffEnvelope = { vault: this.vault, from_public_key: this.publicKey, created_at: this.now(), entries };
     const doc = signDocument(HANDOFF_DOMAIN, this.signer, envelope);
-    const attempts = this.cfg.handoffAttempts ?? 20;
+    // 60 x 3 s = 3 min: the new worker only listens after its key and config views come
+    // back, which through a rate-shaped public RPC can take a couple of minutes.
+    const attempts = this.cfg.handoffAttempts ?? 60;
     for (let i = 1; i <= attempts; i++) {
       try {
         const res = await fetch(`${endpoint}/v1/handoff`, {

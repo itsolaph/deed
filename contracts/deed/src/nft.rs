@@ -42,8 +42,8 @@ impl Deed {
         };
         let amount = |v: u128| format!("{} {}", svg::format_amount(v, TOKEN_DECIMALS), self.payment_symbol);
         let description = format!(
-            "Deed to the business \"{}\". Its vault {} holds the treasury, price list, customer \
-             ledger and worker key. Price per call {}. Last 30 days: {} calls, {} revenue. Cash in vault {}.",
+            "Deed to the transferable service instance \"{}\" (a paid API's vault, not a legal business). Its vault {} holds \
+             the treasury, price list, customer ledger and worker key. Price per call {}. Last 30 days: {} calls, {} revenue. Withdrawable proceeds {}.",
             r.title,
             r.vault_id,
             amount(price),

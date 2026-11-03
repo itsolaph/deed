@@ -119,8 +119,8 @@ pub fn render(c: &Certificate) -> String {
         ("Price per call", amount(c.price_per_call)),
         ("Calls, last 30 days", format_count(c.calls_30d)),
         ("Revenue, last 30 days", amount(c.revenue_30d)),
-        ("Cash in vault", amount(c.cash)),
-        ("Customer credit held", amount(c.liabilities)),
+        ("Withdrawable proceeds", amount(c.cash)),
+        ("Customer credit owed", amount(c.liabilities)),
         ("Held by", escape_xml(&shorten(c.owner_id, 30))),
     ];
     let mut body = String::new();
@@ -154,7 +154,7 @@ pub fn render(c: &Certificate) -> String {
          <rect x=\"11.5\" y=\"11.5\" width=\"617\" height=\"377\" fill=\"none\" stroke=\"{INK}\" stroke-width=\"3\"/>\
          <rect x=\"36\" y=\"32\" width=\"24\" height=\"24\" fill=\"{INK}\"/>\
          <text x=\"48\" y=\"50\" text-anchor=\"middle\" style=\"font-size:15px;font-weight:900;fill:{PLATE}\">D</text>\
-         <text x=\"72\" y=\"50\" style=\"font-size:16px;font-weight:700\">Deed of title to a running business</text>"
+         <text x=\"72\" y=\"50\" style=\"font-size:16px;font-weight:700\">Deed to a transferable service instance</text>"
     ));
     svg.push_str(&format!(
         "<rect x=\"{x}\" y=\"31.75\" width=\"{tag_w}\" height=\"24.5\" fill=\"none\" stroke=\"{INK}\" stroke-width=\"1.5\"/>\

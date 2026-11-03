@@ -78,9 +78,10 @@ async function main() {
   step("seller sets worker key A and endpoint", { tx: rotA.tx, success: rotA.success });
   record.worker_a_key = rotA.public_key;
   start("echo", "agents/dist/src/echo-target.js", ["--port", String(ECHO_PORT), "--fail-rate", "0", "--outage-file", OUTAGE]);
-  // A long flush interval: A charges when told by the clock, so jobs accepted right before the
-  // kill are certainly not charged yet.
-  start("worker-a", "worker/dist/src/cli.js", ["--vault", VAULT, "--network", "testnet", "--port", String(PORT_A), "--key-file", KEY_A, "--allow-target", `127.0.0.1:${ECHO_PORT}`, "--flush-ms", "30000", "--watch-ms", "30000", "--wait-for-key", "120", "--data-dir", path.join(run.logs, "worker-a-data")]);
+  // A long flush interval, so jobs accepted right before the kill are most likely not charged
+  // yet. The checks below do not depend on it: they classify every open receipt against the
+  // chain at the moment of the kill.
+  start("worker-a", "worker/dist/src/cli.js", ["--vault", VAULT, "--network", "testnet", "--port", String(PORT_A), "--key-file", KEY_A, "--allow-target", `127.0.0.1:${ECHO_PORT}`, "--flush-ms", "60000", "--watch-ms", "30000", "--wait-for-key", "120", "--data-dir", path.join(run.logs, "worker-a-data")]);
   await waitHealth(ENDPOINT_A, 180_000);
   say("worker A is serving");
 
@@ -92,7 +93,7 @@ async function main() {
     const signer = new sdkNode.NodeSigner(acc, key, urls);
     await common.ensureTusdc(rpc, TUSDC, acc, TOP_UP);
     const store = path.join(run.logs, `receipts-${short(acc)}.json`);
-    const make = () => new sdk.DeedClient({ vault: VAULT, accountId: acc, signer: sdk.signerFromSecretKey(key), rpc, transactor: sdkNode.createNodeTransactor(signer), store: sdkNode.fileStore(store), keyCacheMs: 0 });
+    const make = () => new sdk.DeedClient({ vault: VAULT, accountId: acc, signer: sdk.signerFromSecretKey(key), rpc, transactor: sdkNode.createNodeTransactor(signer), store: sdkNode.fileStore(store) });
     const client = make();
     const top = await retrySend(() => client.topUp(TOP_UP), say);
     step(`${short(acc)} deposits 1.5 tUSDC (ft_transfer_call)`, { tx: top.hash, success: top.success });
@@ -154,11 +155,15 @@ async function main() {
   for (const acc of [ALICE, BOB]) {
     const chainSeq = await lastSeq(acc);
     const open = customers[acc].client.pendingEntries();
+    // A receipt's seq at or below the customer's last_seq on chain was charged; above it, not.
     inflight[acc] = { open: open.length, charged: open.filter((e) => e.receipt.payload.seq <= chainSeq).length, uncharged: open.filter((e) => e.receipt.payload.seq > chainSeq).length, chain_seq: chainSeq };
   }
   const total = (k) => inflight[ALICE][k] + inflight[BOB][k];
   say(`jobs in flight at the kill (${killedAt}): ${total("open")} (charged on chain, not delivered: ${total("charged")}; accepted, not charged: ${total("uncharged")})`);
-  step("worker A killed with SIGKILL while jobs were in flight (no flush, no hand-off)", { success: total("charged") === 2 * PHASE2 && total("uncharged") === 2 * PHASE3, note: JSON.stringify(inflight) });
+  step("worker A killed with SIGKILL while jobs were in flight, some charged and some not (no flush, no hand-off)", {
+    success: total("open") === 2 * (PHASE2 + PHASE3) && total("charged") >= 2 * PHASE2 && total("uncharged") >= 1,
+    note: JSON.stringify(inflight),
+  });
   record.in_flight_at_kill = { at: killedAt, total: total("open"), charged_not_delivered: total("charged"), accepted_not_charged: total("uncharged"), per_customer: inflight };
   // The customers' processes "restart": the in-memory clients are dropped, the receipt files stay.
   for (const acc of [ALICE, BOB]) customers[acc].client = null;
@@ -183,7 +188,10 @@ async function main() {
   const resA = await alice.client.resubmit();
   const takenFree = resA.filter((r) => r.result === "accepted" && r.charged_as_new === false).length;
   const chargedNew = resA.filter((r) => r.result === "accepted" && r.charged_as_new === true).length;
-  step("worker B takes over alice's receipts (receipts signed by worker A's old key)", { success: takenFree === PHASE2 && chargedNew === PHASE3, note: `${takenFree} already charged by A: delivered without a new charge; ${chargedNew} never charged: charged once by B` });
+  step("worker B takes over alice's receipts (receipts signed by worker A's old key)", {
+    success: takenFree === inflight[ALICE].charged && chargedNew === inflight[ALICE].uncharged,
+    note: `${takenFree} already charged by A: delivered without a new charge; ${chargedNew} never charged: charged once by B`,
+  });
   await send(ALICE, 4, AFTER);
   const newByB = Object.values(alice.ids).filter((x) => x.phase === 4 && x.key === kg.public_key).length;
   step("worker B serves alice's new calls (receipts signed by key B)", { success: newByB === AFTER, note: `${newByB} of ${AFTER}` });
@@ -198,7 +206,10 @@ async function main() {
   const resB = await bob.client.resubmit();
   const bobFree = resB.filter((r) => r.result === "accepted" && r.charged_as_new === false).length;
   const bobRefused = resB.filter((r) => r.result === "rejected" && /refund_pending/.test(r.reason ?? "")).length;
-  step("worker B delivers bob's jobs A charged, and refuses to charge the others while the refund is pending", { success: bobFree === PHASE2 && bobRefused === PHASE3, note: `${bobFree} delivered without a new charge, ${bobRefused} refused (refund pending)` });
+  step("worker B delivers bob's jobs A charged, and refuses to charge the others while the refund is pending", {
+    success: bobFree === inflight[BOB].charged && bobRefused === inflight[BOB].uncharged,
+    note: `${bobFree} delivered without a new charge, ${bobRefused} refused (refund pending)`,
+  });
 
   // ---------------------------------------------------------------- 8. delivery
   banner("8. every taken-over job is delivered by worker B");
@@ -230,7 +241,7 @@ async function main() {
   banner("10. double-charge check: chain seq and balances against the receipts the customers hold");
   const aliceSeq = await lastSeq(ALICE);
   const expectedAlice = PHASE1 + PHASE2 + PHASE3 + AFTER; // every alice job charged exactly once
-  const expectedBob = PHASE1 + PHASE2; // bob's phase-3 jobs were never charged
+  const expectedBob = PHASE1 + inflight[BOB].charged; // bob's jobs A never charged are never charged
   const chargesAlice = aliceSeq - alice.seq0;
   const chargesBob = Number(bobBefore.last_seq) - bob.seq0;
   const aliceView = await vault.customer(ALICE);

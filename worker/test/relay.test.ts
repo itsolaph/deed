@@ -155,6 +155,28 @@ test("paid delivery: 402 first, then receipt, retries, signed proofs, one charge
   }
 });
 
+test("a retry that arrives while the first request is still being admitted gets the same delivery", async () => {
+  const target = await startTarget(() => 0);
+  const fake = new FakeVault();
+  const w = await startWorker(fake, 7628);
+  const stop = await w.start();
+  try {
+    fake.addCustomer("dave.test", generateSecretKey().publicKey, 1_000_000n);
+    // Both copies pass the idempotency check before either finishes its (async) admission,
+    // like a client that timed out on a slow worker and sent the same request again.
+    const [a, b] = await Promise.all([w.worker.deliver("dave.test", request(7)), w.worker.deliver("dave.test", request(7))]);
+    const ids = [a, b].map((r) => (r.body as { delivery_id: string }).delivery_id);
+    assert.equal(ids[0], ids[1], "one delivery for one idempotency key");
+    assert.deepEqual([a.status, b.status].sort(), [200, 202]);
+    await w.worker.flushCharges();
+    assert.equal(fake.customers.get("dave.test")!.lastSeq, 1, "charged once");
+    assert.equal(fake.revenue, fake.price);
+  } finally {
+    await stop();
+    await target.close();
+  }
+});
+
 test("a redirect to a blocked address is refused at the hop", async () => {
   const server = http.createServer((_req, res) => {
     res.writeHead(302, { location: "http://127.0.0.1:7629/internal" });

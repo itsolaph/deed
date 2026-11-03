@@ -98,6 +98,10 @@ export class Worker {
   private readonly now: () => number;
   private readonly deliveries = new Map<string, Delivery>();
   private readonly idempotency = new Map<string, string>();
+  /** Admissions still waiting on the charger, by customer + idempotency key. A client that times
+   * out and retries while the first request waits on a chain read gets the same delivery, not a
+   * second one (seen on testnet under a slow RPC: one job charged twice). */
+  private readonly admitting = new Map<string, Promise<HttpReply>>();
   private info: VaultInfo | null = null;
   private history: { at: number; keys: Set<string> } | null = null;
   private timers: NodeJS.Timeout[] = [];
@@ -318,11 +322,27 @@ export class Worker {
     if (this.gone) return this.goneReply();
     const request = validateRequest(input);
     if (typeof request === "string") return { status: 400, body: { error: request } };
-    const known = this.idempotency.get(`${customer}\n${request.idempotency_key}`);
+    const idemKey = `${customer}\n${request.idempotency_key}`;
+    const known = this.idempotency.get(idemKey);
     if (known) {
       const d = this.deliveries.get(known)!;
       return { status: 200, body: { delivery_id: d.id, receipt: d.receipt } };
     }
+    const inflight = this.admitting.get(idemKey);
+    if (inflight) {
+      const first = await inflight;
+      return first.status === 202 ? { status: 200, body: first.body } : first;
+    }
+    const admission = this.admitNew(customer, request);
+    this.admitting.set(idemKey, admission);
+    try {
+      return await admission;
+    } finally {
+      this.admitting.delete(idemKey);
+    }
+  }
+
+  private async admitNew(customer: string, request: Exclude<ReturnType<typeof validateRequest>, string>): Promise<HttpReply> {
     const blocked = await this.checkTarget(request.url);
     if (blocked) return { status: 400, body: { error: `target refused: ${blocked}` } };
 

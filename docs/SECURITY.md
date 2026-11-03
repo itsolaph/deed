@@ -45,12 +45,24 @@ before the fix.
   daily cap without serving them. Signed receipts make this visible; caps and the refund delay
   limit it. Customers should keep low caps and small balances.
 - **Revenue figures can be inflated.** An owner can pay their own business to make the 30-day
-  calls and revenue look better before a sale. A buyer should look at the customer count and
-  the deposit history, not only the totals.
+  calls and revenue look better before a sale. The vault's totals include such revenue. The
+  buyer agent counts only revenue it can attribute to independent customers: owners now and
+  before, the listing seller, the vault, the deed and customers funded by any of them (one hop:
+  `deposit_for`, transfers, account creation, sub-accounts) are excluded, and its default policy
+  wants 3 independent payers, none above 60%, and 72 hours of history
+  ([DESIGN.md](DESIGN.md#buyer-agent)). `scripts/wash-reject.mjs` shows a rejection on testnet.
+  Funding through an intermediary account, or a seller recruiting real third parties, is not
+  caught.
 - **The seller's worker key after a sale.** It keeps working until the buyer rotates it. Its
   charges go to the buyer, but it can still mis-charge customers within caps and burn its
   remaining gas allowance (default 0.5 NEAR, at most 5 NEAR) from the vault's NEAR. Buyers
   should rotate right after buying.
+- **A hostile seller kills its worker.** No hand-off, no flush. Customers keep their receipts and
+  resubmit them to the buyer's worker: charged jobs are delivered without a second charge,
+  uncharged ones are charged once, and unspent credit stays refundable. A charged job whose
+  receipt the customer lost is paid for and never delivered; there is no clawback. Details and a
+  testnet run: [DESIGN.md](DESIGN.md#hostile-seller-the-old-worker-is-killed-not-handed-off),
+  `scripts/hostile-seller.sh`.
 - **The vault's NEAR balance.** Customer entries, worker gas and state growth are paid from
   the vault's NEAR. If it runs low, new deposits and charges fail until someone calls
   `fund_gas`. The minimum first deposit (1 unit of a 6-decimal token) makes storage spam cost

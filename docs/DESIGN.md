@@ -1,8 +1,10 @@
 # Design
 
-Deed turns a running paid API into an NFT. One token is one business. Whoever holds the token
-owns the business: they can withdraw its revenue and choose which server does the work.
-Selling the token moves the business to the buyer while customers keep calling it.
+Deed turns a running paid API into an NFT. One token is one transferable service instance: the
+vault with its treasury, price list, customer ledger and worker key. Whoever holds the token
+can withdraw its revenue and choose which server does the work. Selling the token moves that
+instance to the buyer while customers keep calling it. Servers, domains and code stay off chain;
+nothing here is a legal transfer of a business.
 
 The demo business is a durable webhook relay. Customers (often agents) prepay credit and pay
 per accepted delivery. The relay retries until the target answers, signs a receipt for every
@@ -36,7 +38,8 @@ accepted delivery and a proof for every attempt, and charges the vault in batche
 - `worker/`: one process per business. HTTP gateway with NEP-413 auth and HTTP 402, durable
   webhook relay, batched charger, handover.
 - `sdk/`: `DeedClient` for customers, plus the shared signing and view code.
-- `agents/`: flaky echo target, traffic generator, buyer agent, owner tools, 1Click dry quotes.
+- `agents/`: flaky echo target, traffic generator, buyer agent, owner tools, 1Click mainnet dry
+  quotes (`dry: true`, nothing executed).
 - `web/`: static app that lists deeds with live numbers and signs actions in the user's wallet.
 
 ## What moves with the token, and what does not
@@ -144,25 +147,88 @@ move with the deed even if the old server is gone.
 The SDK re-reads the endpoint from the vault after a 410 or a failed connection and presents
 its pending receipts again before retrying.
 
+### Hostile seller: the old worker is killed, not handed off
+
+A seller can take the sale price and kill its worker (SIGKILL) before any hand-off: no flush of
+pending charges, no `/v1/handoff`, and the journal stays on the seller's machine. What happens
+to jobs in flight, checked against the code and by `scripts/hostile-seller.sh` on testnet:
+
+| Job state at the kill | What happens | Customer pays |
+|---|---|---|
+| Charged on chain, delivered | Nothing to do. | once |
+| Charged on chain, not delivered | The customer resubmits the receipt to the endpoint now on chain. Worker B sees its seq at or below the customer's `last_seq` when B first read it (after B became the registered worker), and delivers it without a charge. | once (by A) |
+| Accepted by A, not charged | A's charge never went out. On resubmit B charges it once as new, with a fresh receipt, and delivers it. | once (by B) |
+| Accepted by A, not charged, customer prefers its money back | The customer calls `request_refund`; B refuses to charge the receipt while the refund is pending; after the refund delay `claim_refund` returns the whole unspent credit, which still includes this job's price. | nothing |
+| A late charge from A's key | Refused as a whole: the vault checks the signer key against the registered worker key, and the rotation deleted A's key. | nothing |
+
+Why there is no double charge: A's charges can only execute before the rotation (they need A's
+key as the registered worker key). B reads a customer's `last_seq` only after it saw itself as
+the registered worker in a final block, so that mark includes every charge A ever made.
+
+What the customer needs is the receipt and the request. `DeedClient` keeps them in memory, and
+with `store: fileStore(path)` (Node) also in a file, so a customer process that restarts can
+`resubmit()` them; `adopt(entries)` takes receipts saved anywhere else. Receipts are checked
+against the vault's worker key history (last 10 keys), so B accepts receipts signed by A's key.
+
+Gaps, said plainly:
+
+- A job that A charged and never delivered is made good by delivery, not by money: there is no
+  on-chain clawback of a charged call. If the customer lost the receipt, nobody can deliver it
+  (A's journal is gone) and the customer has paid for nothing. Caps and small balances limit
+  this; an uptime bond is on the roadmap.
+- The new owner has no service until it runs worker B and rotates; customers' calls in between
+  fail to connect and nothing is accepted or charged.
+- Delivery is at least once: a job A delivered but whose proof the customer never saw is
+  delivered again by B (and charged once, by whoever charged it first).
+
 ## Buyer agent
 
-`agents/src/buyer.ts` reads listings from the deed and figures from the vault:
+`agents/src/buyer.ts` reads listings from the deed and figures from the vault, then appraises
+the revenue (`sdk/src/appraisal.ts`):
 
-- trailing 30-day revenue and gas spent (`get_stats`), cash that comes with the vault
-  (`revenue`), customer count, pending price, worker key, endpoint;
-- the window is the vault's age, at least 1 and at most 30 days;
-- net per day = revenue per day minus gas per day (NEAR valued with the 1Click token list
-  price, or `--near-price`);
-- payback days = (listing price minus cash) / net per day.
+- per-customer paid revenue over the trailing 30 days, from the vault's own `vault_charge`
+  events (each charged item names its customer), read through the FastNEAR transaction index;
+- revenue charged to the current owner, every previous owner (ownership epochs from
+  `vault_init`, `vault_owner` and `deed_sold`), the listing seller, the vault and the deed is
+  excluded;
+- customers funded by any of those accounts are excluded: a `vault_deposit` whose sender is
+  one of them (`deposit_for`), a transaction signed by one of them that touches the customer
+  account (account creation, NEAR or tUSDC transfers), a tUSDC `ft_transfer` from one of them,
+  or a sub-account of one of them;
+- customers whose funding history could not be read completely, and revenue the vault reports
+  (`get_stats`) that no event in the window explains, are not counted either;
+- credit paid in by a third party is counted under that sponsor, so one sponsor funding many
+  accounts is one payer.
 
-It buys only if every check passes (listing active and pinned, vault locked for that listing,
-no pending price increase, image hash set, worker key registered, customers present, endpoint
-answers with the registered key) and payback is under `--max-payback-days`. With
-`--fund-from <chain:asset>` it asks NEAR Intents 1Click for a dry quote (`"dry": true`) of
-funding the price from another chain and prints it. It never deposits.
+Payback is computed on independent revenue only and is called **payback on chain-visible
+costs**: net per day = independent revenue per day minus on-chain gas per day (NEAR valued with
+the 1Click token list price, or `--near-price`); hosting, bandwidth and operator time are not
+included. Payback days = (listing price minus withdrawable proceeds) / net per day; the window
+is the vault's age, at least 1 and at most 30 days.
 
-For a vault that is minutes old the 1-day minimum makes the estimate optimistic; the agent
-says so in its output. A real buyer should demand weeks of history.
+It buys only if every check passes and payback is under `--max-payback-days`. Checks: listing
+active and pinned, vault locked for that listing, no pending price increase, image hash set,
+worker key registered, listing not stale, every ownership epoch read, endpoint answers with the
+registered key, and the policy gates:
+
+| Policy | Independent paying customers | Largest payer's share | Vault age |
+|---|---|---|---|
+| `strict` (default) | at least 3 | at most 60% | at least 72 h |
+| `demo` | at least 2 | at most 80% | 0 h |
+
+The demo policy exists so the 10-minute testnet demo can buy; the agent prints "demo policy:
+thresholds relaxed for a 10-minute run" whenever it is used. `--min-customers`, `--max-share`
+and `--min-age-hours` override single thresholds and are printed too. Every check is printed with
+pass or fail and its reason. `scripts/wash-reject.mjs` shows the rejection path on testnet.
+
+Funding is followed one hop: an owner who funds a fresh account through an intermediary is not
+caught, and on testnet anyone can mint tUSDC, so a self-minting account with faucet NEAR looks
+independent (the demo traffic agents are exactly that). The appraisal makes wash revenue cost
+effort; it does not make it impossible.
+
+With `--fund-from <chain:asset>` the agent asks NEAR Intents 1Click for a mainnet dry quote
+(`"dry": true`, nothing executed) of funding the price from another chain and prints it. It
+never deposits.
 
 ## Threat model (off-chain parts)
 
@@ -174,12 +240,15 @@ The contract threat model is in [CONTRACTS.md](CONTRACTS.md#threat-model). Off c
 | A different customer | Send their own paid requests. | Act as another customer without that account's full-access key; replay a signed request (nonce and 5-minute window); read another customer's deliveries. |
 | Someone with a stolen receipt | Present it to the worker again. | Get it charged twice (seq and delivery id are checked); change its target or body (hashes are signed). |
 | A customer choosing targets | Point deliveries at any public URL. | Reach loopback, private, link-local or metadata addresses, directly, through DNS answers or through redirects. |
-| Old worker after a sale | Keep serving until the buyer rotates; then only hand its queue over. | Charge after the rotation (its key is deleted, and the vault checks the signer key). |
+| Old worker after a sale | Keep serving until the buyer rotates; then only hand its queue over. Or be killed without a hand-off (see "Hostile seller"). | Charge after the rotation (its key is deleted, and the vault checks the signer key). |
+| Seller inflating revenue before a sale | Pay its own vault from accounts it funds. | Get that revenue counted by the buyer agent when the funding is one hop away (see "Buyer agent"). |
 
 Known limits of the worker:
 
-- Deliveries a worker made but did not charge before its key was rotated are not charged by
-  anyone. The charge batch interval (4 seconds) keeps this small.
+- Deliveries a worker made but did not charge before its key was rotated go to the next worker
+  with the hand-off and its proofs, and are charged once there. Without a hand-off (worker
+  killed) they are charged once by the next worker only if the customer resubmits the receipt,
+  and then delivered a second time.
 - If a worker crashes without its journal, customers can still present their receipts, but
   attempts it made are lost from the status history.
 - The worker trusts its RPC nodes for the chain view.

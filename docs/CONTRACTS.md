@@ -248,7 +248,8 @@ recorded at the end of the previous measurement. A drop is added to today's `gas
 rise (gas refunds arrive a little later) is subtracted, never below zero. NEAR sent with
 `fund_gas()` is excluded. Plain NEAR transfers to the vault without `fund_gas` show up as
 negative gas spending, so top up through `fund_gas`. The figure is an estimate of the net gas
-cost, good enough for a buyer's payback math, not an accounting record.
+cost, good enough for a buyer's payback on chain-visible costs, not an accounting record.
+Hosting, bandwidth and operator time never appear on chain and are not in it.
 
 ### Views
 
@@ -307,9 +308,12 @@ Known limits:
   which code the worker runs. TEE attestation is roadmap.
 - Customers trust the worker to deliver what it charges for. Signed receipts (Phase B) make
   mis-charging visible; caps and refunds limit the damage.
-- The 30-day calls and revenue can be inflated by the owner paying their own business
-  (deposit as a customer, charge, withdraw). Buyers should look at the number of customers and
-  the deposit history, not only at the totals.
+- The 30-day calls and revenue can be inflated by the owner paying their own service
+  (deposit as a customer, charge, withdraw). The contracts do not stop this. Every charged item
+  in `vault_charge` names its customer and every `vault_deposit` names who paid the credit in,
+  so a buyer can attribute revenue per customer from the events; the buyer agent does that and
+  counts only independent customers ([DESIGN.md](DESIGN.md#buyer-agent)). No vault code change
+  was needed for it.
 - During a pending `nft_transfer_call` the vault still has the sender as owner, so the sender
   keeps the owner powers until `nft_resolve_transfer` pushes the final owner. A receiver
   contract should not value the vault's cash during `nft_on_transfer`.

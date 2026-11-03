@@ -9,7 +9,7 @@
 import { parseArgs } from "node:util";
 import { VaultViews, formatUnits, fromUnits } from "@deed/sdk";
 import { NETWORK, clock, isMain, rpc, runMain, tokenMeta, writeJson } from "./common.js";
-import { dryQuote, fetchTokens, findAsset, payoutQuoteRequest } from "./oneclick.js";
+import { DRY_QUOTE_LABEL, dryQuote, fetchTokens, findAsset, payoutQuoteRequest } from "./oneclick.js";
 
 export function withdrawCommand(opts: { vault: string; owner: string; amount: bigint; receiver: string; network: string }): string {
   const args = JSON.stringify({ amount: opts.amount.toString(), receiver_id: opts.receiver, memo: "1Click payout" });
@@ -45,12 +45,12 @@ async function main(): Promise<void> {
   const refundTo = values["refund-to"] ?? info.owner_id.replace(/\.testnet$/, ".near");
   const req = payoutQuoteRequest({ destinationAsset: dest.assetId, amountIn: amount, recipient: values.recipient, refundTo });
   const q = await dryQuote(req);
-  say(`1Click dry quote (mainnet, nothing is deposited): send ${q.quote.amountInFormatted} USDC on NEAR -> receive ${q.quote.amountOutFormatted} ${dest.symbol} on ${dest.blockchain} at ${values.recipient}, about ${q.quote.timeEstimate} s`);
-  say("a dry quote has no deposit address. A real payout asks for the same quote with dry=false and withdraws to its deposit address:");
+  say(`NEAR Intents 1Click, ${DRY_QUOTE_LABEL}: would send ${q.quote.amountInFormatted} USDC on NEAR -> would receive ${q.quote.amountOutFormatted} ${dest.symbol} on ${dest.blockchain} at ${values.recipient}, about ${q.quote.timeEstimate} s`);
+  say("a dry quote has no deposit address and nothing was sent. A real payout (not done by this project) would ask for the same quote with dry=false and withdraw to its deposit address:");
   const command = withdrawCommand({ vault: values.vault, owner: info.owner_id, amount, receiver: "<depositAddress from the non-dry quote>", network: NETWORK });
   say(command);
   say(`on testnet the vault holds ${token.symbol}, which 1Click does not know; on mainnet the vault would hold native USDC (${req.originAsset}).`);
-  writeJson(values.out, { request: req, quote: q.quote, command });
+  writeJson(values.out, { label: DRY_QUOTE_LABEL, request: req, quote: q.quote, command });
 }
 
 if (isMain(import.meta.url)) runMain("withdraw-xchain", main);

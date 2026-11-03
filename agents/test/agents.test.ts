@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { generateSecretKey, payback, sha256Hex, signOutbound, signerFromSecretKey, type DeedView, type ListingView, type VaultInfo } from "@deed/sdk";
 
-import { decide, staticChecks } from "../src/buyer.js";
+import { decide, resolvePolicy, staticChecks } from "../src/buyer.js";
 import { startEchoTarget } from "../src/echo-target.js";
 import { NEAR_USDC_ASSET, dryQuote, findAsset, fundingQuoteRequest, nearPriceFrom, payoutQuoteRequest, type OneClickToken } from "../src/oneclick.js";
 import { withdrawCommand } from "../src/withdraw-xchain.js";
@@ -62,6 +62,26 @@ test("buyer: buys only when every check passes and payback is under the bar", ()
   assert.equal(decide(good, noImage, 30).decision, "skip");
   const losing = payback({ price: 5_000_000n, cash: 0n, revenue30d: 0n, gasSpent30dYocto: 10n ** 24n, vaultCreatedAtMs: 0, nowMs: now, nearPrice: 4, tokenDecimals: 6 });
   assert.match(decide(losing, checks, 30).why, /never pays back/);
+  assert.match(decide(good, checks, 30).why, /payback on chain-visible costs 2\.0 days/);
+});
+
+test("buyer: a failed appraisal gate skips with its reason, and policies print their overrides", () => {
+  const now = Date.now();
+  const good = payback({ price: 5_000_000n, cash: 0n, revenue30d: 5_000_000n, gasSpent30dYocto: 0n, vaultCreatedAtMs: now - 3_600_000, nowMs: now, nearPrice: 4, tokenDecimals: 6 });
+  const gate = { name: "independent paying customers", ok: false, detail: "0 independent of 2 paying customers, need 2; revenue from owner-funded customers excluded" };
+  const d = decide(good, [...staticChecks(listing, deed, info, now), gate], 30);
+  assert.equal(d.decision, "skip");
+  assert.match(d.why, /independent paying customers \(0 independent of 2 .*revenue from owner-funded customers excluded\)/);
+
+  const strict = resolvePolicy("strict", {});
+  assert.deepEqual([strict.policy.minCustomers, strict.policy.maxShare, strict.policy.minAgeHours, strict.overridden], [3, 0.6, 72, []]);
+  const demo = resolvePolicy("demo", {});
+  assert.deepEqual([demo.policy.minCustomers, demo.policy.maxShare, demo.policy.minAgeHours], [2, 0.8, 0]);
+  const custom = resolvePolicy("strict", { minAgeHours: "24" });
+  assert.equal(custom.policy.minAgeHours, 24);
+  assert.equal(custom.policy.name, "strict with overrides");
+  assert.deepEqual(custom.overridden, ["--min-age-hours 24"]);
+  assert.throws(() => resolvePolicy("strict", { maxShare: "1.5" }), /bad --max-share/);
 });
 
 test("1Click: asset lookup, NEAR price and dry quote requests", async () => {

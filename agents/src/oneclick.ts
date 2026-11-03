@@ -4,6 +4,8 @@
 // asks for a real quote and never deposits: on testnet there is nothing to swap.
 
 export const ONECLICK_BASE = "https://1click.chaindefuser.com";
+/** Printed next to every 1Click result. */
+export const DRY_QUOTE_LABEL = "mainnet dry quote (dry:true), nothing executed";
 /** Native USDC on NEAR mainnet (6 decimals). */
 export const NEAR_USDC_ASSET = "nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1";
 const QUOTE_DEADLINE_MS = 30 * 60 * 1000;

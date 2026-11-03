@@ -33,7 +33,7 @@
     }
   },
   "mint_cost_yocto": "2879770000000000000000000",
-  "updated_at": "2026-11-02T13:49:27.710Z",
+  "updated_at": "2026-11-03T00:30:26.356Z",
   "superseded": [
     {
       "deed": "deed.deedlab.testnet",
@@ -729,118 +729,128 @@
       "run": "2026-11-02T05-25-09-361Z-relay-1102ripe",
       "ok": true,
       "finished_at": "2026-11-02T05:38:00.610Z"
+    },
+    {
+      "run": "2026-11-03T00-02-01-082Z-relay-1103rec",
+      "ok": false,
+      "finished_at": "2026-11-03T00:15:43.913Z"
+    },
+    {
+      "run": "2026-11-03T00-17-38-275Z-relay-1103take2",
+      "ok": true,
+      "finished_at": "2026-11-03T00:30:26.355Z"
     }
   ],
   "demo": {
-    "run": "2026-11-02T05-25-09-361Z-relay-1102ripe",
-    "slug": "relay-1102ripe",
-    "vault": "relay-1102ripe.deed2.deedlab.testnet",
+    "run": "2026-11-03T00-17-38-275Z-relay-1103take2",
+    "slug": "relay-1103take2",
+    "vault": "relay-1103take2.deed2.deedlab.testnet",
     "deed": "deed2.deedlab.testnet",
     "accounts": {
-      "seller": "deedl8-seller.testnet",
+      "seller": "deedl9-seller.testnet",
       "buyer": "deedlab-buyer.testnet",
       "customers": [
         "deedlab-alice.testnet",
         "deedlab-bob.testnet"
       ]
     },
-    "started_at": "2026-11-02T05:25:09.362Z",
+    "started_at": "2026-11-03T00:17:38.278Z",
     "steps": [
       {
-        "step": "seller mints relay-1102ripe",
+        "step": "seller mints relay-1103take2",
         "expect": "success",
         "ok": true,
-        "tx": "HJtBcxvVvdPRLamQK1tYEqBsWjMcK8FFTvzMjnm6xGfU",
-        "link": "https://testnet.nearblocks.io/txns/HJtBcxvVvdPRLamQK1tYEqBsWjMcK8FFTvzMjnm6xGfU"
+        "tx": "D9cP31Jk5nUAaTccjZaon4LbZ9RaLPbze6Ptw4yU4dd1",
+        "link": "https://testnet.nearblocks.io/txns/D9cP31Jk5nUAaTccjZaon4LbZ9RaLPbze6Ptw4yU4dd1"
       },
       {
         "step": "seller sets worker key A and endpoint",
         "expect": "success",
         "ok": true,
-        "tx": "ATJTUKtNMaAqmTcc1F2QNnGsZASihkarGhJQaBbNgKMa",
-        "link": "https://testnet.nearblocks.io/txns/ATJTUKtNMaAqmTcc1F2QNnGsZASihkarGhJQaBbNgKMa"
+        "tx": "2uYeBipst5ndwnsgYSteaAyKwDxxNYK4GXKQCkVbcLSC",
+        "link": "https://testnet.nearblocks.io/txns/2uYeBipst5ndwnsgYSteaAyKwDxxNYK4GXKQCkVbcLSC"
       },
       {
         "step": "customer deposit after a 402 (ft_transfer_call)",
         "expect": "success",
         "ok": true,
-        "tx": "6uxmeVgNKbBYJBpVDAm4tLVVRGVvtEF59CWccWwCE1es",
-        "link": "https://testnet.nearblocks.io/txns/6uxmeVgNKbBYJBpVDAm4tLVVRGVvtEF59CWccWwCE1es"
+        "tx": "GuwPYZNaFGcxJYGjVDSRPCp1tNA4iurG4WW8zSRuebz4",
+        "link": "https://testnet.nearblocks.io/txns/GuwPYZNaFGcxJYGjVDSRPCp1tNA4iurG4WW8zSRuebz4"
       },
       {
         "step": "customer deposit after a 402 (ft_transfer_call)",
         "expect": "success",
         "ok": true,
-        "tx": "Dok8TTpbjAQFKtx5cLRDC4XmpKEFsGcFQDaRdWoU7cS9",
-        "link": "https://testnet.nearblocks.io/txns/Dok8TTpbjAQFKtx5cLRDC4XmpKEFsGcFQDaRdWoU7cS9"
+        "tx": "uxTivim3CpWcGjJtxG1PVE3SEWZVNCWHbP9MjRwpvNG",
+        "link": "https://testnet.nearblocks.io/txns/uxTivim3CpWcGjJtxG1PVE3SEWZVNCWHbP9MjRwpvNG"
       },
       {
-        "step": "worker A charges a batch (3 items, signed by the worker key)",
+        "step": "worker A charges a batch (1 items, signed by the worker key)",
         "expect": "success",
         "ok": true,
-        "tx": "DtWj15zeRMXPPUCewXDLtCDcs5A2JhtR9cZ3JKRbQX1x",
-        "link": "https://testnet.nearblocks.io/txns/DtWj15zeRMXPPUCewXDLtCDcs5A2JhtR9cZ3JKRbQX1x"
+        "tx": "3g5f534FjFt37kXhXUrVtvDuoggaLFmkVZunk1gbM4Fy",
+        "link": "https://testnet.nearblocks.io/txns/3g5f534FjFt37kXhXUrVtvDuoggaLFmkVZunk1gbM4Fy"
       },
       {
         "step": "push_stats updates the dynamic NFT metadata",
         "expect": "success",
         "ok": true,
-        "tx": "752J5RaHRBDz7gjxL2fLjfcLy3Nh1FG2kxS6HxmxGS7U",
-        "link": "https://testnet.nearblocks.io/txns/752J5RaHRBDz7gjxL2fLjfcLy3Nh1FG2kxS6HxmxGS7U"
+        "tx": "22ioumG44w22QTRqmEHrwotjKgCocMLE9mWaRwXuQpQY",
+        "link": "https://testnet.nearblocks.io/txns/22ioumG44w22QTRqmEHrwotjKgCocMLE9mWaRwXuQpQY"
       },
       {
         "step": "seller withdraws revenue before listing",
         "expect": "success",
         "ok": true,
-        "tx": "D9E6MceuTUw3agQGweqQaMwkQXfbmWCwstzyzcP8Qcrd",
-        "link": "https://testnet.nearblocks.io/txns/D9E6MceuTUw3agQGweqQaMwkQXfbmWCwstzyzcP8Qcrd"
+        "tx": "F6y7mpaKLeG9J572WWWK2BdEtSvJpWvfXwvQzw68J4n4",
+        "link": "https://testnet.nearblocks.io/txns/F6y7mpaKLeG9J572WWWK2BdEtSvJpWvfXwvQzw68J4n4"
       },
       {
-        "step": "seller lists relay-1102ripe for 3 tUSDC",
+        "step": "seller lists relay-1103take2 for 3 tUSDC",
         "expect": "success",
         "ok": true,
-        "tx": "6bthfgAB41aURVQ4KNsWHuxDmy4HqCwrHSSqyU37nbxA",
-        "link": "https://testnet.nearblocks.io/txns/6bthfgAB41aURVQ4KNsWHuxDmy4HqCwrHSSqyU37nbxA"
+        "tx": "DjePfbDERz7uSKNCF6JoESShPweFZRDitHPrqA9sCvQb",
+        "link": "https://testnet.nearblocks.io/txns/DjePfbDERz7uSKNCF6JoESShPweFZRDitHPrqA9sCvQb"
       },
       {
-        "step": "buyer agent buys relay-1102ripe",
+        "step": "buyer agent buys relay-1103take2",
         "expect": "success",
         "ok": true,
-        "tx": "HaMeB1JePtBkSPYPsV9W2oLj86jvnJjNG3VYHaVEsZVR",
-        "link": "https://testnet.nearblocks.io/txns/HaMeB1JePtBkSPYPsV9W2oLj86jvnJjNG3VYHaVEsZVR",
-        "note": "payback 6.40 days"
+        "tx": "B4oLMrHUZF6L4WriRaKmk73RUfVaPvY3heJ5tqikHb2g",
+        "link": "https://testnet.nearblocks.io/txns/B4oLMrHUZF6L4WriRaKmk73RUfVaPvY3heJ5tqikHb2g",
+        "note": "payback 7.49 days"
       },
       {
         "step": "seller withdraw after the sale reverts (only the deed owner)",
         "expect": "failure",
         "ok": true,
-        "tx": "2DqNtexzZn7r93pempU4MdEeZHzXbBR87Jr3svkLx7ME",
-        "link": "https://testnet.nearblocks.io/txns/2DqNtexzZn7r93pempU4MdEeZHzXbBR87Jr3svkLx7ME"
+        "tx": "7MRvnHyLwLMwjRtuqJw7fPyCUh9tAKywcS2mZMWdhnzY",
+        "link": "https://testnet.nearblocks.io/txns/7MRvnHyLwLMwjRtuqJw7fPyCUh9tAKywcS2mZMWdhnzY"
       },
       {
         "step": "buyer rotates the worker key and endpoint in one transaction",
         "expect": "success",
         "ok": true,
-        "tx": "Zq32xwoV6tX5621S47H4rf2YBtX19R41S82h7DKjqDv",
-        "link": "https://testnet.nearblocks.io/txns/Zq32xwoV6tX5621S47H4rf2YBtX19R41S82h7DKjqDv"
+        "tx": "HSb2N19QLqr5yp3a39FFxbm28ziDgm86btcfL6tJ1Ahr",
+        "link": "https://testnet.nearblocks.io/txns/HSb2N19QLqr5yp3a39FFxbm28ziDgm86btcfL6tJ1Ahr"
       },
       {
         "step": "worker A stops by itself after the rotation",
         "expect": "success",
         "ok": true,
-        "note": "hand-off to http://127.0.0.1:7604: 27 of 27 obligations taken over"
+        "note": "hand-off to http://127.0.0.1:7604: 28 of 28 obligations taken over"
       },
       {
         "step": "worker B holds every open obligation of worker A",
         "expect": "success",
         "ok": true,
-        "note": "hand-off received from the previous worker: 27 taken over (5 charged as new), 0 already here, 0 rejected"
+        "note": "receipts presented by deedlab-bob.testnet: 11 taken over (11 charged as new), 3 already here, 0 rejected; hand-off received from the previous worker: 13 taken over (13 charged as new), 15 already here, 0 rejected"
       },
       {
         "step": "every pending obligation was delivered",
         "expect": "success",
         "ok": true,
-        "note": "alice: 26 accepted, 28 delivered, 0 failed; bob: 35 accepted, 38 delivered, 0 failed"
+        "note": "alice: 23 accepted, 23 delivered, 0 failed; bob: 27 accepted, 27 delivered, 0 failed"
       },
       {
         "step": "receipts were signed by both workers",
@@ -849,58 +859,59 @@
         "note": "2 worker keys"
       },
       {
-        "step": "worker B charges with the new key (11 items)",
+        "step": "worker B charges with the new key (1 items)",
         "expect": "success",
         "ok": true,
-        "tx": "DDMqmncPV5Tow9iTugMz9oGCACmbN3wXAPdmuiVh6a5a",
-        "link": "https://testnet.nearblocks.io/txns/DDMqmncPV5Tow9iTugMz9oGCACmbN3wXAPdmuiVh6a5a"
+        "tx": "3abhecQ56BSD31CdL1fGNruL7uHc6LNHbmDgmY7VMtyQ",
+        "link": "https://testnet.nearblocks.io/txns/3abhecQ56BSD31CdL1fGNruL7uHc6LNHbmDgmY7VMtyQ"
       },
       {
         "step": "buyer withdraws revenue",
         "expect": "success",
         "ok": true,
-        "tx": "52Lun1MSKUCRQMc5zZECkU6xgPzteuy8zQ9ARztSDSrF",
-        "link": "https://testnet.nearblocks.io/txns/52Lun1MSKUCRQMc5zZECkU6xgPzteuy8zQ9ARztSDSrF"
+        "tx": "8BLjiwF8TKqFjXiyaSAkbYEL662qiN1F6zSqV1Dx8yZw",
+        "link": "https://testnet.nearblocks.io/txns/8BLjiwF8TKqFjXiyaSAkbYEL662qiN1F6zSqV1Dx8yZw"
       },
       {
         "step": "push_stats after the sale",
         "expect": "success",
         "ok": true,
-        "tx": "AMKAeTu12b3YJd1BVfyVst6aJc99Y23YLDxTo2ATX6d8",
-        "link": "https://testnet.nearblocks.io/txns/AMKAeTu12b3YJd1BVfyVst6aJc99Y23YLDxTo2ATX6d8"
+        "tx": "HCf9MEbFJfocdWt3Vsjrskfwr5mYURJPYV5EGcyxZVkA",
+        "link": "https://testnet.nearblocks.io/txns/HCf9MEbFJfocdWt3Vsjrskfwr5mYURJPYV5EGcyxZVkA"
       }
     ],
     "links": {
-      "vault": "https://testnet.nearblocks.io/address/relay-1102ripe.deed2.deedlab.testnet",
+      "vault": "https://testnet.nearblocks.io/address/relay-1103take2.deed2.deedlab.testnet",
       "customer_deposits": [
-        "https://testnet.nearblocks.io/txns/6uxmeVgNKbBYJBpVDAm4tLVVRGVvtEF59CWccWwCE1es",
-        "https://testnet.nearblocks.io/txns/Dok8TTpbjAQFKtx5cLRDC4XmpKEFsGcFQDaRdWoU7cS9"
+        "https://testnet.nearblocks.io/txns/GuwPYZNaFGcxJYGjVDSRPCp1tNA4iurG4WW8zSRuebz4",
+        "https://testnet.nearblocks.io/txns/uxTivim3CpWcGjJtxG1PVE3SEWZVNCWHbP9MjRwpvNG"
       ]
     },
-    "image_hash": "sha256:868d35923e1c43a72f699a8d6d0dbe88f5753be399d304a751d8bf8aac7e5b43",
-    "worker_a_key": "ed25519:AVUwNCgxU6Zcq3BwADGfhZfRDhSzD56P7ujcZGReThSc",
+    "image_hash": "sha256:d503fbb24b9851211845c8e37b84af20a463452e14580afd3cd3360978a7f099",
+    "worker_a_key": "ed25519:EWZWVqPtQDsBprcBkoVGRrpPGAzybyqVjfmxmUKtQMWe",
     "worker_a_charge_txs": [
-      "DtWj15zeRMXPPUCewXDLtCDcs5A2JhtR9cZ3JKRbQX1x",
-      "51bpLAu6hphwtM6cRCcfN52caeHkzNzWg1qdUzjLoqJD",
-      "6tiChVWJzRPh1T1FVt8PKFzdSRzUArYG6VCgXiRscGxy",
-      "49nLUg3F1BKPXRDQDsLi5UaNaVxgHkcCHaZNoHBkGPiW",
-      "2SBHkziyCayz2m26DATUAU8by3hj9sQAHLACrqa7pucQ",
-      "3SZidiWMjaVQHRjiURS3yVYbQSNv1T49oyRNkv5g8bqm"
+      "3g5f534FjFt37kXhXUrVtvDuoggaLFmkVZunk1gbM4Fy",
+      "F64ra8oXfZ8HcxjsmtLXotv8cNSGp3TNBbcuvio91ENL",
+      "EaDNsEMj17YRdGaPnBuVbLvKbzmw9zREUCrWxAyr2RFN",
+      "FEKXFHcUZ2yU8Fhr8RssZogRiZVgf1gCph78hiYKARH",
+      "8P3FDedMiMuNYfHAYXb9oE93scywUCXm8wDvExmwphax",
+      "j3n5ipKgVv7AS3i9ZCWF94yc9Lp1xuRBj1GkjXnfhAy",
+      "683djcKYDvpZXro8s8A6F53hnDLDBAYrQeTmn58vQYuK"
     ],
     "buyer": {
       "decision": "buy",
       "evaluated": [
         {
-          "token_id": "relay-1102ripe",
+          "token_id": "relay-1103take2",
           "listing_id": 1,
           "price": "3000000",
           "cash": "0",
-          "calls_30d": 61,
-          "revenue_30d": "610000",
-          "gas_spent_30d_yocto": "33138480806460299999998",
+          "calls_30d": 53,
+          "revenue_30d": "530000",
+          "gas_spent_30d_yocto": "33302358222656899999998",
           "window_days": 1,
-          "net_per_day": 0.4688300717644791,
-          "payback_days": 6.398906940225191,
+          "net_per_day": 0.4007868500960913,
+          "payback_days": 7.485275525583562,
           "checks": [
             {
               "name": "listing active",
@@ -910,7 +921,7 @@
             {
               "name": "seller owns the deed",
               "ok": true,
-              "detail": "deed owner deedl8-seller.testnet, vault owner deedl8-seller.testnet"
+              "detail": "deed owner deedl9-seller.testnet, vault owner deedl9-seller.testnet"
             },
             {
               "name": "vault locked for this listing",
@@ -925,12 +936,12 @@
             {
               "name": "image hash set",
               "ok": true,
-              "detail": "sha256:868d35923e1c43a72f699a8d6d0dbe88f5753be399d304a751d8bf8aac7e5b43"
+              "detail": "sha256:d503fbb24b9851211845c8e37b84af20a463452e14580afd3cd3360978a7f099"
             },
             {
               "name": "worker key registered",
               "ok": true,
-              "detail": "ed25519:AVUwNCgxU6Zcq3BwADGfhZfRDhSzD56P7ujcZGReThSc"
+              "detail": "ed25519:EWZWVqPtQDsBprcBkoVGRrpPGAzybyqVjfmxmUKtQMWe"
             },
             {
               "name": "has customers",
@@ -940,7 +951,7 @@
             {
               "name": "listing not stale",
               "ok": true,
-              "detail": "listed 2026-11-02T05:30:03.451Z"
+              "detail": "listed 2026-11-03T00:23:19.274Z"
             },
             {
               "name": "endpoint answers",
@@ -949,97 +960,100 @@
             }
           ],
           "decision": "buy",
-          "why": "payback 6.4 days is under 30"
+          "why": "payback 7.5 days is under 30"
         }
       ],
       "funding_quote": {
-        "amountIn": "3035911",
-        "amountInFormatted": "3.035911",
-        "amountInUsd": "3.034475014097",
-        "minAmountIn": "3005605",
+        "amountIn": "3035574",
+        "amountInFormatted": "3.035574",
+        "amountInUsd": "3.033543200994",
+        "minAmountIn": "3005266",
         "amountOut": "3000000",
         "amountOutFormatted": "3.0",
-        "amountOutUsd": "2.998581000000",
+        "amountOutUsd": "2.997993000000",
         "minAmountOut": "3000000",
         "timeEstimate": 45,
         "refundFee": "300000",
-        "withdrawFee": "5328"
+        "withdrawFee": "4854"
       },
       "funding_quote_error": null
     },
-    "worker_b_key": "ed25519:BCzjHyw5tdSALF5XSrjjcdcyvmsKU5o9aigqX1KCSWDU",
+    "worker_b_key": "ed25519:FxQV6CRSrkHkya4K2j9kxSVcUY8rgKdpUUVJDE2EoxRQ",
     "handoff": {
-      "worker_a": "hand-off to http://127.0.0.1:7604: 27 of 27 obligations taken over",
+      "worker_a": "hand-off to http://127.0.0.1:7604: 28 of 28 obligations taken over",
       "worker_b": [
-        "hand-off received from the previous worker: 27 taken over (5 charged as new), 0 already here, 0 rejected"
+        "receipts presented by deedlab-bob.testnet: 11 taken over (11 charged as new), 3 already here, 0 rejected",
+        "hand-off received from the previous worker: 13 taken over (13 charged as new), 15 already here, 0 rejected"
       ]
     },
     "vault_keys_after_rotation": [
       {
-        "public_key": "ed25519:BCzjHyw5tdSALF5XSrjjcdcyvmsKU5o9aigqX1KCSWDU",
+        "public_key": "ed25519:FxQV6CRSrkHkya4K2j9kxSVcUY8rgKdpUUVJDE2EoxRQ",
         "permission": {
           "FunctionCall": {
-            "allowance": "2000000000000000000000000",
+            "allowance": "1999316960611512900000000",
             "method_names": [
               "charge"
             ],
-            "receiver_id": "relay-1102ripe.deed2.deedlab.testnet"
+            "receiver_id": "relay-1103take2.deed2.deedlab.testnet"
           }
         }
       }
     ],
     "traffic": {
-      "finished_at": "2026-11-02T05:36:56.787Z",
+      "finished_at": "2026-11-03T00:29:54.148Z",
       "customers": [
         {
           "customer": "alice",
-          "sent": 27,
-          "accepted": 26,
+          "sent": 26,
+          "accepted": 23,
           "refused_402": 0,
-          "errors": 1,
-          "delivered": 28,
+          "errors": 3,
+          "delivered": 23,
           "failed": 0,
           "pending": 0,
           "receipts_by_worker": {
-            "AVUwNC": 13,
-            "BCzjHy": 13
+            "EWZWVq": 14,
+            "FxQV6C": 9
           }
         },
         {
           "customer": "bob",
-          "sent": 36,
-          "accepted": 35,
+          "sent": 28,
+          "accepted": 27,
           "refused_402": 0,
           "errors": 1,
-          "delivered": 38,
+          "delivered": 27,
           "failed": 0,
           "pending": 0,
           "receipts_by_worker": {
-            "AVUwNC": 14,
-            "BCzjHy": 21
+            "EWZWVq": 14,
+            "FxQV6C": 13
           }
         }
       ]
     },
     "worker_b_charge_txs": [
-      "DDMqmncPV5Tow9iTugMz9oGCACmbN3wXAPdmuiVh6a5a",
-      "6xWjMGtck3aSTuMexVawVMpPxecQCckjaueBKnqo7GgE",
-      "GQP4BvktLLhyYp144CThDWcU6votVaYJ7tV9iY8CuwJR"
+      "3abhecQ56BSD31CdL1fGNruL7uHc6LNHbmDgmY7VMtyQ",
+      "B1cfV8e158gGxVkCxnJ4NgoSgrQAfBtJgasY3BhzmiLc",
+      "8S7bSLdjDD7Jn6a3x11wEHoimAEF779oJ7vtgfQP13QZ",
+      "HxqgJ7LtVdgwDUwtGGy4BX8oTSucuojT6SdawiDcggXX",
+      "8ZgyxML4YA7io6WLyTFSy7MTKoUAELQZ4LtMXbnb9poG"
     ],
     "final": {
       "owner": "deedlab-buyer.testnet",
       "owner_epoch": 2,
-      "worker_key": "ed25519:BCzjHyw5tdSALF5XSrjjcdcyvmsKU5o9aigqX1KCSWDU",
+      "worker_key": "ed25519:FxQV6CRSrkHkya4K2j9kxSVcUY8rgKdpUUVJDE2EoxRQ",
       "endpoint": "http://127.0.0.1:7604",
       "revenue": "0",
-      "liabilities": "8770000",
-      "calls_30d": 123,
-      "revenue_30d": "1230000",
-      "gas_spent_30d": "35692529909906199999996"
+      "liabilities": "8930000",
+      "calls_30d": 107,
+      "revenue_30d": "1070000",
+      "gas_spent_30d": "35489561961687699999996"
     },
-    "finished_at": "2026-11-02T05:38:00.610Z",
+    "finished_at": "2026-11-03T00:30:26.355Z",
     "ok": true,
-    "logs": "demo-logs/2026-11-02T05-25-09-361Z-relay-1102ripe/ (local only)"
+    "logs": "demo-logs/2026-11-03T00-17-38-275Z-relay-1103take2/ (local only)"
   },
   "post_demo": {
     "note": "after the recorded run the buyer listed relay-10300721 for 5 tUSDC so the buyer agent dry run has a listing to evaluate",

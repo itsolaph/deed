@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Deed: an NFT that owns a running paid API on NEAR testnet." />
     <meta name="referrer" content="no-referrer" />
-    <title>Deed, a business you can hold</title>
+    <title>Deed, a paid API you can hold</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -31,19 +31,20 @@
       <section class="hero">
         <div class="hero-left">
           <div class="copy">
-            <h1>A business you can hold</h1>
+            <h1>A paid API you can hold</h1>
             <p class="lede">
-              Every deed is an NFT that owns a running paid API: a vault with its treasury, price list,
-              customer ledger and worker key. Buy the deed and the business is yours, in one transaction.
+              Every deed is an NFT that owns a transferable service instance: a running paid API's vault
+              with its treasury, price list, customer ledger and worker key. Buy the deed and the instance
+              is yours, in one transaction. Hosting stays off chain.
             </p>
             <ul class="mechs">
               <li><strong>The cashier can only charge.</strong> Its key can never withdraw.</li>
               <li><strong>A listing locks the vault.</strong> The buyer sees exactly what runs.</li>
-              <li><strong>The sale rotates the worker.</strong> Deliveries survive, no downtime.</li>
+              <li><strong>The sale rotates the worker.</strong> Open receipts move to the new one.</li>
             </ul>
           </div>
           <dl class="board" id="kpis" aria-label="Totals across the deeds on the board"></dl>
-          <a class="cue" href="#for-sale">See every business for sale</a>
+          <a class="cue" href="#for-sale">See every deed for sale</a>
         </div>
         <aside class="featured" id="featured" aria-label="Featured listing">
           <div class="feat-cert cert-ph" aria-hidden="true"><span>Reading the chain</span></div>
@@ -57,7 +58,7 @@
           <div class="tabs" id="tabs" role="tablist" aria-label="Which deeds to show"></div>
         </div>
         <div class="board-head" aria-hidden="true">
-          <span>#</span><span>deed</span><span>calls, 30d</span><span>revenue, 30d</span><span>price</span><span>est. payback</span><span>status</span><span></span>
+          <span>#</span><span>deed</span><span>calls, 30d</span><span>revenue, 30d</span><span>price</span><span>payback, chain costs</span><span>status</span><span></span>
         </div>
         <div id="deeds" role="tabpanel"></div>
         <p class="note board-note" id="board-note"></p>

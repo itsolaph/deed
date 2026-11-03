@@ -10,7 +10,8 @@ const TTL_MS = 120_000;
 const MIN_GAP_MS = 10_000;
 /** Transaction batches per open (20 each): 1 list request + at most 3 batch requests. */
 const MAX_BATCHES = 3;
-const STORE = (vault: string) => `deed.history.v1.${vault}`;
+// v2: charge events carry per-customer items, deposits are kept (older caches lack both).
+const STORE = (vault: string) => `deed.history.v2.${vault}`;
 
 interface Cached {
   events: HistoryEvent[];
@@ -23,6 +24,8 @@ interface Cached {
 export interface HistoryState {
   status: "loading" | "ok" | "error";
   history: EarningsHistory | null;
+  /** The raw events behind it (charges per customer, deposits), for the customer list. */
+  events: HistoryEvent[];
   /** When the last successful read finished, or 0. */
   readAt: number;
   listed: number;
@@ -70,6 +73,7 @@ function set(vault: string, s: HistoryState): void {
 const fromCache = (vault: string, c: Cached, status: HistoryState["status"], extra: Partial<HistoryState> = {}): HistoryState => ({
   status,
   history: buildEarningsHistory(c.events, vault),
+  events: c.events,
   readAt: c.readAt,
   listed: c.listed,
   unread: c.unread,
@@ -100,7 +104,7 @@ export function wantHistory(vault: string, force = false): void {
     return;
   }
   inFlight.add(vault);
-  set(vault, c ? fromCache(vault, c, "loading") : { status: "loading", history: null, readAt: 0, listed: 0, unread: 0, requests: 0, error: null });
+  set(vault, c ? fromCache(vault, c, "loading") : { status: "loading", history: null, events: [], readAt: 0, listed: 0, unread: 0, requests: 0, error: null });
   void readVaultHistory(index, vault, c ?? undefined, { maxBatches: MAX_BATCHES })
     .then((r) => {
       const next: Cached = { events: r.events, settled: r.settled, readAt: Date.now(), listed: r.listed, unread: r.unread };
@@ -110,7 +114,7 @@ export function wantHistory(vault: string, force = false): void {
     .catch((e: unknown) => {
       const msg = e instanceof Error ? e.message : String(e);
       // A cached read stays on screen; the error is shown next to it.
-      set(vault, c ? fromCache(vault, c, "error", { error: msg }) : { status: "error", history: null, readAt: 0, listed: 0, unread: 0, requests: 0, error: msg });
+      set(vault, c ? fromCache(vault, c, "error", { error: msg }) : { status: "error", history: null, events: [], readAt: 0, listed: 0, unread: 0, requests: 0, error: msg });
     })
     .finally(() => inFlight.delete(vault));
 }

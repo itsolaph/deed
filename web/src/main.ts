@@ -3,7 +3,8 @@
 
 import "./style.css";
 import { Rpc, TESTNET_RPC_URLS } from "../../sdk/src/chain.js";
-import { formatUnits, fromUnits, payback, toUnits, type PaybackResult } from "../../sdk/src/payback.js";
+import { PAYBACK_LABEL, formatUnits, fromUnits, payback, toUnits, type PaybackResult } from "../../sdk/src/payback.js";
+import { isProjectDemoAccount, ownersFromEvents } from "../../sdk/src/appraisal.js";
 import { DeedViews, VaultViews, type CustomerView, type DeedView, type NftToken, type VaultInfo, type VaultStatsView } from "../../sdk/src/views.js";
 import { reconcile, type Epoch } from "../../sdk/src/history.js";
 import { DEED_CONTRACT, EXPLORER, NEAR_PRICE_USD, REFRESH_MS, TX_INDEX } from "./config";
@@ -272,8 +273,9 @@ function paybackOf(r: Row): PaybackResult | null {
 
 /** The rule in words, worded after sdk/src/payback.ts. */
 const paybackRule = (): string =>
-  `est. payback = (price − vault cash, at least 0) ÷ net revenue per day, where net revenue per day = ` +
-  `(revenue, 30 days − gas, 30 days at ${NEAR_PRICE_USD} USD/NEAR) ÷ days since the vault opened (1 to 30)`;
+  `${PAYBACK_LABEL} = (price − withdrawable proceeds, at least 0) ÷ net per day, where net per day = ` +
+  `(revenue, 30 days − on-chain gas, 30 days at ${NEAR_PRICE_USD} USD/NEAR) ÷ days since the vault opened (1 to 30). ` +
+  `Hosting, bandwidth and operator time are not included. The board uses all 30-day revenue; the buyer agent counts only revenue from independent customers.`;
 
 function paybackText(p: PaybackResult | null): string {
   if (!p) return "–";
@@ -288,10 +290,10 @@ function paybackMath(r: Row, p: PaybackResult): string {
   const days = p.windowDays;
   const rev = p.revenuePerDay * days;
   const gas = p.gasPerDay * days;
-  const head = `(${fmtNum(price)} − ${fmtNum(cash)}) ÷ ((${fmtNum(rev)} − ${fmtNum(gas)}) ÷ ${days.toFixed(1)} days)`;
+  const head = `(price ${fmtNum(price)} − proceeds ${fmtNum(cash)}) ÷ ((revenue ${fmtNum(rev)} − on-chain gas ${fmtNum(gas)}) ÷ ${days.toFixed(1)} days)`;
   return p.paybackDays === null
     ? `${head}: net revenue is not above zero, so no payback at current revenue`
-    : `${head} = ${p.paybackDays.toFixed(1)} days`;
+    : `${head} = ${p.paybackDays.toFixed(1)} days. Hosting, bandwidth and operator time are not included.`;
 }
 
 function ago(ms: number): string {
@@ -428,7 +430,7 @@ function buyButton(r: Row, me: string | null): HTMLElement | null {
   const l = r.deed.listing;
   if (!l) return null;
   if (me && me === l.seller) return null;
-  const b = button(`Buy this business, ${amount(l.price)} ${token.symbol}`, () => buy(r), "primary buy");
+  const b = button(`Buy this deed, ${amount(l.price)} ${token.symbol}`, () => buy(r), "primary buy");
   if (!l.active) {
     b.disabled = true;
     b.textContent = "Listing activating";
@@ -443,8 +445,9 @@ function salePanel(r: Row, me: string | null, p: PaybackResult | null): HTMLElem
     "section",
     { class: "sale", "aria-label": "Sale" },
     h("p", { class: "sale-head" }, `For sale, ${amount(l.price)} ${token.symbol}`, h("span", { class: "sale-by" }, ` Listing #${l.listing_id} by ${l.seller}${l.active ? "" : ", activating"}.`)),
-    h("p", { class: "note" }, `The vault cash (${amount(r.info.revenue)} ${token.symbol}) comes with the deed. Customer credit (${amount(r.info.liabilities)} ${token.symbol}) stays owed to customers.`),
-    h("p", { class: "note math", title: paybackRule() }, `est. payback: ${paybackMath(r, p)}`),
+    h("p", { class: "note" }, `Withdrawable proceeds (${amount(r.info.revenue)} ${token.symbol}) come with the deed. Customer credit (${amount(r.info.liabilities)} ${token.symbol}) is a liability: it stays owed to customers and the owner can never withdraw it.`),
+    h("p", { class: "note math", title: paybackRule() }, `${PAYBACK_LABEL}: ${paybackMath(r, p)}`),
+    h("p", { class: "note fine" }, "This is a transferable service instance: the vault, its keys and its customer ledger. Servers, domains and code are off chain and do not move with the token."),
   );
   const buyBtn = buyButton(r, me);
   if (buyBtn) box.append(buyBtn, h("p", { class: "note fine" }, `The purchase is pinned to listing #${l.listing_id}, so a cancelled and re-listed deed is refused and refunded.`));
@@ -740,6 +743,9 @@ function fillHistory(box: HTMLElement, r: Row): void {
       parts.push(h("p", { class: "hist-check" }, h("strong", {}, "Not complete yet."), ` The vault's own counters say ${counters}. ${gaps.length ? `The log read so far differs by ${gaps.join(" and ")}. ` : ""}${why}`));
     }
 
+    const custs = customersBlock(r, s);
+    if (custs) parts.push(custs);
+
     const notes: string[] = [];
     if (s.unread > 0) notes.push(`${s.unread} newer transactions are still unread; Read again continues.`);
     if (s.status === "error") notes.push(`The last read failed (${s.error ?? "no answer"}); this is the read from ${clock(s.readAt)}.`);
@@ -747,13 +753,87 @@ function fillHistory(box: HTMLElement, r: Row): void {
       h(
         "p",
         { class: "note fine hist-src" },
-        `From the vault's NEP-297 events (vault_charge, vault_withdraw, vault_owner) and the deed's deed_sold, read through ${new URL(TX_INDEX).host}: ${s.listed} transactions, read at ${clock(s.readAt)}. Revenue is exact per epoch: a charge belongs to whoever held the deed when it executed. Proof links open on NearBlocks. `,
+        `From the vault's NEP-297 events (vault_charge, vault_deposit, vault_withdraw, vault_owner) and the deed's deed_sold, read through ${new URL(TX_INDEX).host}: ${s.listed} transactions, read at ${clock(s.readAt)}. Revenue is exact per epoch: a charge belongs to whoever held the deed when it executed. Proof links open on NearBlocks. `,
         notes.join(" "),
       ),
     );
   }
   box.replaceChildren(...parts.filter((x): x is Node | string => !!x));
   box.setAttribute("aria-busy", String(s?.status === "loading"));
+}
+
+type CustomerKind = "owner" | "owner-funded" | "demo" | "other";
+const KIND_TEXT: Record<CustomerKind, string> = {
+  owner: "owner, now or before",
+  "owner-funded": "credit paid in by an owner",
+  demo: "our demo traffic agent",
+  other: "not ours",
+};
+
+/** Every paying or depositing customer in the events read, with what it paid and who it is. */
+function customersBlock(r: Row, s: HistoryState): HTMLElement | null {
+  const owners = new Set([r.info.owner_id, ...ownersFromEvents(s.events)]);
+  const list = new Map<string, { calls: number; paid: bigint; senders: Set<string> }>();
+  const get = (c: string) => list.get(c) ?? (list.set(c, { calls: 0, paid: 0n, senders: new Set() }), list.get(c)!);
+  for (const e of s.events) {
+    if (e.kind === "deposit" && e.customer) get(e.customer).senders.add(e.sender);
+    if (e.kind === "charge") for (const it of e.items ?? []) {
+      if (!it.customer) continue;
+      const c = get(it.customer);
+      c.calls += it.units;
+      c.paid += BigInt(it.cost);
+    }
+  }
+  if (list.size === 0) return null;
+  const kindOf = (c: string, senders: Set<string>): CustomerKind => {
+    if (owners.has(c)) return "owner";
+    if ([...senders].some((x) => x !== c && owners.has(x))) return "owner-funded";
+    if (isProjectDemoAccount(c, [...senders])) return "demo";
+    return "other";
+  };
+  const rowsOut = [...list.entries()].map(([c, x]) => ({ c, ...x, kind: kindOf(c, x.senders) })).sort((a, b) => (b.paid > a.paid ? 1 : b.paid < a.paid ? -1 : a.c < b.c ? -1 : 1));
+  const n = (k: CustomerKind) => rowsOut.filter((x) => x.kind === k).length;
+  const summary =
+    `${rowsOut.length} distinct ${rowsOut.length === 1 ? "customer" : "customers"} in the events read: ` +
+    `${n("demo")} our own demo traffic ${n("demo") === 1 ? "agent" : "agents"}, ${n("other")} not ours` +
+    (n("owner") + n("owner-funded") > 0 ? `, ${n("owner")} owner ${n("owner") === 1 ? "account" : "accounts"} and ${n("owner-funded")} paid in by an owner` : "") +
+    ".";
+  const cell = (cls: string, ...kids: Child[]) => h("td", { class: cls }, ...kids);
+  return h(
+    "div",
+    { class: "custs" },
+    h("h3", { class: "hist-title" }, "Customers"),
+    h("p", { class: "hist-lede" }, summary),
+    h(
+      "div",
+      { class: "ledger-wrap" },
+      h(
+        "table",
+        { class: "custs-table" },
+        h("thead", {}, h("tr", {}, h("th", { scope: "col" }, "customer"), h("th", { scope: "col", class: "l-num" }, "paid calls"), h("th", { scope: "col", class: "l-num" }, `paid, ${token.symbol}`), h("th", { scope: "col" }, "who"))),
+        h(
+          "tbody",
+          {},
+          ...rowsOut.map((x) =>
+            h(
+              "tr",
+              {},
+              cell("cu-acc", Object.assign(link(`address/${x.c}`, x.c), { title: x.c })),
+              cell("l-num", fmtInt(x.calls)),
+              cell("l-num", amount(x.paid)),
+              cell("cu-kind", h("span", { class: x.kind === "other" ? "tag" : `tag ${x.kind === "demo" ? "ours" : "warn"}` }, KIND_TEXT[x.kind])),
+            ),
+          ),
+        ),
+      ),
+    ),
+    h(
+      "p",
+      { class: "note fine" },
+      "Our demo traffic agents are deedlab-alice, deedlab-bob and accounts funded by a deedl*-seller account. Traffic in the recorded demos comes from these agents. " +
+        "Customers whose credit an owner paid in are marked here; the buyer agent also reads each customer's own funding history and counts only independent revenue.",
+    ),
+  );
 }
 
 function historySection(r: Row): HTMLElement {
@@ -897,7 +977,7 @@ function entry(r: Row, rank: number, me: string | null): HTMLElement {
       id: `row-${key}`,
       "aria-expanded": String(openKeys.has(key)),
       "aria-controls": `detail-${key}`,
-      "aria-label": `${id}, ${deed.title}. ${stats.calls_30d} paid calls in 30 days. ${l ? `For sale at ${amount(l.price)} ${token.symbol}, est. payback ${paybackText(p)}` : "Not listed"}. Show details.`,
+      "aria-label": `${id}, ${deed.title}. ${stats.calls_30d} paid calls in 30 days. ${l ? `For sale at ${amount(l.price)} ${token.symbol}, ${PAYBACK_LABEL} ${paybackText(p)}` : "Not listed"}. Show details.`,
     },
     h("span", { class: "c c-rank" }, String(rank + 1).padStart(2, "0")),
     h("span", { class: "c c-id" }, h("span", { class: "id" }, id), h("span", { class: "sub" }, deed.title)),
@@ -907,7 +987,7 @@ function entry(r: Row, rank: number, me: string | null): HTMLElement {
     h(
       "span",
       { class: `c c-pay${p?.paybackDays == null ? " muted" : ""}`, title: l ? paybackRule() : "Not listed" },
-      h("span", { class: "lbl" }, "est. payback"),
+      h("span", { class: "lbl" }, "payback, chain costs"),
       h("span", { class: "val" }, paybackText(p)),
     ),
     h("span", { class: "c c-status" }, chip),
@@ -920,10 +1000,10 @@ function entry(r: Row, rank: number, me: string | null): HTMLElement {
     { class: "figs" },
     figure("owner", link(`address/${info.owner_id}`, short(info.owner_id))),
     figure("price per call", h("span", { class: "num" }, `${amount(info.price_per_call, 6)} ${token.symbol}`, info.pending_price ? `, ${amount(info.pending_price, 6)} from ${new Date(Number(info.price_effective_at_ms)).toLocaleString()}` : "")),
-    figure("customer credit", h("span", { class: "num" }, `${amount(info.liabilities)} ${token.symbol}`), "Prepaid by customers; never withdrawable by the owner"),
-    figure("cash in vault", h("span", { class: "num" }, `${amount(info.revenue)} ${token.symbol}`), "Withdrawable revenue; goes to the buyer with the deed"),
+    figure("withdrawable proceeds", h("span", { class: "num" }, `${amount(info.revenue)} ${token.symbol}`), "Earned revenue the owner may withdraw; goes to the buyer with the deed"),
+    figure("customer credit, owed", h("span", { class: "num" }, `${amount(info.liabilities)} ${token.symbol}`), "A liability: prepaid by customers, refundable to them, never withdrawable by the owner"),
     figure("gas spent, 30 days", h("span", { class: "num" }, `${near(stats.gas_spent_30d, 5)} NEAR`), "Estimated from the vault's NEAR balance at each charge"),
-    figure("customers", h("span", { class: "num" }, String(info.customers))),
+    figure("customers with credit", h("span", { class: "num" }, String(info.customers)), "Ledger entries in the vault now; who they are is listed under Customers below"),
     figure("calls, all time", h("span", { class: "num" }, fmtInt(stats.calls_total))),
     figure("revenue, all time", h("span", { class: "num" }, `${amount(stats.revenue_total)} ${token.symbol}`)),
     figure("owner epoch", h("span", { class: "num" }, String(info.owner_epoch)), "1 at mint, +1 each time the deed changes hands (sale or transfer)"),
@@ -1086,15 +1166,15 @@ function renderHero(): void {
   const figs = h("dl", { class: "feat-figs" });
   if (l && p) {
     figs.append(
-      h("div", { class: p.paybackDays === null ? "fig big none" : "fig big", title: paybackRule() }, h("dt", {}, "est. payback"), h("dd", {}, paybackText(p))),
+      h("div", { class: p.paybackDays === null ? "fig big none" : "fig big", title: paybackRule() }, h("dt", {}, "payback on chain-visible costs"), h("dd", {}, paybackText(p))),
       figure("price", h("span", { class: "num" }, `${amount(l.price)} ${token.symbol}`)),
-      figure("vault cash, comes with it", h("span", { class: "num" }, `${amount(r.info.revenue)} ${token.symbol}`)),
+      figure("proceeds, come with it", h("span", { class: "num" }, `${amount(r.info.revenue)} ${token.symbol}`)),
     );
   } else {
     figs.append(
       h("div", { class: "fig big" }, h("dt", {}, "paid calls, 30 days"), h("dd", {}, fmtInt(r.stats.calls_30d))),
       figure("price", h("span", { class: "num muted" }, "not for sale")),
-      figure("vault cash", h("span", { class: "num" }, `${amount(r.info.revenue)} ${token.symbol}`)),
+      figure("withdrawable proceeds", h("span", { class: "num" }, `${amount(r.info.revenue)} ${token.symbol}`)),
     );
   }
   const action = forSale ? buyButton(r, me) : null;
@@ -1128,7 +1208,7 @@ function renderKpis(): void {
     ["businesses live", rows.length, fmtInt, false],
     ["paid calls, 30d", calls30, fmtInt, false],
     ["revenue, 30d", toUnits(rev30, token.decimals), fmtAmt(2), true],
-    ["cash in vaults", toUnits(cash, token.decimals), fmtAmt(2), true],
+    ["proceeds in vaults", toUnits(cash, token.decimals), fmtAmt(2), true],
   ];
   const sig = items.map((i) => i[1]).join("|") + token.symbol;
   if (kpis.dataset.sig === sig) return;

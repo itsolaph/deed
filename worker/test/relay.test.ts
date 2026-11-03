@@ -16,6 +16,7 @@ import {
   verifyOutbound,
   type DeliveryRequest,
 } from "@deed/sdk";
+import { fileStore } from "@deed/sdk/node";
 
 import { Authenticator } from "../src/auth.js";
 import { createServer } from "../src/server.js";
@@ -358,6 +359,87 @@ test("track() presents receipts again when the new worker came up after the clie
     assert.equal(b.worker.status("alice.test", d.delivery_id).status, 200);
     await b.worker.flushCharges();
     assert.equal(fake.revenue, fake.price, "charged once, by A");
+  } finally {
+    await stopB();
+    await target.close();
+  }
+});
+
+test("hostile seller: worker A killed without hand-off; a restarted customer resubmits saved receipts to B; nothing is charged twice; a refunding customer keeps its uncharged credit", async () => {
+  let down = false;
+  const target = await startTarget(() => (down ? 1000 : 0));
+  const fake = new FakeVault();
+  // A never hands off (it is killed before it can see the rotation) and flushes only when told.
+  const a = await startWorker(fake, 7626, { flushMs: 60_000 });
+  const stopA = await a.start();
+  const store = path.join(TMP, "alice-pending.json");
+  const aliceKey = generateSecretKey();
+  fake.addCustomer("alice.test", aliceKey.publicKey, 1_000_000n);
+  const views = { info: async () => fake.infoView(), workerHistory: async () => fake.history.slice(-10), customer: async (x: string) => fake.customerView(x) };
+  const alice = new DeedClient({ vault: fake.vault, accountId: "alice.test", signer: signerFromSecretKey(aliceKey.secretKey), views, keyCacheMs: 0, store: fileStore(store) });
+  const { client: bob } = customer(fake, "bob.test", 1_000_000n);
+
+  // Charged and delivered.
+  const d1 = await alice.deliver(request(1));
+  await until(async () => (await alice.track()).pending === 0);
+  // Charged, not delivered (target down).
+  down = true;
+  const d2 = await alice.deliver(request(2));
+  const d3 = await alice.deliver(request(3));
+  const b1 = await bob.deliver(request(11));
+  await a.worker.flushCharges();
+  // Accepted, neither charged nor delivered when A dies.
+  const d4 = await alice.deliver(request(4));
+  const d5 = await alice.deliver(request(5));
+  const b2 = await bob.deliver(request(12));
+  assert.equal(fake.customers.get("alice.test")!.lastSeq, 3);
+  assert.equal(fake.revenue, 4n * fake.price, "d1, d2, d3, b1 charged by A");
+
+  // The seller kills A: no flush, no hand-off. The buyer starts B and rotates key and endpoint.
+  await stopA();
+  const b = await startWorker(fake, 7627);
+  fake.setWorker(b.signer.publicKey, "http://127.0.0.1:7627");
+  const stopB = await b.start();
+  try {
+    // A's key can no longer charge anything, even if its process came back.
+    // (A raw charge call: A's process is dead, so none of its own hand-off code runs.)
+    const late = await a.chain.charge([{ customer: "alice.test", seq: 4, units: 1, receipts_root: "ab".repeat(32) }]);
+    assert.equal(late.ok, false, "a late charge with A's key is refused as a whole");
+    assert.match(late.error ?? "", /not the registered worker key/);
+    assert.equal(fake.revenue, 4n * fake.price);
+
+    // Alice's process restarts: a new client loads the saved receipts and resubmits them to the
+    // endpoint the vault publishes now.
+    down = false;
+    const alice2 = new DeedClient({ vault: fake.vault, accountId: "alice.test", signer: signerFromSecretKey(aliceKey.secretKey), views, keyCacheMs: 0, store: fileStore(store) });
+    assert.deepEqual(alice2.pendingEntries().map((e) => e.receipt.payload.delivery_id).sort(), [d2, d3, d4, d5].map((d) => d.delivery_id).sort());
+    const results = new Map((await alice2.resubmit()).map((r) => [r.delivery_id, r]));
+    assert.equal(results.get(d2.delivery_id)!.charged_as_new, false, "charged by A: delivered by B for free");
+    assert.equal(results.get(d3.delivery_id)!.charged_as_new, false);
+    assert.equal(results.get(d4.delivery_id)!.charged_as_new, true, "never charged: B charges it once");
+    assert.equal(results.get(d5.delivery_id)!.charged_as_new, true);
+    await until(async () => (await alice2.track()).pending === 0, 5000);
+    assert.deepEqual(JSON.parse(fs.readFileSync(store, "utf8")).entries, [], "the store is empty once everything is delivered");
+
+    // Bob asks for his money back instead: the receipt A charged is still delivered, the
+    // uncharged one is refused and its price stays in his refundable credit.
+    fake.customers.get("bob.test")!.refundRequestedAt = Date.now();
+    const bobResults = new Map((await bob.resubmit()).map((r) => [r.delivery_id, r]));
+    assert.equal(bobResults.get(b1.delivery_id)!.result, "accepted");
+    assert.equal(bobResults.get(b2.delivery_id)!.result, "rejected");
+    assert.match(bobResults.get(b2.delivery_id)!.reason!, /refund_pending/);
+    assert.deepEqual(bob.rejectedEntries().map((r) => r.entry.receipt.payload.delivery_id), [b2.delivery_id], "refused for good: no longer presented");
+    assert.deepEqual(bob.pendingEntries().map((e) => e.receipt.payload.delivery_id), [b1.delivery_id]);
+
+    await until(() => target.hits.some((h) => h.relayOk && h.key === b.signer.publicKey && h.path.endsWith("n=11")), 5000);
+    await b.worker.flushCharges();
+    const charged = fake.charges.flatMap((c) => c.results).filter((r) => r.status === "charged");
+    assert.equal(charged.length, 6, "d1..d5 and b1: six deliveries, six charges, none twice");
+    assert.equal(fake.customers.get("alice.test")!.balance, 1_000_000n - 5n * fake.price);
+    assert.equal(fake.customers.get("bob.test")!.balance, 1_000_000n - fake.price, "b2 was never charged; it is refundable");
+    const delivered = new Set(target.hits.filter((h) => h.relayOk).map((h) => h.path));
+    for (const n of [1, 2, 3, 4, 5, 11]) assert.ok([...delivered].some((p) => p.endsWith(`n=${n}`)), `delivery ${n} reached the target`);
+    assert.ok(d1.delivery_id);
   } finally {
     await stopB();
     await target.close();

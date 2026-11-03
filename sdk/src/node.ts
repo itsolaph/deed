@@ -6,7 +6,8 @@ import os from "node:os";
 import path from "node:path";
 import { Account, FailoverRpcProvider, JsonRpcProvider, actions } from "near-api-js";
 import { TESTNET_RPC_URLS } from "./chain.js";
-import type { Transactor } from "./client.js";
+import type { PendingStore, Transactor } from "./client.js";
+import type { ObligationEntry } from "./relay.js";
 
 export const TGAS = 1_000_000_000_000n;
 
@@ -127,6 +128,31 @@ export class NodeSigner {
   call(receiverId: string, call: FunctionCall): Promise<TxOutcome> {
     return this.callMany(receiverId, [call]);
   }
+}
+
+/**
+ * Keeps a client's open obligations in a JSON file (mode 600), written on every change, so a
+ * customer process that restarts (or a different machine) can still resubmit its receipts.
+ * The file holds receipts and request bodies, no keys.
+ */
+export function fileStore(file: string): PendingStore {
+  return {
+    load(): ObligationEntry[] {
+      if (!fs.existsSync(file)) return [];
+      try {
+        const data = JSON.parse(fs.readFileSync(file, "utf8")) as { entries?: ObligationEntry[] };
+        return Array.isArray(data.entries) ? data.entries : [];
+      } catch {
+        return [];
+      }
+    },
+    save(entries: ObligationEntry[]): void {
+      fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
+      const tmp = `${file}.tmp`;
+      fs.writeFileSync(tmp, JSON.stringify({ saved_at: new Date().toISOString(), entries }), { mode: 0o600 });
+      fs.renameSync(tmp, file);
+    },
+  };
 }
 
 export function createNodeTransactor(signer: NodeSigner): Transactor {

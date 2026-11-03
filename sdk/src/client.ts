@@ -57,6 +57,15 @@ export interface DeedClientOptions {
   fetchImpl?: typeof fetch;
   /** Called on handovers, re-presentations and other notable events. */
   onEvent?: (event: string, detail: Record<string, unknown>) => void;
+  /** Keeps the open obligations (receipt + request) outside the process, so a customer that
+   * restarts can still resubmit them (see `fileStore` in the Node entry point). */
+  store?: PendingStore;
+}
+
+/** Where a client keeps its open obligations between runs. */
+export interface PendingStore {
+  load(): ObligationEntry[];
+  save(entries: ObligationEntry[]): void;
 }
 
 export type VaultReader = Pick<VaultViews, "info" | "workerHistory" | "customer">;
@@ -82,6 +91,8 @@ export class DeedClient {
   private readonly endpointOverride: boolean;
   private keys: { at: number; keys: Set<string> } | undefined;
   private readonly pending = new Map<string, Pending>();
+  private readonly store: PendingStore | undefined;
+  private readonly rejected = new Map<string, { entry: ObligationEntry; reason: string }>();
 
   constructor(opts: DeedClientOptions) {
     this.vault = opts.vault;
@@ -94,6 +105,16 @@ export class DeedClient {
     this.onEvent = opts.onEvent ?? (() => {});
     this.endpoint = opts.endpoint;
     this.endpointOverride = opts.endpoint !== undefined;
+    this.store = opts.store;
+    // Receipts kept by an earlier run are open obligations again; they are checked when presented.
+    for (const entry of this.store?.load() ?? []) {
+      const id = entry?.receipt?.payload?.delivery_id;
+      if (typeof id === "string" && entry.receipt.payload.vault === this.vault && entry.receipt.payload.customer === this.accountId) this.pending.set(id, { entry });
+    }
+  }
+
+  private persist(): void {
+    this.store?.save(this.pendingEntries());
   }
 
   /** The worker endpoint as published in the vault (`set_config`). */
@@ -179,6 +200,7 @@ export class DeedClient {
     const problem = await this.verifyReceiptForVault(accepted.receipt, request);
     if (problem) throw new RelayError(`invalid receipt: ${problem}`, status, json);
     this.pending.set(accepted.delivery_id, { entry: { receipt: accepted.receipt, request } });
+    this.persist();
     return accepted;
   }
 
@@ -213,11 +235,19 @@ export class DeedClient {
     const results = (json as { results: ObligationResult[] }).results;
     for (const r of results) {
       const p = this.pending.get(r.delivery_id);
+      // Refused for good (refund pending, unpaid, bad receipt): stop presenting it. A failed
+      // chain read on the worker's side is not final, so that one stays pending.
+      if (p && r.result === "rejected" && !/^chain read failed/.test(r.reason ?? "")) {
+        this.pending.delete(r.delivery_id);
+        this.rejected.set(r.delivery_id, { entry: p.entry, reason: r.reason ?? "rejected" });
+        continue;
+      }
       if (p && r.receipt) {
         const problem = await this.verifyReceiptForVault(r.receipt, p.entry.request);
         if (!problem) p.entry = { ...p.entry, receipt: r.receipt };
       }
     }
+    this.persist();
     this.onEvent("represented", {
       count: entries.length,
       accepted: results.filter((r) => r.result === "accepted").length,
@@ -253,8 +283,56 @@ export class DeedClient {
         throw e;
       }
     }
+    if (delivered.length + failed.length > 0) this.persist();
     if (unknown.length > 0) await this.representIds(unknown);
     return { delivered, failed, pending: this.pending.size };
+  }
+
+  /**
+   * Takes over obligations this client did not create in this process: receipts saved by an
+   * earlier run, or copied from another machine. Each receipt must name this vault and customer,
+   * carry a valid signature by a key the vault registered as a worker key (current or earlier),
+   * and match its request. Valid ones become pending; `resubmit` presents them.
+   */
+  async adopt(entries: ObligationEntry[]): Promise<{ adopted: string[]; rejected: { delivery_id: string; reason: string }[] }> {
+    const adopted: string[] = [];
+    const rejected: { delivery_id: string; reason: string }[] = [];
+    for (const entry of entries) {
+      const id = String(entry?.receipt?.payload?.delivery_id ?? "");
+      const problem = entry?.receipt?.payload ? await this.verifyReceiptForVault(entry.receipt, entry.request) : "no receipt";
+      if (problem) {
+        rejected.push({ delivery_id: id, reason: problem });
+        continue;
+      }
+      if (!this.pending.has(id)) this.pending.set(id, { entry: { receipt: entry.receipt, request: entry.request } });
+      adopted.push(id);
+    }
+    this.persist();
+    return { adopted, rejected };
+  }
+
+  /**
+   * Presents every open obligation (optionally adopting `entries` first) to the worker at the
+   * endpoint the vault publishes on chain now. Use after the old worker vanished without a
+   * hand-off: the current worker delivers receipts already charged on chain without charging
+   * again, and charges the others once, as new.
+   */
+  async resubmit(entries: ObligationEntry[] = []): Promise<ObligationResult[]> {
+    if (entries.length > 0) await this.adopt(entries);
+    await this.resolveEndpoint(true);
+    return this.represent();
+  }
+
+  /** Starts the vault's refund delay for this customer's whole unspent credit. Needs a transactor. */
+  async requestRefund(): Promise<{ hash: string; success: boolean; error?: string }> {
+    if (!this.transactor) throw new Error("requestRefund needs a transactor (see createNodeTransactor)");
+    return this.transactor({ contractId: this.vault, method: "request_refund", args: {}, gasTgas: 30, depositYocto: 0n });
+  }
+
+  /** Pays the unspent credit back once the refund delay has passed. Needs a transactor. */
+  async claimRefund(): Promise<{ hash: string; success: boolean; error?: string }> {
+    if (!this.transactor) throw new Error("claimRefund needs a transactor (see createNodeTransactor)");
+    return this.transactor({ contractId: this.vault, method: "claim_refund", args: {}, gasTgas: 60, depositYocto: 0n });
   }
 
   pendingCount(): number {
@@ -263,6 +341,11 @@ export class DeedClient {
 
   pendingEntries(): ObligationEntry[] {
     return [...this.pending.values()].map((p) => p.entry);
+  }
+
+  /** Obligations the current worker refused for good when they were presented, with its reason. */
+  rejectedEntries(): { entry: ObligationEntry; reason: string }[] {
+    return [...this.rejected.values()];
   }
 
   /** Adds credit with `ft_transfer_call` on the payment token. Needs a transactor. */

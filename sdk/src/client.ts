@@ -77,6 +77,9 @@ interface Pending {
 
 const DEFAULT_KEY_CACHE_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 15_000;
+/** Presenting receipts to a worker that just took over can wait on several chain reads there
+ * (worker-key history, each customer's ledger); the worker's own hand-off allows the same. */
+export const OBLIGATIONS_TIMEOUT_MS = 90_000;
 
 export class DeedClient {
   readonly vault: string;
@@ -155,6 +158,7 @@ export class DeedClient {
   }
 
   private async send(method: string, path: string, body: unknown, attempt = 0): Promise<{ status: number; json: unknown }> {
+    const timeoutMs = path === "/v1/obligations" ? OBLIGATIONS_TIMEOUT_MS : REQUEST_TIMEOUT_MS;
     const endpoint = await this.resolveEndpoint(attempt > 0);
     const text = body === undefined ? "" : JSON.stringify(body);
     const headers: Record<string, string> = {
@@ -167,7 +171,7 @@ export class DeedClient {
         method,
         headers,
         ...(text ? { body: text } : {}),
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        signal: AbortSignal.timeout(timeoutMs),
       });
     } catch (e) {
       // The worker may have moved: read the endpoint from chain again and retry once.

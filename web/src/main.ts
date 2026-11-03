@@ -660,7 +660,7 @@ function fillHistory(box: HTMLElement, r: Row): void {
     "div",
     { class: "hist-head" },
     h("h3", { class: "hist-title", id: `hist-${r.deed.token_id}` }, "Earnings history"),
-    h("p", { class: "hist-lede" }, `Each holder, what the business earned while they held it, what they paid out, and what they sold it for. Newest first, amounts in ${token.symbol}.`),
+    h("p", { class: "hist-lede" }, `Each holder, what the service earned while they held it, what they paid out, and what they sold it for. Newest first, amounts in ${token.symbol}.`),
   );
   // A click inside the minimum gap repaints from the cache without a request.
   const again = button(s?.status === "loading" ? "Reading" : "Read again", () => (canReadAgain(historyState(vault)) ? wantHistory(vault, true) : fillHistory(box, r)), "small");
@@ -1184,7 +1184,7 @@ function renderHero(): void {
     openHistory(r.deed.token_id);
   });
   const parts: (HTMLElement | null)[] = [
-    h("h2", { class: "feat-h" }, forSale ? "Featured listing" : "Most active business"),
+    h("h2", { class: "feat-h" }, forSale ? "Featured listing" : "Most active deed"),
     certImage(r, "feat-cert"),
     h("p", { class: "feat-id" }, h("strong", {}, id), ` ${r.deed.title}`),
     figs,
@@ -1205,7 +1205,7 @@ function renderKpis(): void {
   const rev30 = rows.reduce((n, r) => n + BigInt(r.stats.revenue_30d), 0n);
   const cash = rows.reduce((n, r) => n + BigInt(r.info.revenue), 0n);
   const items: [string, number, (n: number) => string, boolean][] = [
-    ["businesses live", rows.length, fmtInt, false],
+    ["deeds live", rows.length, fmtInt, false],
     ["paid calls, 30d", calls30, fmtInt, false],
     ["revenue, 30d", toUnits(rev30, token.decimals), fmtAmt(2), true],
     ["proceeds in vaults", toUnits(cash, token.decimals), fmtAmt(2), true],

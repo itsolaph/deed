@@ -44,20 +44,25 @@ if you have your own RPC.
 
 ## Claims and proof
 
+Video references below refer to the recorded v2 demo (3:12), not a published video URL.
+The main and wash recordings preceded the concurrent-admission fix; they demonstrate sale,
+appraisal and owner-funded-revenue rejection, not universal absence of duplicate charges.
+The corrected hostile-seller run and regression tests are the evidence for that fix.
+
 | Claim | Test or script | Testnet transaction or log | Video |
 |---|---|---|---|
-| Minting creates the vault sub-account with no full-access key, in one batch | sandbox `mint_creates_vault_without_full_access_key` | demo mint [34S7Fe…](https://testnet.nearblocks.io/txns/34S7FeZ1fc1bQv4dHUmCY11f6ubhctRr9hzKr3Q6sf5r) | TBD |
-| Only the worker key can charge, only within each customer's balance and daily cap, never one seq twice | sandbox `only_the_worker_key_can_charge`, `seq_caps_and_balance_rules`; ledger unit tests | worker A's charge [9xBRsX…](https://testnet.nearblocks.io/txns/9xBRsXfny8CapwFSrmSjwiBgN1R1E9xgB1KatYpdwy3p) | TBD |
-| Six unauthorized actions against a vault are rejected on testnet | `scripts/theft-proof.mjs` | stranger's withdraw rejected by the contract: [3ZARmS…](https://testnet.nearblocks.io/txns/3ZARmSniQehNWMReyEADnUvJtyDZASn4VpkU1qCCdD9f) (the other five are refused before execution and leave no transaction) | TBD |
-| A listing locks the vault; a sale moves the token, the vault owner and the revenue; the seller's withdraw then reverts | sandbox `listing_locks_owner_actions_and_cancel_unlocks`, `buy_moves_the_business_and_rotation_hands_over_the_worker` | list [7gsv5E…](https://testnet.nearblocks.io/txns/7gsv5EojrbKYKGs4MQAxD51mxbAL57LawFLhgvf46m9c), buy [v2ty1Y…](https://testnet.nearblocks.io/txns/v2ty1Yv86qX62FbsTqLaU8yXTa88e4SuVBjgghNBXED), the seller's withdraw reverts [39fQiK…](https://testnet.nearblocks.io/txns/39fQiK98qxZL6kPH9mwn8miyXXVCoiSiJnQ2Vcn2nvnD) | TBD |
-| Customer credit is never withdrawable by the owner and comes back to the customer after the refund delay | sandbox `withdraw_rules`, `refund_delay_claim_and_cancel_by_deposit`, `third_party_deposit_does_not_cancel_a_refund_request` | bob's refund request [2bePEp…](https://testnet.nearblocks.io/txns/2bePEps9BjogecpvWHpWrhRoo2n3E5MHJHdAFUBs92fZ) and claim [3kF65x…](https://testnet.nearblocks.io/txns/3kF65xRXtGC4gz7CCxbBU2ff8MQK3XsU75BahytmPD1H); quickstart claim [D85NtM…](https://testnet.nearblocks.io/txns/D85NtMusXpBjh6weJPvsLohaj1FisiG4R7MyuBPgAnSJ) | TBD |
-| Unknown customers get HTTP 402 with the exact payment call; requests are NEP-413 signed; every accepted job has a signed receipt and every attempt a signed proof | worker test `paid delivery: 402 first, then receipt, retries, signed proofs, one charge per delivery` | quickstart against the hosted relay: deposit [GcktwF…](https://testnet.nearblocks.io/txns/GcktwF7oq8sfwMTaXxoHsYPTixPo5yT4RFSm7V8SphwW) | TBD |
-| A key rotation moves the work to a new worker; open obligations move with it; nothing is charged twice | worker tests `handover: …`, `delivered but uncharged work is handed over …` | rotation [Ai6eou…](https://testnet.nearblocks.io/txns/Ai6eou54iAhaA2tf3kdp89EowKMf7TVNdUQecgj4ubzn), worker B's charge [JD99Ne…](https://testnet.nearblocks.io/txns/JD99NeTceMUQ7EF33oARm8Da2UrGkqrqwcNiMFvJ1nLx); 25 of 25 obligations handed over (demo log) | TBD |
-| If the seller kills its worker without a hand-off, customers resubmit their receipts to the buyer's worker: charged jobs are delivered without a second charge, uncharged ones are charged once, unspent credit stays refundable; 0 double charges | worker test `hostile seller: worker A killed without hand-off; …`; `scripts/hostile-seller.sh` | run `hostile-1103c`: 10 jobs in flight at the kill, 8 of them delivered by B (plus 2 new calls), 2 refunded, 0 double charges; rotation [xeMWP3…](https://testnet.nearblocks.io/txns/xeMWP37Q7UAFT9YtuKkoWp9AC7uZQrbzEa4wtz2tAYy), B's charge [F7nDmo…](https://testnet.nearblocks.io/txns/F7nDmoKJQx5D4Lc14GR1yrr6LLbCFJeAm4xAmNRqMKfx); all in `deployments/testnet.json` `hostileSeller` | TBD |
-| The buyer agent counts only revenue from independent customers and skips owner-funded revenue | `sdk/test/appraisal.test.ts` (one test per gate and exclusion); `scripts/wash-reject.mjs` | run `wash-1103a`: owner-funded deposits [Cy5eL7…](https://testnet.nearblocks.io/txns/Cy5eL7CbxuZQVYv74DrxtVkkXcRnm2zC1w6GSX7DiPRi) and [JEEQsG…](https://testnet.nearblocks.io/txns/JEEQsGsSnSGWrAdeMf3N8H6u6VtencgVseYesDARzqgE), listing [8AAV2N…](https://testnet.nearblocks.io/txns/8AAV2NZdo8YGJ8MscADZ1WVrKNrgamUWYHgRzvKfN6Rx); the agent's SKIP is in `deployments/testnet.json` `washReject` | TBD |
-| An agent appraises and buys a listed deed from on-chain data (demo policy, printed) | agents test `buyer: …`; `scripts/demo-testnet.sh` | run `relay-1103hard`: buy [v2ty1Y…](https://testnet.nearblocks.io/txns/v2ty1Yv86qX62FbsTqLaU8yXTa88e4SuVBjgghNBXED) (payback on chain-visible costs 4.12 days on 0.69 tUSDC of independent revenue) | TBD |
-| Each holder's earnings are reconstructed per ownership epoch from NEP-297 events and match the vault's counters | `sdk/test/history.test.ts` (recorded fixture) | web app, "Earnings history" in any deed | TBD |
-| 1Click quotes are mainnet dry quotes (`dry: true`), nothing executed | agents test `1Click: asset lookup, NEAR price and dry quote requests` (refuses `dry: false`) | demo run: `demo.buyer.funding_quote` (3.035391 USDC from Ethereum for 3 USDC on NEAR; no transaction exists, by design) | TBD |
+| Minting creates the vault sub-account with no full-access key | sandbox `mint_creates_vault_without_full_access_key` | v2 mint [FPWUh1g…](https://testnet.nearblocks.io/txns/FPWUh1geckt4Bg3AsQLf4AyBAbLD2KsgbK1JZoxHa4Ud) | 0:23–0:43 |
+| The worker key charges within each customer balance and cap; repeated on-chain seq is rejected | sandbox `only_the_worker_key_can_charge`, `seq_caps_and_balance_rules` | v2 charge [FSrfBgW…](https://testnet.nearblocks.io/txns/FSrfBgWKtDSnEqAGN4fL6LxZEKpGrCudjB1ohe3aPJC2) | 0:43–1:03 |
+| Six specified unauthorized actions are rejected on testnet | `scripts/theft-proof.mjs` | stranger withdraw [3ZARmS…](https://testnet.nearblocks.io/txns/3ZARmSniQehNWMReyEADnUvJtyDZASn4VpkU1qCCdD9f); other rejected requests may leave no transaction | 1:03–1:25 (selected actions) |
+| Listing locks the vault; a sale moves token ownership and revenue rights; the former owner cannot withdraw | sandbox listing and sale tests | v2 list [F5M1FMc…](https://testnet.nearblocks.io/txns/F5M1FMcQWV9F5iKr7xB3YKCnGmD9VAcvbMBuJKjWZCHh), buy [HsaNut7…](https://testnet.nearblocks.io/txns/HsaNut74t6ssVUq9SMe6AgWQPz4JKWt2Jc17PQVTMmFr), rejected withdraw [Dki6iHn…](https://testnet.nearblocks.io/txns/Dki6iHnU27fsRKJbANsAYqhByUjczWJaUocshxafDAwc) | 1:50–2:09 |
+| Unspent customer credit is not owner revenue and remains refundable after the delay | sandbox `withdraw_rules`, refund tests | v2 refund [2frLN1R…](https://testnet.nearblocks.io/txns/2frLN1RDnbAPFggsQRxaVnS1cuVHA3wTRzKo9Bhoi7mg) | 2:09–2:28 |
+| Unknown customers get HTTP 402; signed requests receive receipts and delivery proofs | worker paid-delivery test | v2 customer deposit [4X6kvvw…](https://testnet.nearblocks.io/txns/4X6kvvwA6ZP7wh9Wi6ukB5V1f8UY8HjyRtRp65wGTJMX) | 0:43–1:03 |
+| Rotation moves authorization and hands open obligations to a new worker | worker handover tests | v2 rotation [6tJr9gk…](https://testnet.nearblocks.io/txns/6tJr9gkPj4u8odBdJHBTjL5hKC5eucvrVFhQxhLLS2wK); 30/30 obligations handed over in recorded main run | 1:50–2:09 |
+| After a hostile seller kills its worker, receipts can be resumed and unused credit refunded; corrected hostile run reports 0 double charges | worker hostile-seller and concurrent-admission regression tests; `scripts/hostile-seller.sh` | `hostile-1103v2b`: 10 in flight, 8 resumed deliveries plus 2 new calls, 2 uncharged jobs refunded; refund [2frLN1R…](https://testnet.nearblocks.io/txns/2frLN1RDnbAPFggsQRxaVnS1cuVHA3wTRzKo9Bhoi7mg) | 2:09–2:28 |
+| The buyer excludes demonstrated owner-funded revenue and skips the listing | `sdk/test/appraisal.test.ts`; `scripts/wash-reject.mjs` | `wash-1103v2a`: seller transfer [C8xZr2w…](https://testnet.nearblocks.io/txns/C8xZr2wz6WbZLgcz34gTQ96X4jUi71fGgUnuNeGWWuza); buyer SKIP in `deployments/testnet.json` | 2:28–2:41 |
+| An agent appraises and buys a listed deed under the explicitly relaxed demo policy | agents buyer test; `scripts/demo-testnet.sh` | `relay-1103v2b`: buy [HsaNut7…](https://testnet.nearblocks.io/txns/HsaNut74t6ssVUq9SMe6AgWQPz4JKWt2Jc17PQVTMmFr); 7.48-day payback on chain-visible costs, using project-generated traffic | 1:25–1:50 |
+| Earnings are reconstructed per ownership epoch from NEP-297 events | `sdk/test/history.test.ts` (recorded fixture) | web Earnings history and vault counters | 2:41–2:59 |
+| 1Click integration produces mainnet dry quotes only; no cross-chain payment was executed | agents 1Click test refuses `dry: false` | recorded buyer funding quote; no transaction by design | 1:44–1:48 |
 
 ## NEAR features used
 
@@ -94,8 +99,9 @@ Not used: gas keys (NEP-611), global contracts (NEP-591), Chain Signatures. See 
 - The deed is a transferable service instance, not a legal transfer of a business.
 - "Six unauthorized actions rejected on testnet" covers those six actions; it is not a proof
   that no other path exists, and the contracts have had no independent audit.
-- The deed account's full-access key: removed before submission, see
-  `deployments/testnet.json` `deedKeys`.
+- The deed account still has an operator full-access key during preparation. Removing it
+  and recording the DeleteKey transaction is a pre-submission gate, not a completed claim;
+  see `deployments/testnet.json` `deedKeys`. Vault sub-accounts are a separate, keyless case.
 
 ## How it works
 

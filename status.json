@@ -1,0 +1,105 @@
+{
+ "conclusion": "success",
+ "sha": "3d571f6bf46a3ae06929e3eca12f32f3409a215a",
+ "run_id": 41870509883,
+ "url": "https://github.com/itsolaph/deed/actions/runs/41870509883",
+ "at": "2026-11-04T16:47:46.730185+00:00",
+ "jobs": [
+  {
+   "name": "contracts (wasm build, unit and sandbox tests)",
+   "conclusion": "success",
+   "steps": [
+    {
+     "name": "Set up job",
+     "conclusion": "success"
+    },
+    {
+     "name": "Run actions/checkout@v4",
+     "conclusion": "success"
+    },
+    {
+     "name": "Run dtolnay/rust-toolchain@stable",
+     "conclusion": "success"
+    },
+    {
+     "name": "Run Swatinem/rust-cache@v2",
+     "conclusion": "success"
+    },
+    {
+     "name": "Install cargo-near from its release",
+     "conclusion": "success"
+    },
+    {
+     "name": "Build wasm (vault, deed, tusdc)",
+     "conclusion": "success"
+    },
+    {
+     "name": "Contract unit tests",
+     "conclusion": "success"
+    },
+    {
+     "name": "Sandbox integration tests",
+     "conclusion": "success"
+    },
+    {
+     "name": "Post Run Swatinem/rust-cache@v2",
+     "conclusion": "success"
+    },
+    {
+     "name": "Post Run actions/checkout@v4",
+     "conclusion": "success"
+    },
+    {
+     "name": "Complete job",
+     "conclusion": "success"
+    }
+   ]
+  },
+  {
+   "name": "node tests (Node 22) and web build",
+   "conclusion": "success",
+   "steps": [
+    {
+     "name": "Set up job",
+     "conclusion": "success"
+    },
+    {
+     "name": "Run actions/checkout@v4",
+     "conclusion": "success"
+    },
+    {
+     "name": "Run actions/setup-node@v4",
+     "conclusion": "success"
+    },
+    {
+     "name": "Run npm ci",
+     "conclusion": "success"
+    },
+    {
+     "name": "Script syntax",
+     "conclusion": "success"
+    },
+    {
+     "name": "sdk, worker and agents tests",
+     "conclusion": "success"
+    },
+    {
+     "name": "Web build",
+     "conclusion": "success"
+    },
+    {
+     "name": "Post Run actions/setup-node@v4",
+     "conclusion": "success"
+    },
+    {
+     "name": "Post Run actions/checkout@v4",
+     "conclusion": "success"
+    },
+    {
+     "name": "Complete job",
+     "conclusion": "success"
+    }
+   ]
+  }
+ ]
+}

@@ -15,8 +15,10 @@ payback on chain-visible costs, and buys. Testnet only. Built for the NEAR hacka
 ## Try it
 
 Hosted demo: <https://itsolaph.github.io/outlive/> (static page, reads testnet directly, no backend of
-ours in the path). Three-minute demo with the recorded runs:
-[docs/media/outlive-demo.mp4](docs/media/outlive-demo.mp4).
+ours in the path). Two-minute film with the recorded runs, subtitled:
+[docs/media/outlive-demo.mp4](docs/media/outlive-demo.mp4) ·
+[poster](docs/media/outlive-poster.jpg) ·
+[subtitles](docs/media/outlive-demo.srt).
 
 | Do | See | Time |
 |---|---|---|

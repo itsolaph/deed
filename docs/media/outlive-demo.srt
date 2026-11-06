@@ -1,0 +1,141 @@
+1
+00:00:00,600 --> 00:00:02,394
+They call it a demo.
+
+2
+00:00:02,424 --> 00:00:03,983
+It is a business.
+
+3
+00:00:04,013 --> 00:00:09,412
+This API has a price, a treasury, and customers who pay per request.
+
+4
+00:00:09,442 --> 00:00:13,874
+The key that signs every delivery is not in anyone's pocket.
+
+5
+00:00:13,904 --> 00:00:15,855
+Nobody is at the keyboard.
+
+6
+00:00:16,335 --> 00:00:19,174
+Here is the problem with buying software.
+
+7
+00:00:19,204 --> 00:00:20,685
+You can copy the code.
+
+8
+00:00:20,715 --> 00:00:23,214
+You cannot copy the customers.
+
+9
+00:00:23,244 --> 00:00:30,707
+An agent marketplace needs services that already have traffic, and traffic is the
+one thing a repo never ships.
+
+10
+00:00:31,087 --> 00:00:34,318
+Outlive sells the business, not the build.
+
+11
+00:00:34,348 --> 00:00:39,094
+Every token is an NFT that owns one running paid API.
+
+12
+00:00:39,124 --> 00:00:45,881
+Inside the token: a vault that holds the money, the price list, the customer ledger,
+and the worker key.
+
+13
+00:00:45,911 --> 00:00:48,985
+Hold the token, and the revenue is yours.
+
+14
+00:00:49,415 --> 00:00:52,254
+This is the live board on NEAR testnet.
+
+15
+00:00:52,284 --> 00:00:57,605
+Nine tokens, a few hundred paid calls, every figure read from the contract.
+
+16
+00:00:57,635 --> 00:01:00,944
+Open one and the whole business is legible.
+
+17
+00:01:00,974 --> 00:01:07,235
+Owner, worker key, vault, gas spent, and what each holder earned while it was
+theirs.
+
+18
+00:01:07,615 --> 00:01:10,193
+The sale is one transaction.
+
+19
+00:01:10,223 --> 00:01:15,543
+The token moves, the vault moves with it, and the buyer rotates the worker key.
+
+20
+00:01:15,573 --> 00:01:19,118
+The old key stops working the moment the sale lands.
+
+21
+00:01:19,148 --> 00:01:22,692
+Customers keep the same endpoint and the same price.
+
+22
+00:01:22,722 --> 00:01:26,919
+Forty of forty obligations handed over. None dropped.
+
+23
+00:01:27,349 --> 00:01:29,613
+We attacked our own protocol.
+
+24
+00:01:29,643 --> 00:01:33,031
+The old worker key cannot call another method.
+
+25
+00:01:33,061 --> 00:01:35,639
+No key can withdraw from the vault.
+
+26
+00:01:35,669 --> 00:01:41,930
+A hostile seller cannot take the buyer's money. The contract refuses before
+execution.
+
+27
+00:01:41,960 --> 00:01:48,299
+And when we paid our own customers to look like demand, the appraisal flagged every
+one as owner-funded.
+
+28
+00:01:48,729 --> 00:01:50,367
+The run we recorded.
+
+29
+00:01:50,397 --> 00:01:59,871
+Sixty-six paid calls in a day. Zero point six six tUSDC of revenue, zero point five
+four net after gas.
+
+30
+00:01:59,901 --> 00:02:02,975
+Four point four days to earn back the price.
+
+31
+00:02:03,005 --> 00:02:07,672
+The strict policy still rejects it. Too young, too small.
+
+32
+00:02:07,702 --> 00:02:11,403
+That is the point. The numbers are the numbers.
+
+33
+00:02:11,983 --> 00:02:13,124
+Outlive.
+
+34
+00:02:13,154 --> 00:02:16,228
+A business that outlives the person who started it.

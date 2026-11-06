@@ -5,7 +5,7 @@
 // waits for its pending deliveries before printing a summary.
 //
 //   node agents/dist/src/traffic.js --vault relay.outlive.testnet \
-//     --customers outlivelab-alice.testnet,outlivelab-bob.testnet --target http://127.0.0.1:7611/hook
+//     --customers outlive-alice.testnet,outlive-bob.testnet --target http://127.0.0.1:7611/hook
 
 import { parseArgs } from "node:util";
 import { OutliveClient, PaymentRequiredError, fromUnits, randomBytes, toHex } from "@outlive/sdk";
@@ -31,7 +31,7 @@ const SUMMARY_INTERVAL_MS = 15_000;
 const DRAIN_TIMEOUT_MS = 240_000;
 
 function short(account: string): string {
-  return account.replace(/^outlivelab-/, "").replace(/\.testnet$/, "");
+  return account.replace(/^outlive-/, "").replace(/\.testnet$/, "");
 }
 
 async function main(): Promise<void> {

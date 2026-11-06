@@ -190,7 +190,7 @@ function portsFree() {
 }
 
 async function main() {
-  banner(`Outlive demo on testnet: outlive ${OUTLIVE}, new business ${SLUG}`);
+  banner(`Outlive demo on testnet: contract ${OUTLIVE}, new business ${SLUG}`);
   portsFree();
   say("building TypeScript packages");
   const build = spawnSync("npx", ["tsc", "-b", "sdk", "worker", "agents"], { cwd: ROOT, encoding: "utf8" });

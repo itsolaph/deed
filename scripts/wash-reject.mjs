@@ -43,7 +43,7 @@ const { say, banner, step, agent, start, record } = run;
 Object.assign(record, { kind: "wash-reject", vault: VAULT, outlive: OUTLIVE, seller: SELLER, buyer: BUYER });
 
 async function main() {
-  banner(`Wash-revenue rejection on testnet: outlive ${OUTLIVE}, new business ${SLUG}, seller ${SELLER}`);
+  banner(`Wash-revenue rejection on testnet: contract ${OUTLIVE}, new business ${SLUG}, seller ${SELLER}`);
   portsFree([PORT, ECHO_PORT]);
   buildPackages();
   const sdk = await import("../sdk/dist/src/index.js");

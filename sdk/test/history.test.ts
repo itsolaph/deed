@@ -16,7 +16,7 @@ import {
 } from "../src/index.js";
 
 // Recorded from FastNEAR's testnet index (scripts/record-history-fixture.mjs): the demo vault
-// relay-1102ripe, minted by outlivel8-seller, sold for 3 tUSDC to outlivelab-buyer (epoch 2).
+// relay-1102ripe, minted by outlive-seller, sold for 3 tUSDC to outlive-buyer (epoch 2).
 const VAULT = "relay-1102ripe.outlive.testnet";
 const fixture = JSON.parse(readFileSync(new URL(`../../test/fixtures/${VAULT}.json`, import.meta.url), "utf8")) as {
   vault: string;
@@ -25,8 +25,8 @@ const fixture = JSON.parse(readFileSync(new URL(`../../test/fixtures/${VAULT}.js
 };
 const SALE_TX = "HaMeB1JePtBkSPYPsV9W2oLj86jvnJjNG3VYHaVEsZVR";
 const MINT_TX = "HJtBcxvVvdPRLamQK1tYEqBsWjMcK8FFTvzMjnm6xGfU";
-const SELLER = "outlivel8-seller.testnet";
-const BUYER = "outlivelab-buyer.testnet";
+const SELLER = "outlive-seller.testnet";
+const BUYER = "outlive-buyer.testnet";
 
 test("history: the recorded demo vault splits into two epochs at the sale", () => {
   const h = buildEarningsHistory(eventsFromTransactions(fixture.transactions, VAULT), VAULT);

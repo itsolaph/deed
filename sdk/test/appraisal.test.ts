@@ -218,8 +218,8 @@ test("funding read: only transactions the customer did not sign are read; owner 
 });
 
 test("demo-account labels: the project's own traffic agents and seller-funded accounts", () => {
-  assert.equal(isProjectDemoAccount("outlivelab-alice.testnet"), true);
-  assert.equal(isProjectDemoAccount("wash1.outlivel12-seller.testnet"), true);
-  assert.equal(isProjectDemoAccount("someone.testnet", ["outlivel9-seller.testnet"]), true);
+  assert.equal(isProjectDemoAccount("outlive-alice.testnet"), true);
+  assert.equal(isProjectDemoAccount("wash1.outlive-seller.testnet"), true);
+  assert.equal(isProjectDemoAccount("someone.testnet", ["outlive-seller2.testnet"]), true);
   assert.equal(isProjectDemoAccount("someone.testnet", ["someone.testnet"]), false);
 });

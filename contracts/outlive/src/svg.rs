@@ -197,7 +197,7 @@ mod tests {
             title: "Relay <&> \"Co\"",
             token_id: "relay",
             vault_id: "relay.outlive.outlive.testnet",
-            owner_id: "outlivelab-seller.testnet",
+            owner_id: "outlive-seller.testnet",
             owner_epoch: 3,
             symbol: "tUSDC",
             price_per_call: 2_000,
@@ -246,7 +246,7 @@ mod tests {
         assert!(svg.contains("24.69 tUSDC"));
         assert!(svg.contains("1.50 tUSDC"));
         assert!(svg.contains("10.00 tUSDC"));
-        assert!(svg.contains("outlivelab-seller.testnet"));
+        assert!(svg.contains("outlive-seller.testnet"));
         assert!(svg.contains("vault relay.outlive.outlive.testnet"));
         assert!(svg.contains("token relay"));
         assert!(svg.contains("2026-10-30 05:00 UTC"));

@@ -33,7 +33,7 @@ const { values } = parseArgs({
   options: {
     vault: { type: "string", default: "relay-live.outlive.testnet" },
     "key-file": { type: "string" },
-    stranger: { type: "string", default: "outlivelab-alice.testnet" },
+    stranger: { type: "string", default: "outlive-alice.testnet" },
     "old-vault": { type: "string", default: "relay-1102ripe.outlive.testnet" },
     "old-key-file": { type: "string" },
     slow: { type: "string", default: "1200" },

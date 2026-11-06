@@ -320,9 +320,9 @@ export async function readFunding(index: TxIndex, customer: string, token: strin
 
 /** Accounts the demo itself runs as customers (for labels only, never for the appraisal). */
 export function isProjectDemoAccount(account: string, depositSenders: string[] = []): boolean {
-  const seller = /^outlivel[a-z0-9]*-seller\.testnet$/;
-  if (/^outlivelab-(alice|bob)\.testnet$/.test(account)) return true;
+  const seller = /^outlive-(seller\d*|hostile|wash)\.testnet$/;
+  if (/^outlive-(alice|bob)\.testnet$/.test(account)) return true;
   if (seller.test(account)) return true;
-  if (/\.outlivel[a-z0-9]*-seller\.testnet$/.test(account)) return true;
+  if (/^[a-z0-9-]+\.outlive-(seller\d*|hostile|wash)\.testnet$/.test(account)) return true;
   return depositSenders.some((s) => s !== account && seller.test(s));
 }

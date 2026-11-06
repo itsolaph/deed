@@ -58,7 +58,7 @@ const OUTAGE = path.join(run.logs, "target-outage");
 Object.assign(record, { kind: "hostile-seller", vault: VAULT, outlive: OUTLIVE, accounts: { seller: SELLER, buyer: BUYER, customers: [ALICE, BOB] } });
 
 async function main() {
-  banner(`Hostile seller on testnet: outlive ${OUTLIVE}, new business ${SLUG}, seller ${SELLER}`);
+  banner(`Hostile seller on testnet: contract ${OUTLIVE}, new business ${SLUG}, seller ${SELLER}`);
   portsFree([PORT_A, PORT_B, ECHO_PORT]);
   buildPackages();
   const sdk = await import("../sdk/dist/src/index.js");

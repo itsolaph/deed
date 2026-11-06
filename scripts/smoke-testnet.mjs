@@ -17,10 +17,10 @@ import { loadDeployments, saveDeployments } from "./lib/deployments.mjs";
 const SLUG = process.env.SMOKE_SLUG || "relay";
 const OUTLIVE = process.env.OUTLIVE_ACCOUNT || "outlive.testnet";
 const TUSDC = process.env.TUSDC_ACCOUNT || "tusdc.outlive.testnet";
-const SELLER = process.env.SELLER_ACCOUNT || "outlivelab-seller.testnet";
-const BUYER = process.env.BUYER_ACCOUNT || "outlivelab-buyer.testnet";
-const ALICE = process.env.ALICE_ACCOUNT || "outlivelab-alice.testnet";
-const BOB = process.env.BOB_ACCOUNT || "outlivelab-bob.testnet";
+const SELLER = process.env.SELLER_ACCOUNT || "outlive-seller.testnet";
+const BUYER = process.env.BUYER_ACCOUNT || "outlive-buyer.testnet";
+const ALICE = process.env.ALICE_ACCOUNT || "outlive-alice.testnet";
+const BOB = process.env.BOB_ACCOUNT || "outlive-bob.testnet";
 const VAULT = `${SLUG}.${OUTLIVE}`;
 
 const U = 1_000_000n; // one tUSDC

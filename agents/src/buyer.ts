@@ -5,7 +5,7 @@
 // ft_transfer_call when every check passes and payback is under a threshold. It prints every
 // check with pass/fail and the reason.
 //
-//   node agents/dist/src/buyer.js --account outlivelab-buyer.testnet --max-payback-days 30 \
+//   node agents/dist/src/buyer.js --account outlive-buyer.testnet --max-payback-days 30 \
 //     [--policy strict|demo] [--min-customers n] [--max-share 0..1] [--min-age-hours h] \
 //     [--token-id relay] [--fund-from eth:usdc --refund-to 0x...] [--dry-run]
 //

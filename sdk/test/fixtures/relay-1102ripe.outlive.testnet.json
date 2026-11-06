@@ -141,7 +141,7 @@
   {
    "transaction": {
     "hash": "2DqNtexzZn7r93pempU4MdEeZHzXbBR87Jr3svkLx7ME",
-    "signer_id": "outlivel8-seller.testnet",
+    "signer_id": "outlive-seller.testnet",
     "receiver_id": "relay-1102ripe.outlive.testnet"
    },
    "receipts": [
@@ -149,7 +149,7 @@
      "receipt": {
       "receipt_id": "7nJoe65NgAChppJeqhp3CUcHTTTcomB5jcwsCp92gcet",
       "receiver_id": "relay-1102ripe.outlive.testnet",
-      "predecessor_id": "outlivel8-seller.testnet"
+      "predecessor_id": "outlive-seller.testnet"
      },
      "execution_outcome": {
       "block_height": 275855630,
@@ -168,7 +168,7 @@
     {
      "receipt": {
       "receipt_id": "Ay65sohzstgDgEKhFZmRbcLFcPEWPEcUZjYopvWjwcb6",
-      "receiver_id": "outlivel8-seller.testnet",
+      "receiver_id": "outlive-seller.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -178,7 +178,7 @@
       "id": "Ay65sohzstgDgEKhFZmRbcLFcPEWPEcUZjYopvWjwcb6",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivel8-seller.testnet",
+       "executor_id": "outlive-seller.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -188,7 +188,7 @@
     {
      "receipt": {
       "receipt_id": "2SoKxZkFApEWWfwZSLUCeCtYCa2mSTKSnp46PFiSZJw7",
-      "receiver_id": "outlivel8-seller.testnet",
+      "receiver_id": "outlive-seller.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -198,7 +198,7 @@
       "id": "2SoKxZkFApEWWfwZSLUCeCtYCa2mSTKSnp46PFiSZJw7",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivel8-seller.testnet",
+       "executor_id": "outlive-seller.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -227,7 +227,7 @@
       "id": "CtPvoFEvqXpJdYVVNTRrTaLqiWDk7vnvd6kTjaBzB8SG",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"120000\",\"items\":[{\"customer\":\"outlivelab-bob.testnet\",\"seq\":8,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"0dfa8307a6cd25fb9f067437f5bd0523d4e44693918f8b72defde5375d71510a\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":9,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8211d9b3d8dd01360ba6df763f26925c0f28f4d56006ed873a6f3884da8ada85\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":10,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"f0825279cc6bf4d8a9dc9641347857b30e4526b4e4efbab4d5a34cbc2c45ecd8\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":11,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"75ba83a26f4ee7354d6f852065bfd649d56778461df07c9df5715f406c4c5e5f\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":12,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"db46874409aab620bce756628dd0c47fb10b946562e0a6f6866e7d8ca18a6f00\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":13,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"489925cb908f72a599da39f1360af5965cf48f63b52ca574bf0d1b15304388bf\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":24,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"dd4b22975ac8ed6044840c13c36493f5bb7498322d9a8e0a35132d3f61b00c11\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":25,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"2f9cca21dbb2f03a79f9c501df5c71d487718e95082b5d3b00111f602214304c\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":26,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"c49d085c1b34c5415a9ebedc7d2cae0f1015472eb3a9b2a82d013432d7c82263\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":27,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"2a3d3c0502afe40e42601282e3884a26b890be30bf2e371c95b49e556a436ae7\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":28,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"07a6f9b0674d90a284506cd27d5e9478577ba5e262ad1f33b1379e06da9d64c1\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":29,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"b8f87e73e2b4be2dcfe2d256ed4039641834fb105c533da8f6b1dccb75ef6d65\"}]}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"120000\",\"items\":[{\"customer\":\"outlive-bob.testnet\",\"seq\":8,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"0dfa8307a6cd25fb9f067437f5bd0523d4e44693918f8b72defde5375d71510a\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":9,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8211d9b3d8dd01360ba6df763f26925c0f28f4d56006ed873a6f3884da8ada85\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":10,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"f0825279cc6bf4d8a9dc9641347857b30e4526b4e4efbab4d5a34cbc2c45ecd8\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":11,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"75ba83a26f4ee7354d6f852065bfd649d56778461df07c9df5715f406c4c5e5f\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":12,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"db46874409aab620bce756628dd0c47fb10b946562e0a6f6866e7d8ca18a6f00\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":13,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"489925cb908f72a599da39f1360af5965cf48f63b52ca574bf0d1b15304388bf\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":24,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"dd4b22975ac8ed6044840c13c36493f5bb7498322d9a8e0a35132d3f61b00c11\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":25,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"2f9cca21dbb2f03a79f9c501df5c71d487718e95082b5d3b00111f602214304c\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":26,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"c49d085c1b34c5415a9ebedc7d2cae0f1015472eb3a9b2a82d013432d7c82263\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":27,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"2a3d3c0502afe40e42601282e3884a26b890be30bf2e371c95b49e556a436ae7\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":28,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"07a6f9b0674d90a284506cd27d5e9478577ba5e262ad1f33b1379e06da9d64c1\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":29,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"b8f87e73e2b4be2dcfe2d256ed4039641834fb105c533da8f6b1dccb75ef6d65\"}]}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -278,7 +278,7 @@
       "id": "5z2PepNfEmdbCriCf9UbmkASnrdYFY8wZnx2VaRAUe5S",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"120000\",\"items\":[{\"customer\":\"outlivelab-alice.testnet\",\"seq\":62,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"a0a3abbec3a680213f170c558ca007b0c4139c014c1373ec1b3e5e9eeb7a6072\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":63,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"cb3512ea24347d60ee2adf40315244706f3d32ebeb117ac5203ac9b5230aa8e6\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":64,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"e2a8428e7fdf60056accb6d106ffc123851228a5642affeeb2b9c2ed1741dd3b\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":65,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"14cf57522bbf98638f4a42d76183b98c9c9f6dd7b9e847c1dd1078bdc9c91ed8\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":66,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"bd4b8530355e559b5ff5a67f649a2034d389c4e473367bcd31670f6fd42a0376\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":51,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"27a8357a0bbd66e0c4fa3deca7a9ef1af3b84b5eb5353053f99a75b3e4b88338\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":52,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"01dece55c756ff927e167359acd89ef6aaef49e560e45c1d9cc6e017f89339c6\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":53,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"546eee105a091c993ba96cc5d1ebc1ddbbc50c97e10e70458cae7ec127bb8376\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":54,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"954dfc23e3ed7249fa2b8a2442a9fc01b240e374570aa7ea3ab1dd1140cbeba6\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":55,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"5e9b9f6035114f35242643b87fcce71b57076f4126a7cbf9931efb02f8b7e607\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":56,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"9c11a29484dab96d38423fcc56751986100f8285208b06adf6830257f8df81ba\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":57,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8c8eb4794f0653de35e034d9aa20708d7c24915d02b5bbdffc018965cbe3f063\"}]}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"120000\",\"items\":[{\"customer\":\"outlive-alice.testnet\",\"seq\":62,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"a0a3abbec3a680213f170c558ca007b0c4139c014c1373ec1b3e5e9eeb7a6072\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":63,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"cb3512ea24347d60ee2adf40315244706f3d32ebeb117ac5203ac9b5230aa8e6\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":64,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"e2a8428e7fdf60056accb6d106ffc123851228a5642affeeb2b9c2ed1741dd3b\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":65,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"14cf57522bbf98638f4a42d76183b98c9c9f6dd7b9e847c1dd1078bdc9c91ed8\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":66,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"bd4b8530355e559b5ff5a67f649a2034d389c4e473367bcd31670f6fd42a0376\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":51,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"27a8357a0bbd66e0c4fa3deca7a9ef1af3b84b5eb5353053f99a75b3e4b88338\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":52,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"01dece55c756ff927e167359acd89ef6aaef49e560e45c1d9cc6e017f89339c6\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":53,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"546eee105a091c993ba96cc5d1ebc1ddbbc50c97e10e70458cae7ec127bb8376\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":54,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"954dfc23e3ed7249fa2b8a2442a9fc01b240e374570aa7ea3ab1dd1140cbeba6\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":55,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"5e9b9f6035114f35242643b87fcce71b57076f4126a7cbf9931efb02f8b7e607\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":56,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"9c11a29484dab96d38423fcc56751986100f8285208b06adf6830257f8df81ba\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":57,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8c8eb4794f0653de35e034d9aa20708d7c24915d02b5bbdffc018965cbe3f063\"}]}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -329,7 +329,7 @@
       "id": "EVMjKgHLEWfiF3NiQP2iViAj7gK9tZsVaaTkcxoW7kY5",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"120000\",\"items\":[{\"customer\":\"outlivelab-bob.testnet\",\"seq\":14,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"0f9a3a52ba014bc976759132edc8a31e6fd9b54cae38951597e685f647ab1915\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":15,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"036942702089c7181e9aeba7815bd48d0f89dc109da989d203059c1fea346e96\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":16,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"fea02800872b4640424041ed118d329c54824f66ab984024e915c4e80228a206\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":17,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"e592bc35d3a0af05e5dab195046c6bdccc8e1350ec890dc0d7d22238618a8345\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":18,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"0948fc35831f00e8ed268e7caa8a91ff8eacbce6daf59573d67e018fc16671da\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":19,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"d98de9ccb804fec6ef63484accb39a6fcf677e9a21bccde5b74a85dacbe4e701\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":30,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"b4ff2b89d2d67928cd7fedb9f4ebb267813e81b5ae5a597c3b1b8bbcc512fb44\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":31,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"0a1b0a3240b1b05887816bfdbd2567aa7b8f85f97ad8561238fd9c3ee5f748aa\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":32,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"db3cad976c2030592ee01bf92309f418b7b849965c17fbc22fbc0cc9edc2bd5f\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":33,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"cbd48d6739979ad1c823b3979e7f31b05042ba5bafb52a6ca4317326397847fd\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":34,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"3208d7df59915dd436ce73f6a1f0f976fed94abdb1039c21f6117d8a3c3b809a\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":35,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"e3808c46a0edb3bec4b09af3b737129d6d82863762a4a8df2ff7565c14a8e72c\"}]}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"120000\",\"items\":[{\"customer\":\"outlive-bob.testnet\",\"seq\":14,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"0f9a3a52ba014bc976759132edc8a31e6fd9b54cae38951597e685f647ab1915\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":15,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"036942702089c7181e9aeba7815bd48d0f89dc109da989d203059c1fea346e96\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":16,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"fea02800872b4640424041ed118d329c54824f66ab984024e915c4e80228a206\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":17,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"e592bc35d3a0af05e5dab195046c6bdccc8e1350ec890dc0d7d22238618a8345\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":18,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"0948fc35831f00e8ed268e7caa8a91ff8eacbce6daf59573d67e018fc16671da\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":19,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"d98de9ccb804fec6ef63484accb39a6fcf677e9a21bccde5b74a85dacbe4e701\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":30,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"b4ff2b89d2d67928cd7fedb9f4ebb267813e81b5ae5a597c3b1b8bbcc512fb44\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":31,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"0a1b0a3240b1b05887816bfdbd2567aa7b8f85f97ad8561238fd9c3ee5f748aa\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":32,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"db3cad976c2030592ee01bf92309f418b7b849965c17fbc22fbc0cc9edc2bd5f\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":33,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"cbd48d6739979ad1c823b3979e7f31b05042ba5bafb52a6ca4317326397847fd\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":34,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"3208d7df59915dd436ce73f6a1f0f976fed94abdb1039c21f6117d8a3c3b809a\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":35,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"e3808c46a0edb3bec4b09af3b737129d6d82863762a4a8df2ff7565c14a8e72c\"}]}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -380,7 +380,7 @@
       "id": "5fvQmoEUEYMJiZF4Vu32Zo9XcAkGQEfg8Dj5CtNRpRxT",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"10000\",\"items\":[{\"customer\":\"outlivelab-bob.testnet\",\"seq\":7,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"fefdc56c647b381083280e71e0cd4fa55ef094cfe07f3ed35f7d4a357cb60c0a\"}]}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"10000\",\"items\":[{\"customer\":\"outlive-bob.testnet\",\"seq\":7,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"fefdc56c647b381083280e71e0cd4fa55ef094cfe07f3ed35f7d4a357cb60c0a\"}]}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -414,7 +414,7 @@
   {
    "transaction": {
     "hash": "52Lun1MSKUCRQMc5zZECkU6xgPzteuy8zQ9ARztSDSrF",
-    "signer_id": "outlivelab-buyer.testnet",
+    "signer_id": "outlive-buyer.testnet",
     "receiver_id": "relay-1102ripe.outlive.testnet"
    },
    "receipts": [
@@ -422,7 +422,7 @@
      "receipt": {
       "receipt_id": "Dm19C53wZQt7TB9tR5RY6LuYpTvsMXxYLY8uqcTEAWEL",
       "receiver_id": "relay-1102ripe.outlive.testnet",
-      "predecessor_id": "outlivelab-buyer.testnet"
+      "predecessor_id": "outlive-buyer.testnet"
      },
      "execution_outcome": {
       "block_height": 275856221,
@@ -441,7 +441,7 @@
     {
      "receipt": {
       "receipt_id": "DJBDectxuNeJqKwyNTiUCKwrX9s2ixFyw9iiBuDDKEDj",
-      "receiver_id": "outlivelab-buyer.testnet",
+      "receiver_id": "outlive-buyer.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -451,7 +451,7 @@
       "id": "DJBDectxuNeJqKwyNTiUCKwrX9s2ixFyw9iiBuDDKEDj",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-buyer.testnet",
+       "executor_id": "outlive-buyer.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -471,7 +471,7 @@
       "id": "6DDAWAVdAb3D9AfqkHtTNdS3HJhe38ZvNyvJWYaR8wqV",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"nep141\",\"version\":\"1.0.0\",\"event\":\"ft_transfer\",\"data\":[{\"old_owner_id\":\"relay-1102ripe.outlive.testnet\",\"new_owner_id\":\"outlivelab-buyer.testnet\",\"amount\":\"620000\"}]}"
+        "EVENT_JSON:{\"standard\":\"nep141\",\"version\":\"1.0.0\",\"event\":\"ft_transfer\",\"data\":[{\"old_owner_id\":\"relay-1102ripe.outlive.testnet\",\"new_owner_id\":\"outlive-buyer.testnet\",\"amount\":\"620000\"}]}"
        ],
        "executor_id": "tusdc.outlive.testnet",
        "status": {
@@ -483,7 +483,7 @@
     {
      "receipt": {
       "receipt_id": "FNoqdfEaY8Mxi6uWfu4dwfQRfRSPUM8RNrXZqj8d8MMn",
-      "receiver_id": "outlivelab-buyer.testnet",
+      "receiver_id": "outlive-buyer.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -493,7 +493,7 @@
       "id": "FNoqdfEaY8Mxi6uWfu4dwfQRfRSPUM8RNrXZqj8d8MMn",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-buyer.testnet",
+       "executor_id": "outlive-buyer.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -513,7 +513,7 @@
       "id": "6zrJ6AyAc1v4xtsqe3i7bZxbeTRC3YWV7pfwgCatdDrF",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_withdraw\",\"data\":[{\"receiver_id\":\"outlivelab-buyer.testnet\",\"amount\":\"620000\",\"owner_epoch\":2}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_withdraw\",\"data\":[{\"receiver_id\":\"outlive-buyer.testnet\",\"amount\":\"620000\",\"owner_epoch\":2}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -525,7 +525,7 @@
     {
      "receipt": {
       "receipt_id": "Fj9o3oi7hehhngA1fKvKy1RfazbfZnLrbd36SgXzeyjy",
-      "receiver_id": "outlivelab-buyer.testnet",
+      "receiver_id": "outlive-buyer.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -535,7 +535,7 @@
       "id": "Fj9o3oi7hehhngA1fKvKy1RfazbfZnLrbd36SgXzeyjy",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-buyer.testnet",
+       "executor_id": "outlive-buyer.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -547,7 +547,7 @@
   {
    "transaction": {
     "hash": "6bthfgAB41aURVQ4KNsWHuxDmy4HqCwrHSSqyU37nbxA",
-    "signer_id": "outlivel8-seller.testnet",
+    "signer_id": "outlive-seller.testnet",
     "receiver_id": "outlive.testnet"
    },
    "receipts": [
@@ -555,7 +555,7 @@
      "receipt": {
       "receipt_id": "C5zaxZhoFRh8oCec3yay3FTHDv7yXdSxfJeAje2Zrb3A",
       "receiver_id": "outlive.testnet",
-      "predecessor_id": "outlivel8-seller.testnet"
+      "predecessor_id": "outlive-seller.testnet"
      },
      "execution_outcome": {
       "block_height": 275855469,
@@ -564,7 +564,7 @@
       "id": "C5zaxZhoFRh8oCec3yay3FTHDv7yXdSxfJeAje2Zrb3A",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"outlive_listed\",\"data\":[{\"token_id\":\"relay-1102ripe\",\"listing_id\":1,\"seller\":\"outlivel8-seller.testnet\",\"price\":\"3000000\",\"epoch\":1}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"outlive_listed\",\"data\":[{\"token_id\":\"relay-1102ripe\",\"listing_id\":1,\"seller\":\"outlive-seller.testnet\",\"price\":\"3000000\",\"epoch\":1}]}"
        ],
        "executor_id": "outlive.testnet",
        "status": {
@@ -576,7 +576,7 @@
     {
      "receipt": {
       "receipt_id": "7uVykc63EbEGmrJav8rkJoH6xMBYDVkMBjjfxm3ibzvT",
-      "receiver_id": "outlivel8-seller.testnet",
+      "receiver_id": "outlive-seller.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -586,7 +586,7 @@
       "id": "7uVykc63EbEGmrJav8rkJoH6xMBYDVkMBjjfxm3ibzvT",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivel8-seller.testnet",
+       "executor_id": "outlive-seller.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -618,7 +618,7 @@
     {
      "receipt": {
       "receipt_id": "5dPb3JyuuDXGidyekrBatydpnfeLySxFacJTgDbLigU8",
-      "receiver_id": "outlivel8-seller.testnet",
+      "receiver_id": "outlive-seller.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -628,7 +628,7 @@
       "id": "5dPb3JyuuDXGidyekrBatydpnfeLySxFacJTgDbLigU8",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivel8-seller.testnet",
+       "executor_id": "outlive-seller.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -660,7 +660,7 @@
     {
      "receipt": {
       "receipt_id": "4uMkktN2rin1TkHLCRRze1skDcVQn3467dvd2qXW5HVJ",
-      "receiver_id": "outlivel8-seller.testnet",
+      "receiver_id": "outlive-seller.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -670,7 +670,7 @@
       "id": "4uMkktN2rin1TkHLCRRze1skDcVQn3467dvd2qXW5HVJ",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivel8-seller.testnet",
+       "executor_id": "outlive-seller.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -699,7 +699,7 @@
       "id": "HQ7VJGguD2ZZF6mKa3y6UEhbnA5tLs4Ch2a6UDdH59HY",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"60000\",\"items\":[{\"customer\":\"outlivelab-bob.testnet\",\"seq\":4,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"d5eb9d8328e0d422a92ce3425e06de345fb32566792f5ce46ff8c4b3f5ed7ab2\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":5,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"4110f6772660584cbbf5a8e873b889b91e2d0cfed6feb43f38ee4f83248c26af\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":6,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"d702a5df667ca8f5e7f58aa6850923e902b5ede98e9f764238356bb7e48710a0\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":21,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"d4d0b3d5507ed2018f7e0a76e867c4afa09352fdbdbbd82fcfa080b0890fd6ef\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":22,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"03bb89b85e3f585c79ab7a6ae2f3f45c34d0ab0afdea17638822d169c8c2888b\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":23,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"0172c2d9e6df76bd3ef97dcbfd084d153e6e2b99e1bf6762184f39ffb693db76\"}]}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"60000\",\"items\":[{\"customer\":\"outlive-bob.testnet\",\"seq\":4,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"d5eb9d8328e0d422a92ce3425e06de345fb32566792f5ce46ff8c4b3f5ed7ab2\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":5,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"4110f6772660584cbbf5a8e873b889b91e2d0cfed6feb43f38ee4f83248c26af\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":6,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"d702a5df667ca8f5e7f58aa6850923e902b5ede98e9f764238356bb7e48710a0\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":21,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"d4d0b3d5507ed2018f7e0a76e867c4afa09352fdbdbbd82fcfa080b0890fd6ef\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":22,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"03bb89b85e3f585c79ab7a6ae2f3f45c34d0ab0afdea17638822d169c8c2888b\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":23,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"0172c2d9e6df76bd3ef97dcbfd084d153e6e2b99e1bf6762184f39ffb693db76\"}]}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -750,7 +750,7 @@
       "id": "CKAwhPFgVAN1dMNsGBWdKMTiCwvpye9mKn59Ex1DGrU1",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"120000\",\"items\":[{\"customer\":\"outlivelab-alice.testnet\",\"seq\":55,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"e4d73356381fa38e09686722177dfd005a2bdab42898f021fc10b02d2d14f7de\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":56,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"3fdd9e9a15339413c6d85a41612f070e5128cccd200b84008937b2fa028f9f04\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":57,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"4332995d21e1df850fb3c84e80efcc53d82e15274e878f0d84d5a5a2ebd36e8d\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":41,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8c69c53a164e0ac54df433492b6b2c562a8ed7da24ff6f358fbead401546deb0\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":42,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"5ad28f4d859167262f5fa874787390bedc582a7b96965192aaab4c0b4c78d5e1\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":43,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"cbc737ed60e9dab19d7b067ff2e9263955c4610baba1e8ca9481a1897f8af6c4\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":44,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"2a6020ece619e96efc1a7379ac9a3e91be8bbeb165fdeef2475dc856b5a2efe3\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":45,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"169b4cdcf4edad06f42367b2cec26865a2df096cfe916df8ecbc087d8a0e0f92\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":46,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"511ffa4326a2f39161ea121fbf4231a8ceb0b16be64e463939b5de1449ce89e3\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":47,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"b851d25aa24b0507e679c045f37b1fae0c2e9becd58978a5c3442ef8ab9a5041\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":48,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"1baf8d12e0f5cc73cea063697c09587423bf583408378bf5dd198d8faf596f48\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":49,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"4d78fa776f0e0f3fbdd86d2507a8b6ddb071ccc8a8af3452ec2a3c3f1a31a10e\"}]}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"120000\",\"items\":[{\"customer\":\"outlive-alice.testnet\",\"seq\":55,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"e4d73356381fa38e09686722177dfd005a2bdab42898f021fc10b02d2d14f7de\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":56,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"3fdd9e9a15339413c6d85a41612f070e5128cccd200b84008937b2fa028f9f04\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":57,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"4332995d21e1df850fb3c84e80efcc53d82e15274e878f0d84d5a5a2ebd36e8d\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":41,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8c69c53a164e0ac54df433492b6b2c562a8ed7da24ff6f358fbead401546deb0\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":42,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"5ad28f4d859167262f5fa874787390bedc582a7b96965192aaab4c0b4c78d5e1\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":43,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"cbc737ed60e9dab19d7b067ff2e9263955c4610baba1e8ca9481a1897f8af6c4\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":44,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"2a6020ece619e96efc1a7379ac9a3e91be8bbeb165fdeef2475dc856b5a2efe3\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":45,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"169b4cdcf4edad06f42367b2cec26865a2df096cfe916df8ecbc087d8a0e0f92\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":46,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"511ffa4326a2f39161ea121fbf4231a8ceb0b16be64e463939b5de1449ce89e3\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":47,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"b851d25aa24b0507e679c045f37b1fae0c2e9becd58978a5c3442ef8ab9a5041\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":48,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"1baf8d12e0f5cc73cea063697c09587423bf583408378bf5dd198d8faf596f48\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":49,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"4d78fa776f0e0f3fbdd86d2507a8b6ddb071ccc8a8af3452ec2a3c3f1a31a10e\"}]}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -784,7 +784,7 @@
   {
    "transaction": {
     "hash": "752J5RaHRBDz7gjxL2fLjfcLy3Nh1FG2kxS6HxmxGS7U",
-    "signer_id": "outlivel8-seller.testnet",
+    "signer_id": "outlive-seller.testnet",
     "receiver_id": "relay-1102ripe.outlive.testnet"
    },
    "receipts": [
@@ -792,7 +792,7 @@
      "receipt": {
       "receipt_id": "8smna6P8RVC5sThV7NJUTJbT2hjzBVQVG2m9yBr2mktA",
       "receiver_id": "relay-1102ripe.outlive.testnet",
-      "predecessor_id": "outlivel8-seller.testnet"
+      "predecessor_id": "outlive-seller.testnet"
      },
      "execution_outcome": {
       "block_height": 275855416,
@@ -833,7 +833,7 @@
     {
      "receipt": {
       "receipt_id": "9LEJ2MQfoZoHeVnu7rF9BGHXBNGnRd9agkC365HezheS",
-      "receiver_id": "outlivel8-seller.testnet",
+      "receiver_id": "outlive-seller.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -843,7 +843,7 @@
       "id": "9LEJ2MQfoZoHeVnu7rF9BGHXBNGnRd9agkC365HezheS",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivel8-seller.testnet",
+       "executor_id": "outlive-seller.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -853,7 +853,7 @@
     {
      "receipt": {
       "receipt_id": "5bUDEkW4FjbuDyGU2ZjzMst74sCVSVtcLiUztJcPgmRD",
-      "receiver_id": "outlivel8-seller.testnet",
+      "receiver_id": "outlive-seller.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -863,7 +863,7 @@
       "id": "5bUDEkW4FjbuDyGU2ZjzMst74sCVSVtcLiUztJcPgmRD",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivel8-seller.testnet",
+       "executor_id": "outlive-seller.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -875,7 +875,7 @@
   {
    "transaction": {
     "hash": "AMKAeTu12b3YJd1BVfyVst6aJc99Y23YLDxTo2ATX6d8",
-    "signer_id": "outlivelab-buyer.testnet",
+    "signer_id": "outlive-buyer.testnet",
     "receiver_id": "relay-1102ripe.outlive.testnet"
    },
    "receipts": [
@@ -883,7 +883,7 @@
      "receipt": {
       "receipt_id": "FWhRL8RJzFU11aoyVKCpEUzJ8a93v4F7VyPeGw8MYSvP",
       "receiver_id": "relay-1102ripe.outlive.testnet",
-      "predecessor_id": "outlivelab-buyer.testnet"
+      "predecessor_id": "outlive-buyer.testnet"
      },
      "execution_outcome": {
       "block_height": 275856296,
@@ -924,7 +924,7 @@
     {
      "receipt": {
       "receipt_id": "BcMQZDNpxKSWkHyD27RfQakH6mob63X5af8SHwmu1mU9",
-      "receiver_id": "outlivelab-buyer.testnet",
+      "receiver_id": "outlive-buyer.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -934,7 +934,7 @@
       "id": "BcMQZDNpxKSWkHyD27RfQakH6mob63X5af8SHwmu1mU9",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-buyer.testnet",
+       "executor_id": "outlive-buyer.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -944,7 +944,7 @@
     {
      "receipt": {
       "receipt_id": "4HT4oFuVQU5VktJp3bm41Rtg7mQWZdxzNBtiALo9xkmD",
-      "receiver_id": "outlivelab-buyer.testnet",
+      "receiver_id": "outlive-buyer.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -954,7 +954,7 @@
       "id": "4HT4oFuVQU5VktJp3bm41Rtg7mQWZdxzNBtiALo9xkmD",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-buyer.testnet",
+       "executor_id": "outlive-buyer.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -966,7 +966,7 @@
   {
    "transaction": {
     "hash": "D9E6MceuTUw3agQGweqQaMwkQXfbmWCwstzyzcP8Qcrd",
-    "signer_id": "outlivel8-seller.testnet",
+    "signer_id": "outlive-seller.testnet",
     "receiver_id": "relay-1102ripe.outlive.testnet"
    },
    "receipts": [
@@ -974,7 +974,7 @@
      "receipt": {
       "receipt_id": "5BY7arzXPrUAgGGp4fuJjhQ8GkzesCA5UbrN7NnVJ2jF",
       "receiver_id": "relay-1102ripe.outlive.testnet",
-      "predecessor_id": "outlivel8-seller.testnet"
+      "predecessor_id": "outlive-seller.testnet"
      },
      "execution_outcome": {
       "block_height": 275855446,
@@ -993,7 +993,7 @@
     {
      "receipt": {
       "receipt_id": "6AhwLZi2pP6k2oj1fRhuyhwJeDAeSk84nvvJeq2K8qcc",
-      "receiver_id": "outlivel8-seller.testnet",
+      "receiver_id": "outlive-seller.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -1003,7 +1003,7 @@
       "id": "6AhwLZi2pP6k2oj1fRhuyhwJeDAeSk84nvvJeq2K8qcc",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivel8-seller.testnet",
+       "executor_id": "outlive-seller.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -1023,7 +1023,7 @@
       "id": "5dhj6qBDhu66RfVRdy76M7gTvQtceDJrFvHGPtdSiBtu",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"nep141\",\"version\":\"1.0.0\",\"event\":\"ft_transfer\",\"data\":[{\"old_owner_id\":\"relay-1102ripe.outlive.testnet\",\"new_owner_id\":\"outlivel8-seller.testnet\",\"amount\":\"610000\"}]}"
+        "EVENT_JSON:{\"standard\":\"nep141\",\"version\":\"1.0.0\",\"event\":\"ft_transfer\",\"data\":[{\"old_owner_id\":\"relay-1102ripe.outlive.testnet\",\"new_owner_id\":\"outlive-seller.testnet\",\"amount\":\"610000\"}]}"
        ],
        "executor_id": "tusdc.outlive.testnet",
        "status": {
@@ -1035,7 +1035,7 @@
     {
      "receipt": {
       "receipt_id": "GEjzRQmhsexa7ot6r3iDwWpKZSWQGUa9mvdChCb9H1ea",
-      "receiver_id": "outlivel8-seller.testnet",
+      "receiver_id": "outlive-seller.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -1045,7 +1045,7 @@
       "id": "GEjzRQmhsexa7ot6r3iDwWpKZSWQGUa9mvdChCb9H1ea",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivel8-seller.testnet",
+       "executor_id": "outlive-seller.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -1065,7 +1065,7 @@
       "id": "HfFTiY9sLYtV1Lwu9LKBekwaECFyrM33aDhqBKbmioYh",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_withdraw\",\"data\":[{\"receiver_id\":\"outlivel8-seller.testnet\",\"amount\":\"610000\",\"owner_epoch\":1}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_withdraw\",\"data\":[{\"receiver_id\":\"outlive-seller.testnet\",\"amount\":\"610000\",\"owner_epoch\":1}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -1077,7 +1077,7 @@
     {
      "receipt": {
       "receipt_id": "A9wcZuV5zZDUjdhcdi6MS8Q9PNKhP2SF5MfAsmpxcbY9",
-      "receiver_id": "outlivel8-seller.testnet",
+      "receiver_id": "outlive-seller.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -1087,7 +1087,7 @@
       "id": "A9wcZuV5zZDUjdhcdi6MS8Q9PNKhP2SF5MfAsmpxcbY9",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivel8-seller.testnet",
+       "executor_id": "outlive-seller.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -1116,7 +1116,7 @@
       "id": "AmeNbG6hEFuj6iHjmBKGPrG2jWyUU1Jvrsk8XD4EThGH",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"110000\",\"items\":[{\"customer\":\"outlivelab-alice.testnet\",\"seq\":50,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"0961965a9f65c4f05f662119a54cb3a28dfc3c1906d7c49679dc02c5d53a6012\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":51,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"cfb3f6736e9e4209c294b22ea5b8521280686a580f7f04bea888849d3980ffe3\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":52,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"6ad12c1429808f6ad5eaf6bdb3087510b36bbd06d9fee6a4e2a65e612c3b8367\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":53,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"98e26a218a9339e610cb97f2db1bcd890fdd69e4c6d48ddd2b582f4ca2147e9e\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":54,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"c696f1077b971df25e7e7f1655f15443b9e6b4c057e004dc2b910fe3217f1bcc\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":35,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"28901563410df25d64f8590a05da82664be951008d4bcc32d0fdb8a255ed82f9\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":36,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"be2e36cb6a66f536ff76a9e262a481b06768b31f752684578d88de0fbf421d74\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":37,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"c2d2e21679d9b24e6bd195f4411cd6c3ee1d26f0257a00744dfbb9e4b741f8f0\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":38,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"a6715b672cd7ab96fc6677b02bcf8c21dcd32d1a2161dfc69ccb5819b285b1b2\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":39,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"b37dc84b0129b0b90f14d26004064f2f6a385d2b67587f1d92ce42eb8cd2d661\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":40,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"6eadae67dbafbf0a92725da16c386887183539737478639db9adc345ae5bca24\"}]}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"110000\",\"items\":[{\"customer\":\"outlive-alice.testnet\",\"seq\":50,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"0961965a9f65c4f05f662119a54cb3a28dfc3c1906d7c49679dc02c5d53a6012\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":51,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"cfb3f6736e9e4209c294b22ea5b8521280686a580f7f04bea888849d3980ffe3\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":52,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"6ad12c1429808f6ad5eaf6bdb3087510b36bbd06d9fee6a4e2a65e612c3b8367\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":53,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"98e26a218a9339e610cb97f2db1bcd890fdd69e4c6d48ddd2b582f4ca2147e9e\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":54,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"c696f1077b971df25e7e7f1655f15443b9e6b4c057e004dc2b910fe3217f1bcc\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":35,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"28901563410df25d64f8590a05da82664be951008d4bcc32d0fdb8a255ed82f9\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":36,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"be2e36cb6a66f536ff76a9e262a481b06768b31f752684578d88de0fbf421d74\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":37,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"c2d2e21679d9b24e6bd195f4411cd6c3ee1d26f0257a00744dfbb9e4b741f8f0\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":38,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"a6715b672cd7ab96fc6677b02bcf8c21dcd32d1a2161dfc69ccb5819b285b1b2\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":39,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"b37dc84b0129b0b90f14d26004064f2f6a385d2b67587f1d92ce42eb8cd2d661\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":40,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"6eadae67dbafbf0a92725da16c386887183539737478639db9adc345ae5bca24\"}]}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -1167,7 +1167,7 @@
       "id": "8x5JWkYocrwNSct3BiN1rNxpNsWqt9FsogoZgbtdqcdn",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"20000\",\"items\":[{\"customer\":\"outlivelab-bob.testnet\",\"seq\":23,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8c0e7d38fe9b305763564a5e82adff0b25b1a8ada5aa215543365e5e08fd834a\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":40,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"57a932b21bd695581cb98a6e950d2822c4fce5ac255d5cbfd83e577d3543fcf0\"}]}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"20000\",\"items\":[{\"customer\":\"outlive-bob.testnet\",\"seq\":23,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8c0e7d38fe9b305763564a5e82adff0b25b1a8ada5aa215543365e5e08fd834a\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":40,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"57a932b21bd695581cb98a6e950d2822c4fce5ac255d5cbfd83e577d3543fcf0\"}]}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -1218,7 +1218,7 @@
       "id": "H2ds487uyRvxBrbiBZxpzs8yiAYt5DU1dNMTKfVU4NaA",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"90000\",\"items\":[{\"customer\":\"outlivelab-bob.testnet\",\"seq\":24,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"93af82fc7526e3ea47639e260319c56a1a10d97e75fa4a98c7aedc246012a5c0\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":25,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"e5a211ed22942019e34afa411bd269ec5072675cec6ed7658f908b7c51c9729c\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":26,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"285573f2ac55d2e43bfe7fd8f9d04f71daa6bd71915b60b6e3b04a0c935e33af\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":27,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"3a5e07efb6aa33f451526121bdd553f473be6e332653f812c20b1129a5193b7c\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":28,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8e73556538b1950ea52b30a22e9832e8ece8971d488de64321fb65168acd4e32\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":29,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"7c05ffd0f5eb3555e6e882dd1df42e18ab1e8751bf5eb5cc4d9c0d2c8425a69e\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":41,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"7a00f8571e7f7689ac388a88a38eb50fbda5c4709c479c77a68be9c8cac35ea6\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":42,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"1a96aa22f3b6c4ea0bc46e0d37b64eadad137074d55016f32c973a5bfe6c2bab\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":43,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"a06d32ef7b69037d3dbb8c7727a589b53fdf8e9c0d7ff9a08e2bf239dc4cee7a\"}]}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"90000\",\"items\":[{\"customer\":\"outlive-bob.testnet\",\"seq\":24,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"93af82fc7526e3ea47639e260319c56a1a10d97e75fa4a98c7aedc246012a5c0\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":25,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"e5a211ed22942019e34afa411bd269ec5072675cec6ed7658f908b7c51c9729c\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":26,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"285573f2ac55d2e43bfe7fd8f9d04f71daa6bd71915b60b6e3b04a0c935e33af\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":27,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"3a5e07efb6aa33f451526121bdd553f473be6e332653f812c20b1129a5193b7c\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":28,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8e73556538b1950ea52b30a22e9832e8ece8971d488de64321fb65168acd4e32\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":29,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"7c05ffd0f5eb3555e6e882dd1df42e18ab1e8751bf5eb5cc4d9c0d2c8425a69e\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":41,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"7a00f8571e7f7689ac388a88a38eb50fbda5c4709c479c77a68be9c8cac35ea6\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":42,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"1a96aa22f3b6c4ea0bc46e0d37b64eadad137074d55016f32c973a5bfe6c2bab\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":43,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"a06d32ef7b69037d3dbb8c7727a589b53fdf8e9c0d7ff9a08e2bf239dc4cee7a\"}]}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -1269,7 +1269,7 @@
       "id": "ERe3STzz1u96PyUG4A2Yvi6efHZXQiptU7Wzuxo5V1Hn",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"110000\",\"items\":[{\"customer\":\"outlivelab-bob.testnet\",\"seq\":30,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"023b776e9312374ed79f7f60fb769b9d111e6b4e124877580e7b32b4e8a45278\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":31,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"c1d017b3c1c6254a738b95b5c584e5ca09409719f01a3aafe8c5db581bd79fb8\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":32,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"495c8e98e5ee071e951e077b4e8861840bfeb39e8cb8ae3b1f43a6462874e8fc\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":33,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"02eed2d27a7cf4e9f0d3e7fbb53d8abf799ad5390132b9835ae700e8a04e9f0e\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":34,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8014cbefd5fdb62a9bb490570c53c65a710c436aa9af08f29e8ef8187518b28b\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":44,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"a32144d347dbdb084d4802f82318938c758f9379c7281d8eb32cc98778fc62f4\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":45,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"afff45d511c3deeb9dd0bba323a7246134291a3d6e7516b883dcf70794d76cca\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":46,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"6eff162c7347465cce32bc187a8725174f98247fa4d945c5c168219727d4c4fd\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":47,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8355ccae8c6350acd21eeeeb7fed269e8e9bf0fb1c3a22153816d95c016ef5f1\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":48,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"a37f6639353954eb657f976c3a15deb0bd51a699f3213e637c2aeba054fd5183\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":49,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8d77c1861aeb5666ed59dbe24e553d404354dc19dab37427d2d6534af7b5de15\"}]}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"110000\",\"items\":[{\"customer\":\"outlive-bob.testnet\",\"seq\":30,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"023b776e9312374ed79f7f60fb769b9d111e6b4e124877580e7b32b4e8a45278\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":31,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"c1d017b3c1c6254a738b95b5c584e5ca09409719f01a3aafe8c5db581bd79fb8\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":32,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"495c8e98e5ee071e951e077b4e8861840bfeb39e8cb8ae3b1f43a6462874e8fc\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":33,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"02eed2d27a7cf4e9f0d3e7fbb53d8abf799ad5390132b9835ae700e8a04e9f0e\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":34,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8014cbefd5fdb62a9bb490570c53c65a710c436aa9af08f29e8ef8187518b28b\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":44,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"a32144d347dbdb084d4802f82318938c758f9379c7281d8eb32cc98778fc62f4\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":45,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"afff45d511c3deeb9dd0bba323a7246134291a3d6e7516b883dcf70794d76cca\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":46,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"6eff162c7347465cce32bc187a8725174f98247fa4d945c5c168219727d4c4fd\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":47,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8355ccae8c6350acd21eeeeb7fed269e8e9bf0fb1c3a22153816d95c016ef5f1\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":48,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"a37f6639353954eb657f976c3a15deb0bd51a699f3213e637c2aeba054fd5183\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":49,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8d77c1861aeb5666ed59dbe24e553d404354dc19dab37427d2d6534af7b5de15\"}]}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -1320,7 +1320,7 @@
       "id": "9UYotXmumupBxgchev6i4cV7xiLzYH5NMzJgRq7fPsUf",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"50000\",\"items\":[{\"customer\":\"outlivelab-alice.testnet\",\"seq\":58,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"b8c532cec109c36b0d9cbaff1862569448d51d45fbe9822bb6679ff849c6200a\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":59,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"290aa9fb632a727c3da86bff1a61c58a128f10320f2e89b237e92537dec67820\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":60,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"b1adf12fe7bd54d05fa9bb111226c804664828d115f0e47038f1ba1971627b73\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":61,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"bf071702f01965de695b05a46217f603ba630b854d6c1ae46767882c86d91652\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":50,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"af883bbbf14371d938f01bc0803395360a536b6f26af2999eab410052cb230e5\"}]}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"50000\",\"items\":[{\"customer\":\"outlive-alice.testnet\",\"seq\":58,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"b8c532cec109c36b0d9cbaff1862569448d51d45fbe9822bb6679ff849c6200a\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":59,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"290aa9fb632a727c3da86bff1a61c58a128f10320f2e89b237e92537dec67820\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":60,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"b1adf12fe7bd54d05fa9bb111226c804664828d115f0e47038f1ba1971627b73\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":61,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"bf071702f01965de695b05a46217f603ba630b854d6c1ae46767882c86d91652\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":50,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"af883bbbf14371d938f01bc0803395360a536b6f26af2999eab410052cb230e5\"}]}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -1371,7 +1371,7 @@
       "id": "3acx6r4ahXikvuG24gN3pefyvhtSTDBg2bdB1LWytGDp",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"70000\",\"items\":[{\"customer\":\"outlivelab-bob.testnet\",\"seq\":20,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"c4cc143abb1ffe84e4e149173d3c32e51a237de1f46c550ddd0d6bd56a07c178\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":21,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"c1849958d0ee572b57461a1a295a8de33231460286e0d6fa673f88eb79c13607\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":22,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"017b3547b43405bfae0c56fcafe6358bce62fabd5d7a71e695b68bcb14069c0f\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":36,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"05fb8d3cf00c372822f212381c9d75b0c1c4f15a478e020f6599f3c01126678e\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":37,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"1521621837cd620a11202dbf18e6ec138f5e8cff52e86b62cdd4d4f68a9a5019\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":38,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"e5cc14db16fa465434110af4f5381e6ca1ba05138d6ab4542ec5c7310ec70970\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":39,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"5d2047fcdc53bdf0cb6a942be0cd99af1b13af422356bb25623e8138404b5796\"}]}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"70000\",\"items\":[{\"customer\":\"outlive-bob.testnet\",\"seq\":20,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"c4cc143abb1ffe84e4e149173d3c32e51a237de1f46c550ddd0d6bd56a07c178\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":21,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"c1849958d0ee572b57461a1a295a8de33231460286e0d6fa673f88eb79c13607\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":22,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"017b3547b43405bfae0c56fcafe6358bce62fabd5d7a71e695b68bcb14069c0f\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":36,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"05fb8d3cf00c372822f212381c9d75b0c1c4f15a478e020f6599f3c01126678e\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":37,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"1521621837cd620a11202dbf18e6ec138f5e8cff52e86b62cdd4d4f68a9a5019\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":38,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"e5cc14db16fa465434110af4f5381e6ca1ba05138d6ab4542ec5c7310ec70970\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":39,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"5d2047fcdc53bdf0cb6a942be0cd99af1b13af422356bb25623e8138404b5796\"}]}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -1405,7 +1405,7 @@
   {
    "transaction": {
     "hash": "HaMeB1JePtBkSPYPsV9W2oLj86jvnJjNG3VYHaVEsZVR",
-    "signer_id": "outlivelab-buyer.testnet",
+    "signer_id": "outlive-buyer.testnet",
     "receiver_id": "tusdc.outlive.testnet"
    },
    "receipts": [
@@ -1413,7 +1413,7 @@
      "receipt": {
       "receipt_id": "6aJxdyfHmCbvpZKtN8d5633nKH3kfUm3kpZXTbFN3g7G",
       "receiver_id": "tusdc.outlive.testnet",
-      "predecessor_id": "outlivelab-buyer.testnet"
+      "predecessor_id": "outlive-buyer.testnet"
      },
      "execution_outcome": {
       "block_height": 275855589,
@@ -1422,7 +1422,7 @@
       "id": "6aJxdyfHmCbvpZKtN8d5633nKH3kfUm3kpZXTbFN3g7G",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"nep141\",\"version\":\"1.0.0\",\"event\":\"ft_transfer\",\"data\":[{\"old_owner_id\":\"outlivelab-buyer.testnet\",\"new_owner_id\":\"outlive.testnet\",\"amount\":\"3000000\"}]}"
+        "EVENT_JSON:{\"standard\":\"nep141\",\"version\":\"1.0.0\",\"event\":\"ft_transfer\",\"data\":[{\"old_owner_id\":\"outlive-buyer.testnet\",\"new_owner_id\":\"outlive.testnet\",\"amount\":\"3000000\"}]}"
        ],
        "executor_id": "tusdc.outlive.testnet",
        "status": {
@@ -1444,8 +1444,8 @@
       "id": "Dhsz3bD2wbJWrgHtni4EfQz18z26RsZA9p1tg7F6ddbe",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"nep171\",\"version\":\"1.0.0\",\"event\":\"nft_transfer\",\"data\":[{\"old_owner_id\":\"outlivel8-seller.testnet\",\"new_owner_id\":\"outlivelab-buyer.testnet\",\"token_ids\":[\"relay-1102ripe\"],\"memo\":\"outlive sale\"}]}",
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"outlive_sold\",\"data\":[{\"token_id\":\"relay-1102ripe\",\"seller\":\"outlivel8-seller.testnet\",\"buyer\":\"outlivelab-buyer.testnet\",\"price\":\"3000000\",\"epoch\":2}]}"
+        "EVENT_JSON:{\"standard\":\"nep171\",\"version\":\"1.0.0\",\"event\":\"nft_transfer\",\"data\":[{\"old_owner_id\":\"outlive-seller.testnet\",\"new_owner_id\":\"outlive-buyer.testnet\",\"token_ids\":[\"relay-1102ripe\"],\"memo\":\"outlive sale\"}]}",
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"outlive_sold\",\"data\":[{\"token_id\":\"relay-1102ripe\",\"seller\":\"outlive-seller.testnet\",\"buyer\":\"outlive-buyer.testnet\",\"price\":\"3000000\",\"epoch\":2}]}"
        ],
        "executor_id": "outlive.testnet",
        "status": {
@@ -1457,7 +1457,7 @@
     {
      "receipt": {
       "receipt_id": "HQt5fa7hFEzwAj71v9WKGS1sa1oQcFNPTxHdaNDRTNLR",
-      "receiver_id": "outlivelab-buyer.testnet",
+      "receiver_id": "outlive-buyer.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -1467,7 +1467,7 @@
       "id": "HQt5fa7hFEzwAj71v9WKGS1sa1oQcFNPTxHdaNDRTNLR",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-buyer.testnet",
+       "executor_id": "outlive-buyer.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -1477,7 +1477,7 @@
     {
      "receipt": {
       "receipt_id": "BzxMPexPpK26GGqnDckUy1MeG1623WNYNok66SnQsatz",
-      "receiver_id": "outlivelab-buyer.testnet",
+      "receiver_id": "outlive-buyer.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -1487,7 +1487,7 @@
       "id": "BzxMPexPpK26GGqnDckUy1MeG1623WNYNok66SnQsatz",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-buyer.testnet",
+       "executor_id": "outlive-buyer.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -1507,7 +1507,7 @@
       "id": "2bRFBLki6fayYRVshEBu4ie6oCAXVk55ZPSDL67ywkFY",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_owner\",\"data\":[{\"previous\":\"outlivel8-seller.testnet\",\"owner_id\":\"outlivelab-buyer.testnet\",\"epoch\":2,\"unlocked\":true}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_owner\",\"data\":[{\"previous\":\"outlive-seller.testnet\",\"owner_id\":\"outlive-buyer.testnet\",\"epoch\":2,\"unlocked\":true}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -1529,7 +1529,7 @@
       "id": "3SNEfzJEUusHJnfRCRzVog8FzRd8Zj4H7rDmLnq5sA45",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"nep141\",\"version\":\"1.0.0\",\"event\":\"ft_transfer\",\"data\":[{\"old_owner_id\":\"outlive.testnet\",\"new_owner_id\":\"outlivel8-seller.testnet\",\"amount\":\"3000000\",\"memo\":\"outlive sale relay-1102ripe\"}]}"
+        "EVENT_JSON:{\"standard\":\"nep141\",\"version\":\"1.0.0\",\"event\":\"ft_transfer\",\"data\":[{\"old_owner_id\":\"outlive.testnet\",\"new_owner_id\":\"outlive-seller.testnet\",\"amount\":\"3000000\",\"memo\":\"outlive sale relay-1102ripe\"}]}"
        ],
        "executor_id": "tusdc.outlive.testnet",
        "status": {
@@ -1561,7 +1561,7 @@
     {
      "receipt": {
       "receipt_id": "GG9mA98xnMpGj9szbqTk6RgehJA2uvCV5cqia5H2oeY3",
-      "receiver_id": "outlivelab-buyer.testnet",
+      "receiver_id": "outlive-buyer.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -1571,7 +1571,7 @@
       "id": "GG9mA98xnMpGj9szbqTk6RgehJA2uvCV5cqia5H2oeY3",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-buyer.testnet",
+       "executor_id": "outlive-buyer.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -1591,7 +1591,7 @@
       "id": "tFALyHLytQLH9GicMLRqzkEqe9kDbqEDpejKjSNxowZ",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"outlive_owner_pushed\",\"data\":[{\"token_id\":\"relay-1102ripe\",\"owner_id\":\"outlivelab-buyer.testnet\",\"epoch\":2}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"outlive_owner_pushed\",\"data\":[{\"token_id\":\"relay-1102ripe\",\"owner_id\":\"outlive-buyer.testnet\",\"epoch\":2}]}"
        ],
        "executor_id": "outlive.testnet",
        "status": {
@@ -1603,7 +1603,7 @@
     {
      "receipt": {
       "receipt_id": "Gn47HWqqDRiLCyyMmdSxikHg8NNYPWByeyZV9rLFmMMc",
-      "receiver_id": "outlivelab-buyer.testnet",
+      "receiver_id": "outlive-buyer.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -1613,7 +1613,7 @@
       "id": "Gn47HWqqDRiLCyyMmdSxikHg8NNYPWByeyZV9rLFmMMc",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-buyer.testnet",
+       "executor_id": "outlive-buyer.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -1633,7 +1633,7 @@
       "id": "4hV2JCLg42zrjmLgzP1EyaGpdStky5vCyhKv9KcZg17V",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"outlive_seller_paid\",\"data\":[{\"token_id\":\"relay-1102ripe\",\"seller\":\"outlivel8-seller.testnet\",\"amount\":\"3000000\"}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"outlive_seller_paid\",\"data\":[{\"token_id\":\"relay-1102ripe\",\"seller\":\"outlive-seller.testnet\",\"amount\":\"3000000\"}]}"
        ],
        "executor_id": "outlive.testnet",
        "status": {
@@ -1645,7 +1645,7 @@
     {
      "receipt": {
       "receipt_id": "4gh8cA8e52h71xUctKKWfg3WKg9KYpUJ38ptbnahJ6fQ",
-      "receiver_id": "outlivelab-buyer.testnet",
+      "receiver_id": "outlive-buyer.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -1655,7 +1655,7 @@
       "id": "4gh8cA8e52h71xUctKKWfg3WKg9KYpUJ38ptbnahJ6fQ",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-buyer.testnet",
+       "executor_id": "outlive-buyer.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -1665,7 +1665,7 @@
     {
      "receipt": {
       "receipt_id": "7Gvnb47mWXgWuRJP9XbRmDxzGXSAVg2z1VTBB42anCTr",
-      "receiver_id": "outlivelab-buyer.testnet",
+      "receiver_id": "outlive-buyer.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -1675,7 +1675,7 @@
       "id": "7Gvnb47mWXgWuRJP9XbRmDxzGXSAVg2z1VTBB42anCTr",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-buyer.testnet",
+       "executor_id": "outlive-buyer.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -1685,7 +1685,7 @@
     {
      "receipt": {
       "receipt_id": "FEJnWuxpZmH4by9J7YcHWR1MJf45qdvUag5ZhEktZdrb",
-      "receiver_id": "outlivelab-buyer.testnet",
+      "receiver_id": "outlive-buyer.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -1695,7 +1695,7 @@
       "id": "FEJnWuxpZmH4by9J7YcHWR1MJf45qdvUag5ZhEktZdrb",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-buyer.testnet",
+       "executor_id": "outlive-buyer.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -1707,7 +1707,7 @@
   {
    "transaction": {
     "hash": "Zq32xwoV6tX5621S47H4rf2YBtX19R41S82h7DKjqDv",
-    "signer_id": "outlivelab-buyer.testnet",
+    "signer_id": "outlive-buyer.testnet",
     "receiver_id": "relay-1102ripe.outlive.testnet"
    },
    "receipts": [
@@ -1715,7 +1715,7 @@
      "receipt": {
       "receipt_id": "B6oJb5M6a2ar5WRDe4re7qBDZmyYeL1nbsYNQ1ERSt58",
       "receiver_id": "relay-1102ripe.outlive.testnet",
-      "predecessor_id": "outlivelab-buyer.testnet"
+      "predecessor_id": "outlive-buyer.testnet"
      },
      "execution_outcome": {
       "block_height": 275855886,
@@ -1736,7 +1736,7 @@
     {
      "receipt": {
       "receipt_id": "EmgcxS9hXJ257NDSXFiq4ptUumkEThdfHik84mbW3tMN",
-      "receiver_id": "outlivelab-buyer.testnet",
+      "receiver_id": "outlive-buyer.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -1746,7 +1746,7 @@
       "id": "EmgcxS9hXJ257NDSXFiq4ptUumkEThdfHik84mbW3tMN",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-buyer.testnet",
+       "executor_id": "outlive-buyer.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -1776,7 +1776,7 @@
     {
      "receipt": {
       "receipt_id": "FMVBfNA2vx38WmETMgheck1htVj3CrxDeWsCAnLMJ2Zn",
-      "receiver_id": "outlivelab-buyer.testnet",
+      "receiver_id": "outlive-buyer.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -1786,7 +1786,7 @@
       "id": "FMVBfNA2vx38WmETMgheck1htVj3CrxDeWsCAnLMJ2Zn",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-buyer.testnet",
+       "executor_id": "outlive-buyer.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -1818,7 +1818,7 @@
     {
      "receipt": {
       "receipt_id": "3AGoGcFykzPia1fpthpmNiuM3eriurcAFAbeqkSshvsZ",
-      "receiver_id": "outlivelab-buyer.testnet",
+      "receiver_id": "outlive-buyer.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -1828,7 +1828,7 @@
       "id": "3AGoGcFykzPia1fpthpmNiuM3eriurcAFAbeqkSshvsZ",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-buyer.testnet",
+       "executor_id": "outlive-buyer.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -1857,7 +1857,7 @@
       "id": "9ZuirBgcpBLjFQzwruQ38gsaexN5p9TbXQ5MssgaLAse",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"200000\",\"items\":[{\"customer\":\"outlivelab-bob.testnet\",\"seq\":1,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"68a2ad25d5e5c8907be9b27d781e5a0c90932c0dad015b68a3378a34a2d221db\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":2,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"80e139ea82d43b8eecd0c45b48535abf5e50a0445caa9317633ec74073e170be\"},{\"customer\":\"outlivelab-bob.testnet\",\"seq\":3,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"0ee5148577c8ec24735ceded2d245f39227c7a8dc351f8f46592a72e42206120\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":4,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"3eca2c4e6a0a289bd7254a2958d2c5f9b33f3b30720fe442d950ff2ab0b9aeac\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":5,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"a65d0322a8eecae81e47a03ee880d6c0c1c372b2275f94f20b84b8b83c2a963f\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":6,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8c25920f412ac7ffaa4c0cbfa8301c8ac9fbe5101c5e91227c60c0a8109e695e\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":7,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"c6062f64aa2561156400929062414bc4965143450fae34bde569372f18023a37\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":8,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"0899f6e54008ff86559dd63d19cdc14f610c75857a663b9a12ce7e1f175ff6c9\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":9,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"bd1c978124f611f9fd067a092e09727f4ce8184f88663764624183f2dd8842d3\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":10,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"93fbc596060e36b133c8b44a4810834d23fcf7c81bb733e5f6230763f4163f2b\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":11,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"7a95118388982c4bec431b7a03bf5a5fc4c3399c2ce6eee6b105d56324c047b3\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":12,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"a30ab48a44a2391d48689c22d614a3cb68419a025e7e0e4a515955ec461caf63\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":13,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"e36533b060a592006c75aad420a6d82cc16411b77e70e1710987b5504289e413\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":14,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"01fc6294b78a119d19da117207b5e57b49e64503d6f7985a5db6767a17777914\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":15,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"043579b30317a5b04f0aa1af003996e0c00f64694cc0c294634f399fc29d7929\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":16,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"adba64137592505060dfad12226ab470e3ca7206970b412f1b52af3944978d52\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":17,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"6cc878ad41e4df8e95b7e7970d67b5c4c1b7371ec992bd2eb40b17eb1baf1a31\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":18,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"88454b8e1ea81537d32212092675a3de1886aa09ea583bff29caf9a235a0e240\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":19,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"47632db94325788abe228f20e24bcce43004956600b9a7d603b6647d271aafdb\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":20,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"b79e2aaefca39e92609eb78df15e011f86e664a8262b080a53db26fea7d723d8\"}]}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"200000\",\"items\":[{\"customer\":\"outlive-bob.testnet\",\"seq\":1,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"68a2ad25d5e5c8907be9b27d781e5a0c90932c0dad015b68a3378a34a2d221db\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":2,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"80e139ea82d43b8eecd0c45b48535abf5e50a0445caa9317633ec74073e170be\"},{\"customer\":\"outlive-bob.testnet\",\"seq\":3,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"0ee5148577c8ec24735ceded2d245f39227c7a8dc351f8f46592a72e42206120\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":4,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"3eca2c4e6a0a289bd7254a2958d2c5f9b33f3b30720fe442d950ff2ab0b9aeac\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":5,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"a65d0322a8eecae81e47a03ee880d6c0c1c372b2275f94f20b84b8b83c2a963f\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":6,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"8c25920f412ac7ffaa4c0cbfa8301c8ac9fbe5101c5e91227c60c0a8109e695e\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":7,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"c6062f64aa2561156400929062414bc4965143450fae34bde569372f18023a37\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":8,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"0899f6e54008ff86559dd63d19cdc14f610c75857a663b9a12ce7e1f175ff6c9\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":9,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"bd1c978124f611f9fd067a092e09727f4ce8184f88663764624183f2dd8842d3\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":10,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"93fbc596060e36b133c8b44a4810834d23fcf7c81bb733e5f6230763f4163f2b\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":11,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"7a95118388982c4bec431b7a03bf5a5fc4c3399c2ce6eee6b105d56324c047b3\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":12,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"a30ab48a44a2391d48689c22d614a3cb68419a025e7e0e4a515955ec461caf63\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":13,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"e36533b060a592006c75aad420a6d82cc16411b77e70e1710987b5504289e413\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":14,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"01fc6294b78a119d19da117207b5e57b49e64503d6f7985a5db6767a17777914\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":15,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"043579b30317a5b04f0aa1af003996e0c00f64694cc0c294634f399fc29d7929\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":16,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"adba64137592505060dfad12226ab470e3ca7206970b412f1b52af3944978d52\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":17,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"6cc878ad41e4df8e95b7e7970d67b5c4c1b7371ec992bd2eb40b17eb1baf1a31\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":18,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"88454b8e1ea81537d32212092675a3de1886aa09ea583bff29caf9a235a0e240\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":19,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"47632db94325788abe228f20e24bcce43004956600b9a7d603b6647d271aafdb\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":20,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"b79e2aaefca39e92609eb78df15e011f86e664a8262b080a53db26fea7d723d8\"}]}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -1891,7 +1891,7 @@
   {
    "transaction": {
     "hash": "6uxmeVgNKbBYJBpVDAm4tLVVRGVvtEF59CWccWwCE1es",
-    "signer_id": "outlivelab-alice.testnet",
+    "signer_id": "outlive-alice.testnet",
     "receiver_id": "tusdc.outlive.testnet"
    },
    "receipts": [
@@ -1899,7 +1899,7 @@
      "receipt": {
       "receipt_id": "EsNr24rAGpEuP9jhgx1PMUXwtkctvFWxh38bupS51x6S",
       "receiver_id": "tusdc.outlive.testnet",
-      "predecessor_id": "outlivelab-alice.testnet"
+      "predecessor_id": "outlive-alice.testnet"
      },
      "execution_outcome": {
       "block_height": 275855072,
@@ -1908,7 +1908,7 @@
       "id": "EsNr24rAGpEuP9jhgx1PMUXwtkctvFWxh38bupS51x6S",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"nep141\",\"version\":\"1.0.0\",\"event\":\"ft_transfer\",\"data\":[{\"old_owner_id\":\"outlivelab-alice.testnet\",\"new_owner_id\":\"relay-1102ripe.outlive.testnet\",\"amount\":\"5000000\"}]}"
+        "EVENT_JSON:{\"standard\":\"nep141\",\"version\":\"1.0.0\",\"event\":\"ft_transfer\",\"data\":[{\"old_owner_id\":\"outlive-alice.testnet\",\"new_owner_id\":\"relay-1102ripe.outlive.testnet\",\"amount\":\"5000000\"}]}"
        ],
        "executor_id": "tusdc.outlive.testnet",
        "status": {
@@ -1920,7 +1920,7 @@
     {
      "receipt": {
       "receipt_id": "BhSsSJyQPeuvbtK8THxwcUNxVfvoLLSrnc9FWsr1a8yH",
-      "receiver_id": "outlivelab-alice.testnet",
+      "receiver_id": "outlive-alice.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -1930,7 +1930,7 @@
       "id": "BhSsSJyQPeuvbtK8THxwcUNxVfvoLLSrnc9FWsr1a8yH",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-alice.testnet",
+       "executor_id": "outlive-alice.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -1950,7 +1950,7 @@
       "id": "FFKkcxMsmKzMdyKfqCMCU8fVetphPaFazvdMFJ854HGt",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_deposit\",\"data\":[{\"customer\":\"outlivelab-alice.testnet\",\"sender\":\"outlivelab-alice.testnet\",\"amount\":\"5000000\",\"balance\":\"5000000\",\"refund_cancelled\":false}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_deposit\",\"data\":[{\"customer\":\"outlive-alice.testnet\",\"sender\":\"outlive-alice.testnet\",\"amount\":\"5000000\",\"balance\":\"5000000\",\"refund_cancelled\":false}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -1962,7 +1962,7 @@
     {
      "receipt": {
       "receipt_id": "fhphf43HkBVhRFeRKQpSdHo3YTozGXcxBxYutn9NiEx",
-      "receiver_id": "outlivelab-alice.testnet",
+      "receiver_id": "outlive-alice.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -1972,7 +1972,7 @@
       "id": "fhphf43HkBVhRFeRKQpSdHo3YTozGXcxBxYutn9NiEx",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-alice.testnet",
+       "executor_id": "outlive-alice.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -2002,7 +2002,7 @@
     {
      "receipt": {
       "receipt_id": "FMntoUQiVzEgPddCfgKnTcVR6t1zEjiGJHguuXqU52gU",
-      "receiver_id": "outlivelab-alice.testnet",
+      "receiver_id": "outlive-alice.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -2012,7 +2012,7 @@
       "id": "FMntoUQiVzEgPddCfgKnTcVR6t1zEjiGJHguuXqU52gU",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-alice.testnet",
+       "executor_id": "outlive-alice.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -2024,7 +2024,7 @@
   {
    "transaction": {
     "hash": "ATJTUKtNMaAqmTcc1F2QNnGsZASihkarGhJQaBbNgKMa",
-    "signer_id": "outlivel8-seller.testnet",
+    "signer_id": "outlive-seller.testnet",
     "receiver_id": "relay-1102ripe.outlive.testnet"
    },
    "receipts": [
@@ -2032,7 +2032,7 @@
      "receipt": {
       "receipt_id": "2axYzg8cQNxegjWBpnqfXKLcFAd8ECSsku6BGrp8Qffr",
       "receiver_id": "relay-1102ripe.outlive.testnet",
-      "predecessor_id": "outlivel8-seller.testnet"
+      "predecessor_id": "outlive-seller.testnet"
      },
      "execution_outcome": {
       "block_height": 275855008,
@@ -2053,7 +2053,7 @@
     {
      "receipt": {
       "receipt_id": "9yVckP5SdipgxE6mcpQYhKs9tTqnCuukYaWn2DjRQjpp",
-      "receiver_id": "outlivel8-seller.testnet",
+      "receiver_id": "outlive-seller.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -2063,7 +2063,7 @@
       "id": "9yVckP5SdipgxE6mcpQYhKs9tTqnCuukYaWn2DjRQjpp",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivel8-seller.testnet",
+       "executor_id": "outlive-seller.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -2093,7 +2093,7 @@
     {
      "receipt": {
       "receipt_id": "AyLWuurStyWzTRv87vzw6brnQ7whfbQ4gE6PPa84cyy",
-      "receiver_id": "outlivel8-seller.testnet",
+      "receiver_id": "outlive-seller.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -2103,7 +2103,7 @@
       "id": "AyLWuurStyWzTRv87vzw6brnQ7whfbQ4gE6PPa84cyy",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivel8-seller.testnet",
+       "executor_id": "outlive-seller.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -2135,7 +2135,7 @@
     {
      "receipt": {
       "receipt_id": "4yFLXyHG8EuN8Mp529jbfcNsEja2tg3Rp6vGQMBuC1R3",
-      "receiver_id": "outlivel8-seller.testnet",
+      "receiver_id": "outlive-seller.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -2145,7 +2145,7 @@
       "id": "4yFLXyHG8EuN8Mp529jbfcNsEja2tg3Rp6vGQMBuC1R3",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivel8-seller.testnet",
+       "executor_id": "outlive-seller.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -2157,7 +2157,7 @@
   {
    "transaction": {
     "hash": "Dok8TTpbjAQFKtx5cLRDC4XmpKEFsGcFQDaRdWoU7cS9",
-    "signer_id": "outlivelab-bob.testnet",
+    "signer_id": "outlive-bob.testnet",
     "receiver_id": "tusdc.outlive.testnet"
    },
    "receipts": [
@@ -2165,7 +2165,7 @@
      "receipt": {
       "receipt_id": "29o5EWmjT71oCBTSoAW2WM93qj3CjJJMPY2EcxuGMguG",
       "receiver_id": "tusdc.outlive.testnet",
-      "predecessor_id": "outlivelab-bob.testnet"
+      "predecessor_id": "outlive-bob.testnet"
      },
      "execution_outcome": {
       "block_height": 275855163,
@@ -2174,7 +2174,7 @@
       "id": "29o5EWmjT71oCBTSoAW2WM93qj3CjJJMPY2EcxuGMguG",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"nep141\",\"version\":\"1.0.0\",\"event\":\"ft_transfer\",\"data\":[{\"old_owner_id\":\"outlivelab-bob.testnet\",\"new_owner_id\":\"relay-1102ripe.outlive.testnet\",\"amount\":\"5000000\"}]}"
+        "EVENT_JSON:{\"standard\":\"nep141\",\"version\":\"1.0.0\",\"event\":\"ft_transfer\",\"data\":[{\"old_owner_id\":\"outlive-bob.testnet\",\"new_owner_id\":\"relay-1102ripe.outlive.testnet\",\"amount\":\"5000000\"}]}"
        ],
        "executor_id": "tusdc.outlive.testnet",
        "status": {
@@ -2186,7 +2186,7 @@
     {
      "receipt": {
       "receipt_id": "5kNM6k1PHhCUde5an3kLQfZULtmZsBdXV7C3naionF3d",
-      "receiver_id": "outlivelab-bob.testnet",
+      "receiver_id": "outlive-bob.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -2196,7 +2196,7 @@
       "id": "5kNM6k1PHhCUde5an3kLQfZULtmZsBdXV7C3naionF3d",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-bob.testnet",
+       "executor_id": "outlive-bob.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -2216,7 +2216,7 @@
       "id": "DC64ECvgdz9AhxgBqLDsftRPTc5fEwGZCuetTdKk8Ub5",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_deposit\",\"data\":[{\"customer\":\"outlivelab-bob.testnet\",\"sender\":\"outlivelab-bob.testnet\",\"amount\":\"5000000\",\"balance\":\"5000000\",\"refund_cancelled\":false}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_deposit\",\"data\":[{\"customer\":\"outlive-bob.testnet\",\"sender\":\"outlive-bob.testnet\",\"amount\":\"5000000\",\"balance\":\"5000000\",\"refund_cancelled\":false}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -2228,7 +2228,7 @@
     {
      "receipt": {
       "receipt_id": "2ZspUJmR6g4oQJvbeNewde89rzXwcEKs4N7X6zTbzgGo",
-      "receiver_id": "outlivelab-bob.testnet",
+      "receiver_id": "outlive-bob.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -2238,7 +2238,7 @@
       "id": "2ZspUJmR6g4oQJvbeNewde89rzXwcEKs4N7X6zTbzgGo",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-bob.testnet",
+       "executor_id": "outlive-bob.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -2268,7 +2268,7 @@
     {
      "receipt": {
       "receipt_id": "2umWEQkwUs5L9da9HSbpaUuobt2EEiiQxFkXMqpH86z9",
-      "receiver_id": "outlivelab-bob.testnet",
+      "receiver_id": "outlive-bob.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -2278,7 +2278,7 @@
       "id": "2umWEQkwUs5L9da9HSbpaUuobt2EEiiQxFkXMqpH86z9",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivelab-bob.testnet",
+       "executor_id": "outlive-bob.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -2307,7 +2307,7 @@
       "id": "BR1tBfVdSPzZpjnmGykLVLZ8FeCorfjhVpKVufkEcjD8",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"30000\",\"items\":[{\"customer\":\"outlivelab-alice.testnet\",\"seq\":1,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"557fb8bcbea3d19905b5a384603ef97be28bc058915b7e98c030c7c8e931e106\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":2,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"f10f6b0023f42b88501038688846146933b2a2ba7a101205f6252eebf8b95222\"},{\"customer\":\"outlivelab-alice.testnet\",\"seq\":3,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"b44edbffd85cc8a23aeb61a81b9e0026813e4d730a34a352f2f0fbbf0ccc4df7\"}]}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_charge\",\"data\":[{\"price\":\"10000\",\"earned\":\"30000\",\"items\":[{\"customer\":\"outlive-alice.testnet\",\"seq\":1,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"557fb8bcbea3d19905b5a384603ef97be28bc058915b7e98c030c7c8e931e106\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":2,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"f10f6b0023f42b88501038688846146933b2a2ba7a101205f6252eebf8b95222\"},{\"customer\":\"outlive-alice.testnet\",\"seq\":3,\"units\":1,\"cost\":\"10000\",\"status\":\"charged\",\"receipts_root\":\"b44edbffd85cc8a23aeb61a81b9e0026813e4d730a34a352f2f0fbbf0ccc4df7\"}]}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -2341,7 +2341,7 @@
   {
    "transaction": {
     "hash": "HJtBcxvVvdPRLamQK1tYEqBsWjMcK8FFTvzMjnm6xGfU",
-    "signer_id": "outlivel8-seller.testnet",
+    "signer_id": "outlive-seller.testnet",
     "receiver_id": "outlive.testnet"
    },
    "receipts": [
@@ -2349,7 +2349,7 @@
      "receipt": {
       "receipt_id": "DM8kDKm2SMt7dPmwproaK6DYAEvR5iT6bXsqKyXN5qqz",
       "receiver_id": "outlive.testnet",
-      "predecessor_id": "outlivel8-seller.testnet"
+      "predecessor_id": "outlive-seller.testnet"
      },
      "execution_outcome": {
       "block_height": 275854985,
@@ -2368,7 +2368,7 @@
     {
      "receipt": {
       "receipt_id": "7NrRR8XZDaWmRrv27pP8MraXDW6ratXhuUr5Dq8yQcWJ",
-      "receiver_id": "outlivel8-seller.testnet",
+      "receiver_id": "outlive-seller.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -2378,7 +2378,7 @@
       "id": "7NrRR8XZDaWmRrv27pP8MraXDW6ratXhuUr5Dq8yQcWJ",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivel8-seller.testnet",
+       "executor_id": "outlive-seller.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -2398,7 +2398,7 @@
       "id": "DvnioJCgcpt95kHtDXBuD7L73QQYFmaxWYYkWf9RJDJS",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_init\",\"data\":[{\"outlive_id\":\"outlive.testnet\",\"token_id\":\"relay-1102ripe\",\"owner_id\":\"outlivel8-seller.testnet\",\"owner_epoch\":1,\"payment_token\":\"tusdc.outlive.testnet\",\"price_per_call\":\"10000\",\"refund_delay_sec\":600}]}"
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"vault_init\",\"data\":[{\"outlive_id\":\"outlive.testnet\",\"token_id\":\"relay-1102ripe\",\"owner_id\":\"outlive-seller.testnet\",\"owner_epoch\":1,\"payment_token\":\"tusdc.outlive.testnet\",\"price_per_call\":\"10000\",\"refund_delay_sec\":600}]}"
        ],
        "executor_id": "relay-1102ripe.outlive.testnet",
        "status": {
@@ -2410,7 +2410,7 @@
     {
      "receipt": {
       "receipt_id": "Bg8SX6c8W44yK6jZaTzE55aJx93VkLnc3qyJrWCFjtG6",
-      "receiver_id": "outlivel8-seller.testnet",
+      "receiver_id": "outlive-seller.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -2420,7 +2420,7 @@
       "id": "Bg8SX6c8W44yK6jZaTzE55aJx93VkLnc3qyJrWCFjtG6",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivel8-seller.testnet",
+       "executor_id": "outlive-seller.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -2440,8 +2440,8 @@
       "id": "JAZotAN34Aag16KQ3Z9f8DaMBDUEKYqJc7XN4mCDMVve",
       "outcome": {
        "logs": [
-        "EVENT_JSON:{\"standard\":\"nep171\",\"version\":\"1.0.0\",\"event\":\"nft_mint\",\"data\":[{\"owner_id\":\"outlivel8-seller.testnet\",\"token_ids\":[\"relay-1102ripe\"]}]}",
-        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"outlive_vault_created\",\"data\":[{\"token_id\":\"relay-1102ripe\",\"vault_id\":\"relay-1102ripe.outlive.testnet\",\"owner_id\":\"outlivel8-seller.testnet\",\"owner_epoch\":1}]}"
+        "EVENT_JSON:{\"standard\":\"nep171\",\"version\":\"1.0.0\",\"event\":\"nft_mint\",\"data\":[{\"owner_id\":\"outlive-seller.testnet\",\"token_ids\":[\"relay-1102ripe\"]}]}",
+        "EVENT_JSON:{\"standard\":\"outlive\",\"version\":\"1.0.0\",\"event\":\"outlive_vault_created\",\"data\":[{\"token_id\":\"relay-1102ripe\",\"vault_id\":\"relay-1102ripe.outlive.testnet\",\"owner_id\":\"outlive-seller.testnet\",\"owner_epoch\":1}]}"
        ],
        "executor_id": "outlive.testnet",
        "status": {
@@ -2453,7 +2453,7 @@
     {
      "receipt": {
       "receipt_id": "EEFoZJfLYprRoMnAdtKnTyBaPqjPUPs7HLq6yLuzgGqp",
-      "receiver_id": "outlivel8-seller.testnet",
+      "receiver_id": "outlive-seller.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -2463,7 +2463,7 @@
       "id": "EEFoZJfLYprRoMnAdtKnTyBaPqjPUPs7HLq6yLuzgGqp",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivel8-seller.testnet",
+       "executor_id": "outlive-seller.testnet",
        "status": {
         "SuccessValue": ""
        }
@@ -2493,7 +2493,7 @@
     {
      "receipt": {
       "receipt_id": "3JHPu5NAFAYf2WVUP4BVrZXsdgf4Mmp3kAVVAVGC1zap",
-      "receiver_id": "outlivel8-seller.testnet",
+      "receiver_id": "outlive-seller.testnet",
       "predecessor_id": "system"
      },
      "execution_outcome": {
@@ -2503,7 +2503,7 @@
       "id": "3JHPu5NAFAYf2WVUP4BVrZXsdgf4Mmp3kAVVAVGC1zap",
       "outcome": {
        "logs": [],
-       "executor_id": "outlivel8-seller.testnet",
+       "executor_id": "outlive-seller.testnet",
        "status": {
         "SuccessValue": ""
        }

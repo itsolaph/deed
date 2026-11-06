@@ -14,6 +14,10 @@ payback on chain-visible costs, and buys. Testnet only. Built for the NEAR hacka
 
 ## Try it
 
+Hosted demo: <https://itsolaph.github.io/deed/> (static page, reads testnet directly, no backend of
+ours in the path). Three-minute demo with the recorded runs:
+[docs/media/outlive-demo.mp4](docs/media/outlive-demo.mp4).
+
 | Do | See | Time |
 |---|---|---|
 | `npm ci && bash scripts/check.sh` | Contract wasm builds, 41 contract unit tests, 19 sandbox integration tests (near-workspaces), 57 Node tests (sdk 28, worker 20, agents 5, web 4) and the web build pass; ends with `== all checks passed`. `SKIP_SANDBOX=1` skips the sandbox tests (they download `neard` once). | 3 to 6 min |

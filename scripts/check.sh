@@ -32,7 +32,7 @@ if [[ ! -d node_modules ]]; then
   npm ci --no-audit --no-fund
 fi
 
-for dir in sdk worker agents; do
+for dir in sdk worker agents web; do
   if [[ -f "$dir/package.json" ]]; then
     step "node tests: $dir"
     (cd "$dir" && npm test)

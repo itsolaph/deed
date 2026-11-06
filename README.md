@@ -1,10 +1,12 @@
-<p align="center"><img src="docs/card.svg" width="820" height="220" alt="Deed: an NFT that owns a running paid API on NEAR"></p>
+<p align="center"><img src="docs/card.svg" width="820" height="220" alt="Outlive: an NFT that owns a running paid API on NEAR"></p>
 
-# Deed
+# Outlive
 
-Deed is an NFT that owns a transferable service instance of a running paid API: the vault that
+Outlive is an NFT that owns a transferable service instance of a running paid API: the vault that
 holds its treasury, price list, customer ledger and worker key is a NEAR sub-account the token
 controls. Selling the token moves that instance to the buyer while customers keep calling it.
+One token is one deed to one running service; the contract that issues deeds is called the deed
+contract, and that word is used throughout the code and the docs.
 The demo service is a durable webhook relay that agents pay per delivery; the demo buyer is
 itself an agent that attributes the vault's on-chain revenue to independent customers, computes
 payback on chain-visible costs, and buys. Testnet only. Built for the NEAR hackathon (November
@@ -14,10 +16,11 @@ payback on chain-visible costs, and buys. Testnet only. Built for the NEAR hacka
 
 | Do | See | Time |
 |---|---|---|
-| `npm ci && bash scripts/check.sh` | Contract wasm builds, 41 contract unit tests, 19 sandbox integration tests (near-workspaces), 52 Node tests (sdk 28, worker 19, agents 5) and the web build pass; ends with `== all checks passed`. `SKIP_SANDBOX=1` skips the sandbox tests (they download `neard` once). | 3 to 6 min |
+| `npm ci && bash scripts/check.sh` | Contract wasm builds, 41 contract unit tests, 19 sandbox integration tests (near-workspaces), 57 Node tests (sdk 28, worker 20, agents 5, web 4) and the web build pass; ends with `== all checks passed`. `SKIP_SANDBOX=1` skips the sandbox tests (they download `neard` once). | 3 to 6 min |
 | `npm run build && node agents/dist/src/buyer.js --account <any testnet account> --dry-run` | Read only. The buyer agent prints its policy (strict by default), then for every listing on `deed2.deedlab.testnet`: each customer with its paid revenue and whether it counts as independent, the payback on chain-visible costs, every check with pass/FAIL and the reason, and its decision. The listings on testnet today are past demo runs; each is skipped with its reasons (too few independent customers, too young, worker stopped). | 15 s |
 | `node examples/customer.mjs --account <you>.testnet`, then `--fund 2` | Become a paying customer of the hosted relay: HTTP 402 with the exact payment call, then mint test tUSDC, prepay, a signed receipt and a signed delivery proof. See [docs/TRY-AS-CUSTOMER.md](docs/TRY-AS-CUSTOMER.md). | 10 min |
 | `npm run dev -w web`, open http://127.0.0.1:7650 | Every deed with live figures and its on-chain certificate. Open one for its earnings history per holder, its customers (our demo traffic agents marked), and for a listing the payback on chain-visible costs with the worked formula. Connect a testnet wallet to buy, list, withdraw, rotate the worker or manage relay credit. `npm run build -w web` writes a static site to `web/dist/`. | 1 min |
+| Open a deed in the web app and connect a testnet wallet that owns it; otherwise stay disconnected or connect another account | The holder console in the deed detail: withdraw revenue, rotate the worker, list/set config and manage customer credit and refunds. Without the holder wallet it shows "Holder console - locked", the owner read live with `nft_token`, and a hint to connect as that account. | 2 min |
 | Open `deployments/testnet.json` | Every recorded testnet run with transaction links: `demo`, `hostileSeller`, `washReject`. | |
 | `bash scripts/demo-testnet.sh` (funded accounts, see below) | The whole story on testnet: worker A and traffic, revenue ticking, listing, the buyer agent (demo policy, printed) buying, the seller's withdraw reverting, worker B taking over, open deliveries delivered, the buyer withdrawing. Prints a link at every step, ends with `Demo passed`, stops every process it started. | 8 to 16 min |
 | `bash scripts/hostile-seller.sh` | The seller kills its worker with SIGKILL after the sale, with jobs in flight. Prints jobs in flight at the kill, delivered by the buyer's worker, refunded, and double charges (0), each with links. | about 20 min (10 are the refund delay) |
@@ -63,6 +66,14 @@ The corrected hostile-seller run and regression tests are the evidence for that 
 | An agent appraises and buys a listed deed under the explicitly relaxed demo policy | agents buyer test; `scripts/demo-testnet.sh` | `relay-1103v2b`: buy [HsaNut7…](https://testnet.nearblocks.io/txns/HsaNut74t6ssVUq9SMe6AgWQPz4JKWt2Jc17PQVTMmFr); 7.48-day payback on chain-visible costs, using project-generated traffic | 1:25–1:50 |
 | Earnings are reconstructed per ownership epoch from NEP-297 events | `sdk/test/history.test.ts` (recorded fixture) | web Earnings history and vault counters | 2:41–2:59 |
 | 1Click integration produces mainnet dry quotes only; no cross-chain payment was executed | agents 1Click test refuses `dry: false` | recorded buyer funding quote; no transaction by design | 1:44–1:48 |
+
+## Track requirements (nfts)
+
+- [x] **NEP-171 contract and the token → sub-account link.** `contracts/deed/src/nft.rs` implements NEP-171 (`nft_transfer`, `nft_transfer_call`, `nft_token`); `contracts/deed/src/mint.rs` derives `vault_id = <token_id>.<deed>` and creates that sub-account in the same mint batch; views in `contracts/deed/src/views.rs`.
+- [x] **Control passes on transfer and the old owner cannot keep access.** `contracts/deed/src/ownership.rs` bumps `owner_epoch` and pushes the new owner to the vault after every transfer/sale; every owner method starts with `assert_owner` against that pushed owner in `contracts/vault/src/owner.rs`, so the old account's withdraw/rotate calls revert. Sandbox tests: `contracts/tests/tests/integration/ownership.rs`, `sale.rs`, `owner_powers.rs`.
+- [x] **Holder-gated page (the new console).** `web/src/gate.ts` (`isHolder`, 4 cases in `web/test/gate.test.ts`); `web/src/main.ts` reads the live owner with `nft_token(token_id)` and renders either the holder actions or the locked card.
+- [x] **Per-NFT history: what it earned, what it paid out, who held it.** `sdk/src/history.ts` builds ownership epochs from the vault's NEP-297 events; `web/src/earnings.ts` reads the index and `web/src/main.ts` renders the ledger. Test: `sdk/test/history.test.ts` (recorded fixture under `sdk/test/fixtures/`).
+- [x] **Transfer-path tests, including a sale with a payout in flight.** `contracts/tests/tests/integration/sale.rs` and `ownership.rs`; `scripts/hostile-seller.sh` sells the deed mid-run, then kills worker A with jobs in flight. Recorded run `hostile-1103v2b` in `deployments/testnet.json` (`hostileSeller`) reports 0 double charges and is summarized in [`docs/DEMO.md`](docs/DEMO.md#hostile-seller).
 
 ## NEAR features used
 

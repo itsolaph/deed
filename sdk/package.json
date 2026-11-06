@@ -2,7 +2,7 @@
   "name": "@deed/sdk",
   "version": "0.1.0",
   "private": true,
-  "description": "Customer client for Deed relays: NEP-413 auth, top-ups, receipts and proofs",
+  "description": "Customer client for Outlive relays: NEP-413 auth, top-ups, receipts and proofs",
   "license": "MIT",
   "type": "module",
   "main": "./dist/src/index.js",

@@ -412,6 +412,14 @@ table.custs-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 
 .feat-hist { justify-self: start; font-size: 13.5px; font-weight: 700; }
 
+/* holder console: the only place holder actions exist, and a locked card otherwise */
+.console { border-top: 2px solid var(--ink); padding-top: 14px; display: grid; gap: 12px; }
+.console-title { margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; }
+.console-owner { margin: 0; font-size: 13.5px; color: var(--ink-2); overflow-wrap: anywhere; }
+.console-sub { margin: 4px 0 0; font-size: 14px; font-weight: 800; }
+.console-locked { border: 2px dashed var(--rule); padding: 14px; display: grid; gap: 6px; max-width: 720px; }
+.console-locked .note { margin: 0; }
+
 /* owner and customer panels */
 details.panel { border-top: 2px solid var(--ink); }
 details.panel summary {

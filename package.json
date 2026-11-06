@@ -16,7 +16,7 @@
   ],
   "scripts": {
     "build": "tsc -b sdk worker agents",
-    "test": "npm test -w sdk -w worker -w agents",
+    "test": "npm test -w sdk -w worker -w agents -w web",
     "deploy:testnet": "node scripts/deploy-testnet.mjs",
     "smoke:testnet": "node scripts/smoke-testnet.mjs",
     "demo:testnet": "node scripts/demo-testnet.mjs"

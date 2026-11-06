@@ -1,6 +1,6 @@
 # Demo
 
-`bash scripts/demo-testnet.sh` runs the whole Deed story on testnet. It takes 8 to 16
+`bash scripts/demo-testnet.sh` runs the whole Outlive story on testnet. It takes 8 to 16
 minutes depending on how fast the public RPC answers (16 in the recorded run), prints an explorer link at every step, writes the links to
 `deployments/testnet.json` (section `demo`) and stops every process it started. Logs of every
 process go to `demo-logs/<run>/` (not committed).

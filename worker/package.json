@@ -2,7 +2,7 @@
   "name": "@deed/worker",
   "version": "0.1.0",
   "private": true,
-  "description": "Deed worker: NEP-413 gateway, durable webhook relay and batched charger for one vault",
+  "description": "Outlive worker: NEP-413 gateway, durable webhook relay and batched charger for one vault",
   "license": "MIT",
   "type": "module",
   "main": "./dist/src/worker.js",

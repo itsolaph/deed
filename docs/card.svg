@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="820" height="220" viewBox="0 0 820 220" role="img" aria-labelledby="title desc">
-  <title id="title">Deed</title>
-  <desc id="desc">Deed: an NFT that owns a running paid API on NEAR. Sell the token and the business moves with it.</desc>
+  <title id="title">Outlive</title>
+  <desc id="desc">Outlive: an NFT that owns a running paid API on NEAR. Sell the token and the business moves with it.</desc>
   <defs>
     <pattern id="guilloche" width="16" height="16" patternUnits="userSpaceOnUse">
       <path d="M0 8 Q4 0 8 8 T16 8" fill="none" stroke="#d8cba9" stroke-width="0.6"/>

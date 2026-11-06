@@ -1,4 +1,4 @@
-// Deed web app: every deed on the deed contract with live numbers from the contract views,
+// Outlive web app: every deed on the deed contract with live numbers from the contract views,
 // its dynamic NFT certificate, and the actions for buyers, owners and customers.
 
 import "./style.css";
@@ -9,6 +9,7 @@ import { DeedViews, VaultViews, type CustomerView, type DeedView, type NftToken,
 import { reconcile, type Epoch } from "../../sdk/src/history.js";
 import { DEED_CONTRACT, EXPLORER, NEAR_PRICE_USD, REFRESH_MS, TX_INDEX } from "./config";
 import { canReadAgain, historyState, onHistory, wantHistory, type HistoryState } from "./earnings";
+import { isHolder } from "./gate";
 import { connect, currentAccount, disconnect, initWallet, onAccount, send, type Call } from "./wallet";
 
 const rpc = new Rpc(TESTNET_RPC_URLS);
@@ -157,6 +158,50 @@ async function pumpCerts(): Promise<void> {
     }
   } finally {
     certBusy = false;
+  }
+}
+
+/** The deed's owner as nft_token reports it. The deed list can lag a transfer, so the holder
+ *  console never trusts `deed.owner_id`; it reads this view when a detail is opened. */
+interface OwnerRead {
+  status: "loading" | "ok" | "error";
+  owner: string | null;
+  error: string | null;
+  readAt: number;
+}
+
+const OWNER_TTL_MS = 60_000;
+const ownerReads = new Map<string, OwnerRead>();
+const ownerWanted: string[] = [];
+let ownerBusy = false;
+
+function wantOwner(tokenId: string, force = false): void {
+  const cur = ownerReads.get(tokenId);
+  if (cur?.status === "loading") return;
+  if (!force && cur && Date.now() - cur.readAt < OWNER_TTL_MS) return;
+  ownerReads.set(tokenId, { status: "loading", owner: cur?.owner ?? null, error: null, readAt: Date.now() });
+  if (!ownerWanted.includes(tokenId)) ownerWanted.push(tokenId);
+  void pumpOwners();
+}
+
+async function pumpOwners(): Promise<void> {
+  if (ownerBusy) return;
+  ownerBusy = true;
+  try {
+    while (ownerWanted.length > 0) {
+      const key = ownerWanted.shift()!;
+      try {
+        const t = await withBackoff(() => rpc.view<NftToken | null>(DEED_CONTRACT, "nft_token", { token_id: key }), 3);
+        ownerReads.set(key, { status: "ok", owner: t?.owner_id ?? null, error: null, readAt: Date.now() });
+      } catch (e) {
+        ownerReads.set(key, { status: "error", owner: null, error: e instanceof Error ? e.message : String(e), readAt: Date.now() });
+      }
+      // The console is part of the row: repaint after the owner read, like a certificate.
+      render();
+      await sleep(400);
+    }
+  } finally {
+    ownerBusy = false;
   }
 }
 
@@ -457,7 +502,8 @@ function salePanel(r: Row, me: string | null, p: PaybackResult | null): HTMLElem
   return box;
 }
 
-function ownerPanel(r: Row): { summary: string; body: HTMLElement } {
+/** Holder-only actions. Rendered inside the holder console, never for anyone else. */
+function ownerActions(r: Row): HTMLElement {
   const v = r.deed.vault_id;
   const locked = r.info.locked;
   const panel = h("div", { class: "panel-body" });
@@ -497,7 +543,7 @@ function ownerPanel(r: Row): { summary: string; body: HTMLElement } {
       (f) => void act("Set config", v, [{ method: "set_config", args: { endpoint: f.endpoint, image_hash: f.image }, gasTgas: 20, depositYocto: ONE_YOCTO }]),
     ),
   );
-  return { summary: "Owner controls", body: panel };
+  return panel;
 }
 
 function customerPanel(r: Row, me: string): { summary: string; body: HTMLElement } {
@@ -543,6 +589,51 @@ function customerPanel(r: Row, me: string): { summary: string; body: HTMLElement
   }
   panel.prepend(h("p", { class: "note" }, `Signed in as ${me}.`));
   return { summary: "Customer credit", body: panel };
+}
+
+/**
+ * The deed detail's operator console. The owner comes from nft_token, not from the cached deed
+ * row, and the actions live only in the holder branch: a locked console contains no form or
+ * button that can call a vault owner method.
+ */
+function consoleSection(r: Row, me: string | null, customer: { summary: string; body: HTMLElement } | null): HTMLElement {
+  const key = r.deed.token_id;
+  const read = ownerReads.get(key) ?? null;
+  const owner = read?.status === "ok" ? read.owner : null;
+  const box = h("section", { class: "console", "data-console": key, "aria-label": "Console" });
+
+  if (owner && isHolder(owner, me)) {
+    box.append(
+      h("h2", { class: "console-title" }, "Console"),
+      h("p", { class: "console-owner" }, "Holder console. Current owner: ", link(`address/${owner}`, owner), ". Signed in as ", me ?? "", "."),
+      ownerActions(r),
+    );
+    if (customer) box.append(h("h3", { class: "console-sub" }, "Customer credit & refunds"), customer.body);
+    return box;
+  }
+
+  const current: Child =
+    read?.status === "ok"
+      ? owner
+        ? link(`address/${owner}`, owner)
+        : h("span", { class: "muted" }, "none")
+      : read?.status === "error"
+        ? h("span", { class: "muted" }, `not read (${read.error ?? "RPC error"})`)
+        : h("span", { class: "muted" }, "reading from the chain…");
+  box.append(
+    h(
+      "div",
+      { class: "console-locked" },
+      h("h2", { class: "console-title" }, "Holder console - locked"),
+      h("p", { class: "console-owner" }, "Current owner: ", current),
+      h(
+        "p",
+        { class: "note" },
+        owner ? `Connect as ${owner} to withdraw revenue, rotate the worker or manage customer credit and refunds.` : "Connect a testnet wallet that holds this deed to use the console.",
+      ),
+    ),
+  );
+  return box;
 }
 
 /** 30 daily bars from the vault's day buckets: quiet days are real zeros (a 2px tick), active
@@ -953,7 +1044,8 @@ const openKeys = new Set<string>();
 
 function rowSig(r: Row, me: string | null): string {
   const s = seen.get(r.deed.token_id);
-  return JSON.stringify([r.deed, r.info, r.stats, r.me, me, token.symbol, !!r.token?.metadata?.media, s?.callAfter ?? null]);
+  const o = ownerReads.get(r.deed.token_id);
+  return JSON.stringify([r.deed, r.info, r.stats, r.me, me, token.symbol, !!r.token?.metadata?.media, s?.callAfter ?? null, o?.status ?? null, o?.owner ?? null]);
 }
 
 function entry(r: Row, rank: number, me: string | null): HTMLElement {
@@ -1011,9 +1103,12 @@ function entry(r: Row, rank: number, me: string | null): HTMLElement {
     figure("minted", h("span", { class: "num" }, new Date(Number(deed.minted_at_ms)).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }))),
     figure("vault", link(`address/${deed.vault_id}`, short(deed.vault_id, 8))),
   );
-  const panels = [me && me === info.owner_id ? ownerPanel(r) : null, me ? customerPanel(r, me) : null].filter(
-    (x): x is { summary: string; body: HTMLElement } => x !== null,
-  );
+  const ownerRead = ownerReads.get(key);
+  const holder = !!ownerRead && ownerRead.status === "ok" && isHolder(ownerRead.owner, me);
+  const customer = me ? customerPanel(r, me) : null;
+  // A holder manages their own customer credit in the console; everyone else keeps the
+  // customer panel outside it, so deposits and refunds stay available to non-holders.
+  const panels = [customer && !holder ? customer : null].filter((x): x is { summary: string; body: HTMLElement } => x !== null);
   const detail = h(
     "div",
     { class: "detail", id: `detail-${key}`, role: "region", "aria-labelledby": `row-${key}` },
@@ -1030,11 +1125,13 @@ function entry(r: Row, rank: number, me: string | null): HTMLElement {
       ),
       h("figure", { class: "detail-cert" }, certImage(r, "cert")),
     ),
+    consoleSection(r, me, holder ? customer : null),
     historySection(r),
     salePanel(r, me, p),
     ...panels.map((x) => h("details", { class: "panel" }, h("summary", {}, x.summary), x.body)),
   );
   if (!openKeys.has(key)) detail.hidden = true;
+  if (openKeys.has(key)) wantOwner(key);
 
   const art = h("article", { class: l ? "entry listed" : "entry", "data-token": key }, rowBtn, detail);
   rowBtn.addEventListener("click", () => {
@@ -1045,6 +1142,7 @@ function entry(r: Row, rank: number, me: string | null): HTMLElement {
     detail.hidden = !open;
     art.classList.toggle("open", open);
     if (open) {
+      wantOwner(key, true);
       wantCert(key);
       wantHistory(deed.vault_id);
       if (!reduceMotion()) {
@@ -1068,6 +1166,9 @@ function render(animate = true): void {
   const me = currentAccount();
   const tab = activeTab();
   const visible = tab === "sale" ? rows.filter((r) => r.deed.listing) : rows;
+  // Open consoles re-read nft_token when their cached owner is stale (they are the only place
+  // holder actions exist); a transfer therefore cannot leave the old owner's buttons on screen.
+  for (const r of visible) if (openKeys.has(r.deed.token_id)) wantOwner(r.deed.token_id);
   const expected = tab === "sale" ? counts().sale : counts().all;
   renderNote();
   if (visible.length === 0) {
@@ -1243,6 +1344,10 @@ async function main(): Promise<void> {
   renderWallet(null);
   onAccount((a) => {
     renderWallet(a);
+    // Relock (or unlock) open consoles at once and re-read the owner for the new account;
+    // the refresh below updates the numbers.
+    for (const key of openKeys) wantOwner(key, true);
+    render();
     void refresh(true);
   });
   addEventListener("hashchange", () => {

@@ -1,6 +1,6 @@
 # Design
 
-Deed turns a running paid API into an NFT. One token is one transferable service instance: the
+Outlive turns a running paid API into an NFT. One token is one transferable service instance: the
 vault with its treasury, price list, customer ledger and worker key. Whoever holds the token
 can withdraw its revenue and choose which server does the work. Selling the token moves that
 instance to the buyer while customers keep calling it. Servers, domains and code stay off chain;

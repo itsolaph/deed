@@ -378,7 +378,7 @@ table.ledger { width: 100%; border-collapse: collapse; font-size: 14px; }
 .ledger .l-holder:has(.you) a { max-width: calc(100% - 40px); }
 .ledger .l-held { min-width: 150px; }
 .ledger .sub { display: block; margin-top: 1px; font-size: 12px; font-weight: 500; color: var(--ink-3); white-space: normal; overflow-wrap: anywhere; }
-.ledger .l-num .sub { max-width: 170px; margin-left: auto; }
+.ledger .l-num .sub { max-width: 210px; margin-left: auto; }
 .ledger .muted { font-weight: 500; }
 .ep-n { display: grid; place-items: center; width: 30px; height: 30px; background: var(--ink); color: #fff; font-weight: 900; font-size: 15px; line-height: 1; }
 .ep.now .ep-n { background: var(--signal); box-shadow: 2px 2px 0 var(--ink); }

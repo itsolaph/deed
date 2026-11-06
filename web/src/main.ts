@@ -705,8 +705,8 @@ function epochRow(ep: Epoch, r: Row, me: string | null): HTMLTableRowElement {
             h("span", { class: "sub" }, `held ${span(ep.toMs! - ep.fromMs)}`),
           ];
   let sold: Child[];
-  if (ep.ended?.by === "sale") sold = [`${amount(ep.ended.price)}`, h("span", { class: "sub" }, `to ${ep.ended.buyer}`)];
-  else if (ep.ended?.by === "transfer") sold = [h("span", { class: "muted" }, "no sale"), h("span", { class: "sub" }, `transferred to ${ep.ended.to}`)];
+  if (ep.ended?.by === "sale") sold = [`${amount(ep.ended.price)}`, h("span", { class: "sub" }, "sale")];
+  else if (ep.ended?.by === "transfer") sold = [h("span", { class: "muted" }, "no sale"), h("span", { class: "sub" }, "transfer")];
   else if (r.outlive.listing) sold = [h("span", { class: "muted" }, `listed at ${amount(r.outlive.listing.price)}`)];
   else sold = [h("span", { class: "muted" }, "still held")];
 

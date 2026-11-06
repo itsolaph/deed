@@ -33,6 +33,8 @@ if [[ ! -d node_modules ]]; then
 fi
 
 step "deployment evidence tests"
+# The repository-level scripts import the built workspaces, so build them first.
+npm run build
 node --test scripts/test/*.test.mjs
 
 for dir in sdk worker agents web; do

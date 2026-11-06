@@ -47,6 +47,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Build node workspaces
+        run: npm run build
       - name: Script syntax
         run: for f in scripts/*.mjs scripts/lib/*.mjs; do node --check "$f"; done
       - name: Deployment evidence tests

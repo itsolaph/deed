@@ -27,69 +27,82 @@ Its customers cannot.
 An agent marketplace needs traffic, and a repo ships none.
 
 8
-00:00:19,665 --> 00:00:22,687
-So we sell the business, not the build.
+00:00:19,665 --> 00:00:22,321
+Picture a vending machine on a good corner.
 
 9
-00:00:22,717 --> 00:00:27,176
-Every token is an NFT that owns one running paid API.
+00:00:22,351 --> 00:00:27,620
+You can copy the machine. You cannot copy the corner, or the people who walk past
+it.
 
 10
-00:00:27,206 --> 00:00:30,071
-Hold the token, and the revenue is yours.
+00:00:27,650 --> 00:00:31,586
+We sell the machine, the corner and the till, as one token.
 
 11
-00:00:30,341 --> 00:00:33,519
-Live on testnet, read straight from the contract.
+00:00:31,856 --> 00:00:34,878
+So we sell the business, not the build.
 
 12
-00:00:33,549 --> 00:00:36,728
-Nine tokens, every figure verifiable.
+00:00:34,908 --> 00:00:39,366
+Every token is an NFT that owns one running paid API.
 
 13
-00:00:36,758 --> 00:00:41,869
-Open one: owner, worker key, vault, gas, earnings.
+00:00:39,396 --> 00:00:42,261
+Hold the token, and the revenue is yours.
 
 14
-00:00:42,139 --> 00:00:44,587
-The sale is one transaction.
+00:00:42,531 --> 00:00:45,710
+Live on testnet, read straight from the contract.
 
 15
-00:00:44,617 --> 00:00:47,664
-Vault, key and customers move together.
+00:00:45,740 --> 00:00:48,918
+Nine tokens, every figure verifiable.
 
 16
-00:00:47,694 --> 00:00:51,160
-Forty of forty obligations. None dropped.
+00:00:48,948 --> 00:00:54,060
+Open one: owner, worker key, vault, gas, earnings.
 
 17
-00:00:51,450 --> 00:00:53,584
-We attacked our own protocol.
+00:00:54,330 --> 00:00:56,777
+The sale is one transaction.
 
 18
-00:00:53,614 --> 00:00:56,349
-Six attacks. Zero succeeded.
+00:00:56,807 --> 00:00:59,855
+Vault, key and customers move together.
 
 19
-00:00:56,379 --> 00:01:00,680
-Our own customers faking demand? The appraisal says skip.
+00:00:59,885 --> 00:01:03,351
+Forty of forty obligations. None dropped.
 
 20
-00:01:00,970 --> 00:01:07,597
-The run: sixty-six paid calls, zero point six six revenue, zero point five four net.
+00:01:03,641 --> 00:01:05,775
+We attacked our own protocol.
 
 21
-00:01:07,627 --> 00:01:10,492
-Four point four days to earn back the price.
+00:01:05,805 --> 00:01:08,539
+Six attacks. Zero succeeded.
 
 22
-00:01:10,522 --> 00:01:14,746
-The strict policy still says no. The numbers are the numbers.
+00:01:08,569 --> 00:01:12,871
+Our own customers faking demand? The appraisal says skip.
 
 23
-00:01:15,116 --> 00:01:16,204
-Outlive.
+00:01:13,161 --> 00:01:19,788
+The run: sixty-six paid calls, zero point six six revenue, zero point five four net.
 
 24
-00:01:16,234 --> 00:01:19,100
+00:01:19,818 --> 00:01:22,683
+Four point four days to earn back the price.
+
+25
+00:01:22,713 --> 00:01:26,936
+The strict policy still says no. The numbers are the numbers.
+
+26
+00:01:27,306 --> 00:01:28,395
+Outlive.
+
+27
+00:01:28,425 --> 00:01:31,290
 A business that outlives the person who started it.

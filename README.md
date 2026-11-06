@@ -12,10 +12,16 @@ itself an agent that attributes the vault's on-chain revenue to independent cust
 payback on chain-visible costs, and buys. Testnet only. Built for the NEAR hackathon (November
 2026), tracks `nfts` and `business`.
 
+**In the real world.** Picture a vending machine on a good corner. You can copy the machine in an
+afternoon; you cannot copy the corner, the four years of people walking past it, or the till it
+fills. Software has no resale value for exactly that reason: the code is the machine and the
+customers are the corner, so a buyer can get one but never the other. Outlive sells the corner with
+the machine — one token, one running service, its customers and its till.
+
 ## Try it
 
 Hosted demo: <https://itsolaph.github.io/outlive/> (static page, reads testnet directly, no backend of
-ours in the path). Eighty-two-second film with the recorded runs, cut 4:5 so it reads on a phone and on a desktop, subtitled:
+ours in the path). Ninety-four-second film with the recorded runs, cut 4:5 so it reads on a phone and on a desktop, subtitled:
 [docs/media/outlive-demo.mp4](docs/media/outlive-demo.mp4) ·
 [poster](docs/media/outlive-poster.jpg) ·
 [subtitles](docs/media/outlive-demo.srt).
@@ -61,16 +67,16 @@ The corrected hostile-seller run and regression tests are the evidence for that 
 
 | Claim | Test or script | Testnet transaction or log | Video |
 |---|---|---|---|
-| Minting creates the vault sub-account with no full-access key | sandbox `mint_creates_vault_without_full_access_key` | v2 mint [FPWUh1g…](https://testnet.nearblocks.io/txns/FPWUh1geckt4Bg3AsQLf4AyBAbLD2KsgbK1JZoxHa4Ud) | 0:51–1:01 (refused on camera) |
-| The worker key charges within each customer balance and cap; repeated on-chain seq is rejected | sandbox `only_the_worker_key_can_charge`, `seq_caps_and_balance_rules` | v2 charge [FSrfBgW…](https://testnet.nearblocks.io/txns/FSrfBgWKtDSnEqAGN4fL6LxZEKpGrCudjB1ohe3aPJC2) | 0:30–0:42 |
-| Six specified unauthorized actions are rejected on testnet | `scripts/theft-proof.mjs` | stranger withdraw [3ZARmS…](https://testnet.nearblocks.io/txns/3ZARmSniQehNWMReyEADnUvJtyDZASn4VpkU1qCCdD9f); other rejected requests may leave no transaction | 0:51–1:01 |
-| Listing locks the vault; a sale moves token ownership and revenue rights; the former owner cannot withdraw | sandbox listing and sale tests | v2 list [F5M1FMc…](https://testnet.nearblocks.io/txns/F5M1FMcQWV9F5iKr7xB3YKCnGmD9VAcvbMBuJKjWZCHh), buy [HsaNut7…](https://testnet.nearblocks.io/txns/HsaNut74t6ssVUq9SMe6AgWQPz4JKWt2Jc17PQVTMmFr), rejected withdraw [Dki6iHn…](https://testnet.nearblocks.io/txns/Dki6iHnU27fsRKJbANsAYqhByUjczWJaUocshxafDAwc) | 0:42–0:51 |
+| Minting creates the vault sub-account with no full-access key | sandbox `mint_creates_vault_without_full_access_key` | v2 mint [FPWUh1g…](https://testnet.nearblocks.io/txns/FPWUh1geckt4Bg3AsQLf4AyBAbLD2KsgbK1JZoxHa4Ud) | 1:03–1:13 (refused on camera) |
+| The worker key charges within each customer balance and cap; repeated on-chain seq is rejected | sandbox `only_the_worker_key_can_charge`, `seq_caps_and_balance_rules` | v2 charge [FSrfBgW…](https://testnet.nearblocks.io/txns/FSrfBgWKtDSnEqAGN4fL6LxZEKpGrCudjB1ohe3aPJC2) | 0:42–0:54 |
+| Six specified unauthorized actions are rejected on testnet | `scripts/theft-proof.mjs` | stranger withdraw [3ZARmS…](https://testnet.nearblocks.io/txns/3ZARmSniQehNWMReyEADnUvJtyDZASn4VpkU1qCCdD9f); other rejected requests may leave no transaction | 1:03–1:13 |
+| Listing locks the vault; a sale moves token ownership and revenue rights; the former owner cannot withdraw | sandbox listing and sale tests | v2 list [F5M1FMc…](https://testnet.nearblocks.io/txns/F5M1FMcQWV9F5iKr7xB3YKCnGmD9VAcvbMBuJKjWZCHh), buy [HsaNut7…](https://testnet.nearblocks.io/txns/HsaNut74t6ssVUq9SMe6AgWQPz4JKWt2Jc17PQVTMmFr), rejected withdraw [Dki6iHn…](https://testnet.nearblocks.io/txns/Dki6iHnU27fsRKJbANsAYqhByUjczWJaUocshxafDAwc) | 0:54–1:03 |
 | Unspent customer credit is not owner revenue and remains refundable after the delay | sandbox `withdraw_rules`, refund tests | v2 refund [2frLN1R…](https://testnet.nearblocks.io/txns/2frLN1RDnbAPFggsQRxaVnS1cuVHA3wTRzKo9Bhoi7mg) | not in the film |
-| Unknown customers get HTTP 402; signed requests receive receipts and delivery proofs | worker paid-delivery test | customer deposit after a 402 [GnFZufQ9…](https://testnet.nearblocks.io/txns/GnFZufQ9QMqCnZUEctLfBGcce1BWw3KK17CUmKrY1EuC) | 0:36–0:42 |
-| Rotation moves authorization and hands open obligations to a new worker | worker handover tests | rotation [9J2SNdXc…](https://testnet.nearblocks.io/txns/9J2SNdXcUJUN8oRanqFQTRNaJGjvRXsmnXMAtxVSGZYF); 40/40 obligations handed over in recorded main run | 0:44–0:51 |
+| Unknown customers get HTTP 402; signed requests receive receipts and delivery proofs | worker paid-delivery test | customer deposit after a 402 [GnFZufQ9…](https://testnet.nearblocks.io/txns/GnFZufQ9QMqCnZUEctLfBGcce1BWw3KK17CUmKrY1EuC) | 0:48–0:54 |
+| Rotation moves authorization and hands open obligations to a new worker | worker handover tests | rotation [9J2SNdXc…](https://testnet.nearblocks.io/txns/9J2SNdXcUJUN8oRanqFQTRNaJGjvRXsmnXMAtxVSGZYF); 40/40 obligations handed over in recorded main run | 0:54–1:03 |
 | After a hostile seller kills its worker, receipts can be resumed and unused credit refunded; corrected hostile run reports 0 double charges | worker hostile-seller and concurrent-admission regression tests; `scripts/hostile-seller.sh` | `hostile-11060310`: 10 in flight, 10 deliveries resumed plus 2 new calls, 2 uncharged jobs refunded; refund [9KawW61j…](https://testnet.nearblocks.io/txns/9KawW61jwDQLceAzgthecTfYjR8YeEAQrkhxdc9HdtvH) | not in the film |
-| The buyer excludes demonstrated owner-funded revenue and skips the listing | `sdk/test/appraisal.test.ts`; `scripts/wash-reject.mjs` | `wash-11060325`: seller transfer [GjFQ6oY6…](https://testnet.nearblocks.io/txns/GjFQ6oY6pv2a8AcLwkbVeHhSmVpe8NffsSyBdoYxhGYm); buyer SKIP in `deployments/testnet.json` | 0:57–1:01 |
-| An agent appraises and buys a listed token under the explicitly relaxed demo policy | agents buyer test; `scripts/demo-testnet.sh` | `relay-11060332`: buy [HeTSJDPe…](https://testnet.nearblocks.io/txns/HeTSJDPesRMDm5KK8Br9T4RYheNdSjHbbpok8RNAKQDZ); 4.36-day payback on chain-visible costs, using project-generated traffic | 1:01–1:15 |
+| The buyer excludes demonstrated owner-funded revenue and skips the listing | `sdk/test/appraisal.test.ts`; `scripts/wash-reject.mjs` | `wash-11060325`: seller transfer [GjFQ6oY6…](https://testnet.nearblocks.io/txns/GjFQ6oY6pv2a8AcLwkbVeHhSmVpe8NffsSyBdoYxhGYm); buyer SKIP in `deployments/testnet.json` | 1:09–1:13 |
+| An agent appraises and buys a listed token under the explicitly relaxed demo policy | agents buyer test; `scripts/demo-testnet.sh` | `relay-11060332`: buy [HeTSJDPe…](https://testnet.nearblocks.io/txns/HeTSJDPesRMDm5KK8Br9T4RYheNdSjHbbpok8RNAKQDZ); 4.36-day payback on chain-visible costs, using project-generated traffic | 1:13–1:27 |
 | Earnings are reconstructed per ownership epoch from NEP-297 events | `sdk/test/history.test.ts` (recorded fixture) | web Earnings history and vault counters | not in the film |
 | 1Click integration produces mainnet dry quotes only; no cross-chain payment was executed | agents 1Click test refuses `dry: false` | recorded buyer funding quote; no transaction by design | not in the film |
 

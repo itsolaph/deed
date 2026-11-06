@@ -304,12 +304,23 @@ async function main() {
   const aLog = logText("worker-a");
   const handoff = aLog.match(/hand-off to .*/)?.[0] ?? aLog.match(/no hand-off.*/)?.[0] ?? "(no hand-off line)";
   step("worker A stops by itself after the rotation", { success: aExited, note: handoff });
-  // Open obligations reach B two ways: A's signed hand-off and customers presenting their
-  // receipts after a 410. Whichever comes first takes them over; the other finds them known.
+  // Open obligations reach B two ways: A's signed hand-off carries the work the chain already
+  // charged, and customers presenting their receipts after a 410 recover everything uncharged
+  // (a revoked key may not mint new charges through its successor). Whichever comes first takes
+  // an obligation over; the other finds it known. Nothing may be lost: both paths together must
+  // cover every open obligation, and step 11 proves the final zero-pending.
   const bLines = [...logText("worker-b").matchAll(/(hand-off received from the previous worker|receipts presented by \S+): .*/g)].map((m) => m[0]);
   const handed = handoff.match(/(\d+) of (\d+) obligations taken over/);
-  const takenOver = handed !== null && Number(handed[2]) > 0 && handed[1] === handed[2];
-  step("worker B holds every open obligation of worker A", { success: takenOver, note: bLines.join("; ") || "no lines" });
+  const takenOver = (line) => { const m = line.match(/(\d+) taken over \((\d+) charged as new\)/); return m ? Number(m[1]) : 0; };
+  const chargedAsNew = (line) => { const m = line.match(/(\d+) taken over \((\d+) charged as new\)/); return m ? Number(m[2]) : 0; };
+  const open = handed !== null ? Number(handed[2]) : 0;
+  const fromHandoff = handed !== null ? Number(handed[1]) : 0;
+  const fromCustomers = bLines.filter((l) => l.startsWith("receipts presented")).reduce((n, l) => n + takenOver(l), 0);
+  const heldByB = fromHandoff + fromCustomers;
+  step("worker B holds every open obligation of worker A", {
+    success: heldByB >= open,
+    note: `${heldByB} of ${open} open obligations: hand-off ${handed ? `${handed[1]}/${handed[2]}` : "-"} (settled only, 0 charged as new), ${fromCustomers} via customer presentations (${bLines.filter((l) => l.startsWith("receipts presented")).reduce((n, l) => n + chargedAsNew(l), 0)} charged as new); ${bLines.join("; ") || "no lines"}`,
+  });
   record.handoff = { worker_a: handoff, worker_b: bLines };
   await sleep(5_000);
   fs.rmSync(OUTAGE_FILE, { force: true });

@@ -26,7 +26,7 @@ async fn listing_locks_owner_actions_and_cancel_unlocks() -> Result<()> {
     fails(env.list(&env.seller, "relay", SALE_PRICE).await?, "already listed");
 
     // While listed the seller cannot drain, rotate, reconfigure or reprice the vault.
-    let locked = "locked while the outlive is listed";
+    let locked = "locked while the token is listed";
     fails(env.call_owner(&env.seller, &vault, "withdraw", json!({ "amount": "1" })).await?, locked);
     let new_key = SecretKey::from_random(KeyType::ED25519).public_key().to_string();
     fails(env.call_owner(&env.seller, &vault, "set_worker", json!({ "public_key": new_key })).await?, locked);
@@ -102,7 +102,7 @@ async fn buy_moves_the_business_and_rotation_hands_over_the_worker() -> Result<(
 
     // The seller's withdraw now reverts. Revenue from the next call accrues to the buyer.
     let w = json!({ "amount": PRICE.to_string() });
-    fails(env.call_owner(&env.seller, &vault, "withdraw", w.clone()).await?, "only the outlive owner");
+    fails(env.call_owner(&env.seller, &vault, "withdraw", w.clone()).await?, "only the token owner");
     env.charge_ok(&vault, &old_key, vec![item(alice, 2, 5)]).await?;
     let revenue = u128_of(&env.vault_info(&vault).await?["revenue"]);
     assert_eq!(revenue, 15 * PRICE, "cash that came with the vault plus new revenue");
@@ -113,7 +113,7 @@ async fn buy_moves_the_business_and_rotation_hands_over_the_worker() -> Result<(
 
     // Only the new owner can rotate. Rotation deletes the old key; the new one charges.
     let seller_try = SecretKey::from_random(KeyType::ED25519).public_key().to_string();
-    fails(env.call_owner(&env.seller, &vault, "set_worker", json!({ "public_key": seller_try })).await?, "only the outlive owner");
+    fails(env.call_owner(&env.seller, &vault, "set_worker", json!({ "public_key": seller_try })).await?, "only the token owner");
     let new_key = env.set_worker(&env.buyer, &vault).await?;
     let keys = env.worker.view_access_keys(&vault).await?;
     assert_eq!(keys.len(), 1);

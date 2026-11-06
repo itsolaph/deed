@@ -91,7 +91,7 @@ export interface ListingView {
   listed_at_ms: string;
 }
 
-/** Stats the vault pushes to the outlive (shown in the NFT metadata). */
+/** Stats the vault pushes to the token (shown in the NFT metadata). */
 export interface PushedStats {
   calls_30d: number;
   revenue_30d: string;

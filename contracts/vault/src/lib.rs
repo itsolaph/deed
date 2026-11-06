@@ -72,7 +72,7 @@ pub struct Vault {
     token_id: String,
     owner_id: AccountId,
     owner_epoch: u64,
-    /// Set while the outlive is listed for sale. Blocks withdraw, set_worker, set_config, set_price.
+    /// Set while the token is listed for sale. Blocks withdraw, set_worker, set_config, set_price.
     locked: bool,
     /// Listing id of the newest lock. Lock ids only grow, so a lock or unlock that arrives
     /// late (receipts between two accounts are not formally ordered) is ignored.
@@ -137,7 +137,7 @@ impl Vault {
         let outlive_id = env::predecessor_account_id();
         require!(
             parent_of(current.as_str()) == Some(outlive_id.as_str()),
-            "only the parent outlive account may initialize the vault"
+            "only the parent Outlive account may initialize the vault"
         );
         require!(!token_id.is_empty() && token_id.len() <= MAX_TOKEN_ID_LEN, "bad token_id");
         require!(price_per_call.0 > 0, "price must be positive");
@@ -196,11 +196,11 @@ impl Vault {
     }
 
     pub(crate) fn assert_owner(&self) {
-        require!(env::predecessor_account_id() == self.owner_id, "only the outlive owner");
+        require!(env::predecessor_account_id() == self.owner_id, "only the token owner");
     }
 
     pub(crate) fn assert_unlocked(&self) {
-        require!(!self.locked, "vault is locked while the outlive is listed");
+        require!(!self.locked, "vault is locked while the token is listed");
     }
 
     pub(crate) fn assert_outlive(&self) {

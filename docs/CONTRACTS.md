@@ -4,13 +4,13 @@ Three contracts live in `contracts/`:
 
 | Contract | Testnet account | Role |
 |---|---|---|
-| `outlive` | `outlive.testnet` | NEP-171 registry. Mints one token per business, creates its vault, runs the built-in sale. |
-| `vault` | `<slug>.outlive.testnet` | One per business. Treasury, price list, customer ledger, worker key. |
+| `outlive` | `outlive2.outlive.testnet` | NEP-171 registry. Mints one token per business, creates its vault, runs the built-in sale. |
+| `vault` | `<slug>.outlive2.outlive.testnet` | One per business. Treasury, price list, customer ledger, worker key. |
 | `tusdc` | `tusdc.outlive.testnet` | Testnet-only test token (NEP-141). Has no value. |
 
-`outlive.outlive.testnet` runs the first version, before the self-review fixes in
-[`SECURITY.md`](SECURITY.md). Its records are kept under `superseded` in the deployments file.
-Use `outlive.testnet`.
+`outlive.outlive.testnet` ran the first version, before the self-review fixes in
+[`SECURITY.md`](SECURITY.md). Nothing in this repo points at it any more; every account named
+in `deployments/testnet.json` is under `outlive2.outlive.testnet`.
 
 All amounts are `u128` in the payment token's smallest unit (tUSDC and USDC have 6 decimals)
 and are passed as JSON strings. Arithmetic on balances is checked. Every state change that
@@ -43,10 +43,10 @@ used for display in the certificate.
   `new`. No access key is added. The token (`token_id = slug`) is minted to the caller only in
   the callback after the batch succeeded. If the batch failed, the whole batch reverted and
   the callback returns the full deposit. On success the excess deposit is refunded and the
-  outlive registers the vault on the payment token.
+  The contract registers the vault on the payment token.
 - The vault wasm is embedded in the token at build time (`scripts/build.sh` builds the vault
   first). `vault_code_hash()` returns its sha256 (hex and base58) so anyone can compare it
-  with the code hash of any `<slug>.outlive.testnet` on an explorer.
+  with the code hash of any `<slug>.outlive2.outlive.testnet` on an explorer.
 
 Scale note: NEP-591 global contracts (deploy once, reference by hash) are the way to run many
 vaults. Publishing a global contract burns about 10 NEAR per 100 KB once, so for a handful of
@@ -129,7 +129,7 @@ the stored one is ignored.
 it cannot move tokens, cannot withdraw anything, cannot change or lock a vault and cannot
 change the payment token. There is no admin method at all.
 
-What is not trustless: the token account `outlive.testnet` holds a full-access key, so
+What is not trustless: the token account `outlive2.outlive.testnet` holds a full-access key, so
 whoever holds that key can redeploy the token code on testnet. Redeployed code could push a
 fake owner to every vault (the vault trusts its parent outlive), then withdraw revenue and
 register its own worker key to charge customers within their caps. On mainnet the token account's

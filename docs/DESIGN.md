@@ -47,7 +47,7 @@ accepted delivery and a proof for every attempt, and charges the vault in batche
 Moves trustlessly, enforced by the contracts:
 
 - **Treasury.** Withdrawable revenue in the vault. Only the current token holder can withdraw
-  it. The outlive pushes every ownership change to the vault with an increasing epoch.
+  it. The contract pushes every ownership change to the vault with an increasing epoch.
 - **Price list.** The price per call. Increases need a 24-hour notice.
 - **Customer ledger.** Balances, daily caps, sequence numbers, refund requests. Customer
   credit is never withdrawable by the owner.

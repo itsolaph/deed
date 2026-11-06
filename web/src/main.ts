@@ -52,7 +52,7 @@ const amount = (v: string | bigint, digits = 4) => formatUnits(v, token.decimals
 const near = (v: string | bigint, digits = 4) => formatUnits(v, 24, digits);
 const short = (s: string | null, n = 10) => (s ? (s.length > n * 2 + 1 ? `${s.slice(0, n)}…${s.slice(-6)}` : s) : "none");
 const link = (path: string, text: string) => h("a", { href: `${EXPLORER}/${path}`, target: "_blank", rel: "noopener noreferrer" }, text);
-/** The outlive ID people read on the board: the vault sub-account prefix, e.g. relay-1102fin2. */
+/** The token ID people read on the board: the vault sub-account prefix, e.g. relay-1102fin2. */
 const outliveId = (d: OutliveView) => d.vault_id.split(".")[0] || d.token_id;
 const byCalls = (a: Row, b: Row) => b.stats.calls_30d - a.stats.calls_30d || b.stats.calls_total - a.stats.calls_total;
 
@@ -75,7 +75,7 @@ async function act(label: string, receiver: string, calls: Call[]): Promise<void
 
 // ---------------------------------------------------------------- data
 
-/** How many tokens get full detail (vault views) per load. Every extra outlive costs RPC calls
+/** How many tokens get full detail (vault views) per load. Every extra token costs RPC calls
  *  against rate-limited public endpoints. */
 const DETAIL_LIMIT = 12;
 
@@ -105,7 +105,7 @@ async function fetchRow(outlive: OutliveView, me: string | null): Promise<Row> {
   return { outlive, info, stats, token: certCache.get(outlive.token_id) ?? null, me: mine };
 }
 
-/** What the page saw at each read of a outlive. Paid calls are only known per day on chain, but a
+/** What the page saw at each read of a token. Paid calls are only known per day on chain, but a
  *  rise in calls between two reads proves a paid call landed after the earlier read. */
 interface Seen {
   calls30: number;
@@ -161,7 +161,7 @@ async function pumpCerts(): Promise<void> {
   }
 }
 
-/** The outlive's owner as nft_token reports it. The outlive list can lag a transfer, so the holder
+/** The token's owner as nft_token reports it. The token list can lag a transfer, so the holder
  *  console never trusts `outlive.owner_id`; it reads this view when a detail is opened. */
 interface OwnerRead {
   status: "loading" | "ok" | "error";
@@ -327,7 +327,7 @@ function paybackText(p: PaybackResult | null): string {
   return p.paybackDays === null ? "no payback at current revenue" : `${p.paybackDays.toFixed(1)} days`;
 }
 
-/** The same rule with this outlive's numbers, so anyone can redo the division. */
+/** The same rule with this token's numbers, so anyone can redo the division. */
 function paybackMath(r: Row, p: PaybackResult): string {
   const l = r.outlive.listing!;
   const price = toUnits(BigInt(l.price), token.decimals);
@@ -475,7 +475,7 @@ function buyButton(r: Row, me: string | null): HTMLElement | null {
   const l = r.outlive.listing;
   if (!l) return null;
   if (me && me === l.seller) return null;
-  const b = button(`Buy this outlive, ${amount(l.price)} ${token.symbol}`, () => buy(r), "primary buy");
+  const b = button(`Buy this token, ${amount(l.price)} ${token.symbol}`, () => buy(r), "primary buy");
   if (!l.active) {
     b.disabled = true;
     b.textContent = "Listing activating";
@@ -629,7 +629,7 @@ function consoleSection(r: Row, me: string | null, customer: { summary: string; 
       h(
         "p",
         { class: "note" },
-        owner ? `Connect as ${owner} to withdraw revenue, rotate the worker or manage customer credit and refunds.` : "Connect a testnet wallet that holds this outlive to use the console.",
+        owner ? `Connect as ${owner} to withdraw revenue, rotate the worker or manage customer credit and refunds.` : "Connect a testnet wallet that holds this token to use the console.",
       ),
     ),
   );
@@ -1285,7 +1285,7 @@ function renderHero(): void {
     openHistory(r.outlive.token_id);
   });
   const parts: (HTMLElement | null)[] = [
-    h("h2", { class: "feat-h" }, forSale ? "Featured listing" : "Most active outlive"),
+    h("h2", { class: "feat-h" }, forSale ? "Featured listing" : "Most active token"),
     certImage(r, "feat-cert"),
     h("p", { class: "feat-id" }, h("strong", {}, id), ` ${r.outlive.title}`),
     figs,

@@ -39,7 +39,7 @@ before the fix.
 - **The contract account key.** On testnet the token account keeps a full-access key so the code
   can be redeployed. Whoever holds it can replace the token code, push a fake owner to every
   vault, withdraw revenue and register a worker key that charges customers within their caps.
-  Vaults cannot be upgraded, but they trust their parent outlive. For mainnet the token account's
+  Vaults cannot be upgraded, but they trust their parent contract. For mainnet the token account's
   full-access keys must be removed, or upgrades must go through a DAO with a delay.
 - **The owner runs the worker.** The worker key can charge customers within their balance and
   daily cap without serving them. Signed receipts make this visible; caps and the refund delay

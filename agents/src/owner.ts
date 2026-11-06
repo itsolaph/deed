@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// owner: the outlive holder's tool. Each command signs one transaction with the owner's key from
+// owner: the token holder's tool. Each command signs one transaction with the owner's key from
 // the legacy keychain and prints the explorer link.
 //
 //   owner mint     --as <acc> --slug <s> --title <t> --price <tUSDC> --endpoint <url> --image-hash <h> [--daily-cap <tUSDC>]

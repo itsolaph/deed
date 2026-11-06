@@ -18,7 +18,7 @@ async fn withdraw_rules() -> Result<()> {
     env.charge_ok(&vault, &sk, vec![item(alice, 1, 100)]).await?;
     let revenue = 100 * PRICE;
 
-    fails(env.call_owner(&env.alice, &vault, "withdraw", withdraw(1)).await?, "only the outlive owner");
+    fails(env.call_owner(&env.alice, &vault, "withdraw", withdraw(1)).await?, "only the token owner");
     fails(env.call_owner(&env.seller, &vault, "withdraw", withdraw(0)).await?, "amount must be positive");
     fails(env.call_owner(&env.seller, &vault, "withdraw", withdraw(revenue + 1)).await?, "exceeds withdrawable revenue");
     fails(
@@ -62,7 +62,7 @@ async fn config_and_price_notice() -> Result<()> {
     let vault = env.mint(&env.seller, "relay").await?;
 
     let cfg = json!({ "endpoint": "https://b.example/v1", "image_hash": "sha256:1111" });
-    fails(env.call_owner(&env.alice, &vault, "set_config", cfg.clone()).await?, "only the outlive owner");
+    fails(env.call_owner(&env.alice, &vault, "set_config", cfg.clone()).await?, "only the token owner");
     done(env.call_owner(&env.seller, &vault, "set_config", cfg).await?);
     let info = env.vault_info(&vault).await?;
     assert_eq!(info["endpoint"], "https://b.example/v1");
@@ -82,7 +82,7 @@ async fn config_and_price_notice() -> Result<()> {
     let created: u64 = info["created_at_ms"].as_str().unwrap().parse()?;
     assert!(at >= created + 24 * 3_600 * 1_000);
 
-    fails(env.call_owner(&env.alice, &vault, "set_price", json!({ "price": "1" })).await?, "only the outlive owner");
+    fails(env.call_owner(&env.alice, &vault, "set_price", json!({ "price": "1" })).await?, "only the token owner");
     fails(env.call_owner(&env.seller, &vault, "set_price", json!({ "price": "0" })).await?, "price must be positive");
     Ok(())
 }

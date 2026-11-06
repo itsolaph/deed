@@ -104,7 +104,7 @@ impl Outlive {
         // Neither account could ever use the vault's owner powers, so the business would be lost.
         require!(
             receiver != &r.vault_id && receiver != &env::current_account_id(),
-            "the outlive contract and the token's vault cannot receive the token"
+            "the Outlive contract and the token's vault cannot receive the token"
         );
         require!(r.listing.is_none(), "token is listed; cancel the listing first");
     }

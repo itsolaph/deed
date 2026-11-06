@@ -134,7 +134,7 @@ impl Vault {
         ext_ft_core::ext(self.payment_token.clone())
             .with_attached_deposit(NearToken::from_yoctonear(1))
             .with_static_gas(GAS_FT_TRANSFER)
-            .ft_transfer(id.clone(), U128(amount), Some("outlive vault refund".to_string()))
+            .ft_transfer(id.clone(), U128(amount), Some("Outlive vault refund".to_string()))
             .then(
                 Self::ext(env::current_account_id())
                     .with_static_gas(GAS_CALLBACK)

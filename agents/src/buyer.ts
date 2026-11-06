@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// buyer: an agent that reads outlive listings and vault views, attributes the vault's revenue to
+// buyer: an agent that reads token listings and vault views, attributes the vault's revenue to
 // independent customers (owners, previous owners and owner-funded customers excluded, see
 // sdk/src/appraisal.ts), computes payback on chain-visible costs, runs its checks, and buys with
 // ft_transfer_call when every check passes and payback is under a threshold. It prints every
@@ -106,7 +106,7 @@ export function staticChecks(listing: ListingView, outlive: OutliveView, info: V
   const pendingIncrease = info.pending_price !== null && BigInt(info.pending_price) > BigInt(info.price_per_call);
   return [
     { name: "listing active", ok: listing.active, detail: listing.active ? `listing #${listing.listing_id}` : "still activating" },
-    { name: "seller owns the token", ok: listing.seller === outlive.owner_id && info.owner_id === outlive.owner_id, detail: `outlive owner ${outlive.owner_id}, vault owner ${info.owner_id}` },
+    { name: "seller owns the token", ok: listing.seller === outlive.owner_id && info.owner_id === outlive.owner_id, detail: `token owner ${outlive.owner_id}, vault owner ${info.owner_id}` },
     { name: "vault locked for this listing", ok: info.locked && info.lock_id === listing.listing_id && info.owner_epoch === listing.epoch, detail: `locked=${info.locked} lock_id=${info.lock_id} epoch=${info.owner_epoch}` },
     {
       name: "no pending price increase",
@@ -373,7 +373,7 @@ async function main(): Promise<void> {
   const vaultAfter = await new VaultViews(r, pick.outlive.vault_id).info();
   const bought = after?.owner_id === account && vaultAfter.owner_id === account;
   say(`${bought ? "bought" : "purchase did not go through"}: ${txLink(tx.hash)}`);
-  say(`outlive owner now ${after?.owner_id}, vault owner now ${vaultAfter.owner_id} (epoch ${vaultAfter.owner_epoch}, locked ${vaultAfter.locked})`);
+  say(`token owner now ${after?.owner_id}, vault owner now ${vaultAfter.owner_id} (epoch ${vaultAfter.owner_epoch}, locked ${vaultAfter.locked})`);
   report.buy_tx = tx.hash;
   report.buy_link = txLink(tx.hash);
   report.bought = bought;

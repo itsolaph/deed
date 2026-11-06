@@ -6,7 +6,7 @@
 //   node examples/customer.mjs --account you.testnet --refund        3. start the refund delay
 //   node examples/customer.mjs --account you.testnet --claim         4. after the delay: money back
 //
-// Options: --vault (default relay-live.outlive.testnet), --target (a public URL that
+// Options: --vault (default relay-live.outlive2.outlive.testnet), --target (a public URL that
 // accepts POST; default https://httpbin.org/post). The endpoint is read from the vault on chain.
 // Your key is read from the near-cli legacy keychain (~/.near-credentials/testnet/<account>.json)
 // and never printed. Run `npm ci && npm run build` once in the repository first.
@@ -20,7 +20,7 @@ const MAX_MINT = 5; // tUSDC: plenty for hundreds of calls at 0.01; the token al
 const { values: o } = parseArgs({
   options: {
     account: { type: "string" },
-    vault: { type: "string", default: "relay-live.outlive.testnet" },
+    vault: { type: "string", default: "relay-live.outlive2.outlive.testnet" },
     target: { type: "string", default: "https://httpbin.org/post" },
     fund: { type: "string" },
     refund: { type: "boolean", default: false },

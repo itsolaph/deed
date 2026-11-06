@@ -101,7 +101,7 @@ const str = (v: unknown): string => (typeof v === "string" ? v : typeof v === "n
 const num = (v: unknown): number => (typeof v === "number" ? v : typeof v === "string" && v !== "" ? Number(v) : NaN);
 const nsToMs = (ns: number | string): number => Number(BigInt(String(ns)) / 1_000_000n);
 
-/** The outlive account is the parent of the vault account: `<token>.<outlive>`. */
+/** The contract account is the parent of the vault account: `<token>.<contract>`. */
 export function vaultParts(vault: string): { tokenId: string; outlive: string } {
   const dot = vault.indexOf(".");
   return { tokenId: vault.slice(0, dot), outlive: vault.slice(dot + 1) };

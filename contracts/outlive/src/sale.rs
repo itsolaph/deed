@@ -49,7 +49,7 @@ impl Outlive {
             return Err("a transfer call is pending");
         }
         if &l.seller == buyer {
-            return Err("seller cannot buy their own outlive");
+            return Err("seller cannot buy their own token");
         }
         if l.price > args.max_price.0 {
             return Err("price is above max_price");
@@ -64,7 +64,7 @@ impl Outlive {
         ext_ft_core::ext(self.payment_token.clone())
             .with_attached_deposit(NearToken::from_yoctonear(1))
             .with_static_gas(GAS_FT_TRANSFER)
-            .ft_transfer(seller.clone(), U128(amount), Some(format!("outlive sale {token_id}")))
+            .ft_transfer(seller.clone(), U128(amount), Some(format!("Outlive sale {token_id}")))
             .then(
                 Self::ext(env::current_account_id())
                     .with_static_gas(GAS_ON_PAID)
@@ -188,7 +188,7 @@ impl Outlive {
         ext_ft_core::ext(self.payment_token.clone())
             .with_attached_deposit(NearToken::from_yoctonear(1))
             .with_static_gas(GAS_FT_TRANSFER)
-            .ft_transfer(account.clone(), U128(amount), Some("outlive sale proceeds".to_string()))
+            .ft_transfer(account.clone(), U128(amount), Some("Outlive sale proceeds".to_string()))
             .then(
                 Self::ext(env::current_account_id())
                     .with_static_gas(GAS_CALLBACK_SMALL)
@@ -213,7 +213,7 @@ impl Outlive {
 
 #[near]
 impl FungibleTokenReceiver for Outlive {
-    /// Buys a listed outlive. Every refusal returns the whole amount to the sender.
+    /// Buys a listed token. Every refusal returns the whole amount to the sender.
     fn ft_on_transfer(&mut self, sender_id: AccountId, amount: U128, msg: String) -> PromiseOrValue<U128> {
         let refuse = |reason: &str| {
             events::emit(
@@ -235,7 +235,7 @@ impl FungibleTokenReceiver for Outlive {
 
         let token_id = buy.token_id;
         self.token_mut(&token_id).listing = None;
-        self.move_token(&token_id, &seller, &sender_id, Some("outlive sale"));
+        self.move_token(&token_id, &seller, &sender_id, Some("Outlive sale"));
         self.finalize_owner(&token_id).detach();
         let epoch = self.token(&token_id).owner_epoch;
         events::emit(

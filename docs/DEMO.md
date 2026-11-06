@@ -1,311 +1,288 @@
 # Demo
 
-`bash scripts/demo-testnet.sh` runs the whole Outlive story on testnet. It takes 8 to 16
-minutes depending on how fast the public RPC answers (16 in the recorded run), prints an explorer link at every step, writes the links to
-`deployments/testnet.json` (section `demo`) and stops every process it started. Logs of every
-process go to `demo-logs/<run>/` (not committed).
+`bash scripts/demo-testnet.sh` runs the whole Outlive story on testnet. It takes 8 to 16 minutes depending on how fast the public RPC answers, prints an explorer link at every step, writes the links to `deployments/testnet.json` (section `demo`) and stops every process it started. Logs of every process go to `demo-logs/<run>/` (not committed).
+
+Two more runs show the failure cases: a seller that does not cooperate ([Hostile seller](#hostile-seller)) and a seller that inflates revenue ([Wash revenue rejected](#wash-revenue-rejected)).
 
 ## Before you start
 
 - Node 22 or newer, `npm ci` done (the script runs it if `node_modules` is missing).
-- Four testnet accounts with keys in the near-cli legacy keychain
-  (`~/.near-credentials/testnet/<account>.json`). By default the script uses the project's
-  accounts from `deployments/testnet.json`; set `DEMO_SELLER`, `DEMO_BUYER`, `DEMO_ALICE` and
-  `DEMO_BOB` to use your own. The seller needs about 3.5 NEAR (a mint costs 2.88 NEAR, most of
-  it the vault's code storage), the others about 1 NEAR each.
+- Four testnet accounts with keys in the near-cli legacy keychain (`~/.near-credentials/testnet/<account>.json`). By default the script uses the project's accounts from `deployments/testnet.json`; set `DEMO_SELLER`, `DEMO_BUYER`, `DEMO_ALICE` and `DEMO_BOB` to use your own. The seller needs about 3.5 NEAR (a mint costs 2.88 NEAR, most of it the vault's code storage), the others about 1 NEAR each.
 - Free local ports 7601 (worker A), 7602 (worker B) and 7611 (echo target), all on 127.0.0.1.
 - tUSDC is minted for the buyer and the customers as needed. It is a test token without value.
 
-Optional: `DEMO_SLUG` (default `relay-<MMDDHHMM>`), `DEMO_TRAFFIC_SEC` (traffic before the
-listing, default 75), `DEMO_AFTER_SEC` (traffic after the handover, default 45),
-`DEMO_PORT_A`, `DEMO_PORT_B`, `DEMO_ECHO_PORT`, `NEAR_RPC_URLS`. All settings can also go in a
-git-ignored `.env` (see `.env.example`).
+Optional: `DEMO_SLUG` (default `relay-<MMDDHHMM>`), `DEMO_TRAFFIC_SEC` (traffic before the listing, default 75), `DEMO_AFTER_SEC` (traffic after the handover, default 45), `DEMO_PORT_A`, `DEMO_PORT_B`, `DEMO_ECHO_PORT`, `NEAR_RPC_URLS`. All settings can also go in a git-ignored `.env` (see `.env.example`).
 
-The buyer agent runs with `--policy demo`: at least 2 independent paying customers, none above
-80% of independent revenue, no minimum vault age. It prints "demo policy: thresholds relaxed for
-a 10-minute run". With the default strict policy (3 customers, 60%, 72 hours) it would not buy a
-vault that is minutes old, which is the point of the strict policy.
+The buyer agent runs with `--policy demo`: at least 2 independent paying customers, none above 80% of independent revenue, no minimum vault age. It prints "demo policy: thresholds relaxed for a 10-minute run". With the default strict policy (3 customers, 60%, 72 hours) it would not buy a vault that is minutes old, which is the point of the strict policy.
 
 ## Steps and expected output
 
-Excerpts below are from earlier recorded runs (relay-10300721, and relay-1103hard for step 7), some lines shortened. Hashes and numbers differ in every run.
+Excerpts below are from the recorded run `relay-11060332` (6 November 2026), some lines shortened. Hashes and numbers differ in every run.
 
 ### 1. The seller mints the token
 
-`owner mint` calls `mint` on the token with the mint cost attached. The outlive creates
-`<slug>.outlive.testnet`, deploys the vault code, initializes it, and only then mints the
-token. The vault account has no access key at all.
+`owner mint` calls `mint` on the token with the mint cost attached. The contract creates `<slug>.outlive2.outlive.testnet`, deploys the vault code, initializes it, and only then mints the token. The vault account has no access key at all.
 
 ```
-[owner outlivelab-seller.testnet] mint relay-... (deposit 2.879 NEAR, excess refunded): ok https://testnet.nearblocks.io/txns/...
-[demo] vault relay-....outlive.testnet access keys after mint: 0 (no full-access key)
+=== 1. seller mints the token; the Outlive contract creates the vault sub-account
+ok   seller mints relay-11060332
+vault relay-11060332.outlive2.outlive.testnet access keys after mint: 0 (no full-access key)
 ```
 
 ### 2. Worker A is registered
 
-`owner rotate` generates a key pair (stored with mode 600 under
-`~/.near-credentials/testnet/workers/`) and sends `set_worker` and `set_config` in one
-transaction. The vault adds the key itself as a function-call key that may only call `charge`.
+`owner rotate` generates a key pair (stored with mode 600 under `~/.near-credentials/testnet/workers/`) and sends `set_worker` and `set_config` in one transaction. The vault adds the key itself as a function-call key that may only call `charge`.
+
+```
+=== 2. seller registers worker A (function-call key limited to charge)
+ok   seller sets worker key A and endpoint
+```
 
 ### 3. Echo target and worker A start
 
-The echo target answers 503 to about 30 percent of first attempts so retries show, and checks
-the relay signature on every request. Worker A starts with `--allow-target 127.0.0.1:7611`
-(the only non-public address it may call) and prints a warning about it.
+The echo target answers 503 to about 30 percent of first attempts so retries show, and checks the relay signature on every request. Worker A starts with `--allow-target 127.0.0.1:7611` (the only non-public address it may call) and prints a warning about it.
 
 ```
-[worker 7601] worker key registered on chain; allowance left 2 NEAR
-[worker 7601] listening on http://127.0.0.1:7601
-[echo] d_3f... attempt 1 relay-sig ok key 3cjYRKtK.. -> 503 (on purpose)
-[echo] d_3f... attempt 2 relay-sig ok key 3cjYRKtK.. -> 200
+=== 3. echo target and worker A start
+worker A healthy: key ed25519:9zAZfCHaovVVxDyWz9AnkRXHCwfM59wPvsEyEUanNCL3, price 10000
 ```
+
+`price 10000` is 0.01 tUSDC per delivery (6 decimals).
 
 ### 4. Traffic: alice and bob pay per delivery
 
-The traffic agent sends a delivery every 2 seconds per customer through `OutliveClient`. The first
-call answers 402 (unknown customer); the SDK pays 5 tUSDC with `ft_transfer_call` to the vault
-and goes on. Worker A charges in batches every 4 seconds; the vault revenue goes up.
+The traffic agent sends a delivery every 2 seconds per customer through `OutliveClient`. The first call answers 402 (unknown customer); the SDK pays 5 tUSDC with `ft_transfer_call` to the vault and goes on. Worker A charges in batches; the vault revenue goes up.
 
 ```
-[traffic] alice  #1 402 unknown_customer (price 10000, min deposit 1000000)
-[traffic] alice  topped up 5 tUSDC with ft_transfer_call: ok https://testnet.nearblocks.io/txns/...
-[traffic] alice  #2 202 seq 1 receipt signed by worker 3cjYRK..
-[worker 7601] charge tx ...: 4 of 4 items charged
-[demo] revenue ticking: vault revenue 0.3600 tUSDC, customer credit 9.6400, 2 customers, 36 charges
+=== 4. traffic: alice and bob send deliveries (first call answers 402, the SDK tops up)
+ok   customer deposit after a 402 (ft_transfer_call)
+ok   customer deposit after a 402 (ft_transfer_call)
+ok   worker A charges a batch (4 items, signed by the worker key)
 ```
+
+Deliveries the target drops on purpose are retried and counted once.
 
 ### 5. The NFT certificate updates
 
-`push_stats` sends the vault figures to the outlive. `nft_token` now returns a certificate SVG and
-an `extra` JSON with the 30-day calls and revenue.
+`push_stats` sends the vault figures to the token. `nft_token` now returns a certificate SVG and an `extra` JSON with the 30-day calls and revenue. Any marketplace or wallet that reads the token sees a service with traffic, not an empty shell.
+
+```
+=== 5. stats pushed to the token; the NFT certificate updates
+ok   push_stats updates the dynamic NFT metadata
+token stats now: 64 calls, revenue 0.6400 tUSDC
+```
 
 ### 6. The seller withdraws and lists
 
-The seller withdraws all revenue, then lists the token for 3 tUSDC. The listing becomes active
-only after the vault confirmed the lock.
+The seller withdraws all revenue, then lists the token for 3 tUSDC. The listing becomes active only after the vault confirmed the lock: no withdraw, no price change, no endpoint change while it is for sale.
+
+```
+=== 6. seller withdraws revenue, then lists the token (the vault locks)
+ok   seller lists relay-11060332 for 3 tUSDC
+```
 
 ### 7. The buyer agent decides and buys
 
-From the run `relay-1103hard` (3 November 2026); six passing static checks left out:
+From the same run; six passing static checks left out:
 
 ```
+[buyer] I am outlive-buyer.testnet. I look for tokens on outlive2.outlive.testnet whose payback on chain-visible costs is within 30 days.
 [buyer] policy demo: at least 2 independent paying customers, none above 80% of independent revenue, vault at least 0 h old
 [buyer] demo policy: thresholds relaxed for a 10-minute run
-[buyer] payback on chain-visible costs: net per day = revenue minus on-chain gas; hosting, bandwidth and operator time are not included.
-[buyer] --- relay-1103hard (Webhook Relay) listed by outlivel12-seller.testnet for 3 tUSDC, listing #1
-[buyer] vault relay-1103hard.outlive.testnet: withdrawable proceeds (cash) 0.69 tUSDC come with the token; customer credit 9.31 tUSDC is owed to 2 customers and is not withdrawable
-[buyer] trailing 30 days per the vault: 69 calls, revenue 0.69 tUSDC, gas 0.0338 NEAR
-[buyer] event log: 16 vault transactions in the index, 16 read (2 requests to tx.test.fastnear.com)
-[buyer]   customer outlivelab-alice.testnet: 37 paid calls, 0.37 tUSDC -> counted: pays its own credit
-[buyer]   customer outlivelab-bob.testnet: 32 paid calls, 0.32 tUSDC -> counted: pays its own credit
-[buyer] independent revenue 0.69 tUSDC; not counted: owner 0 tUSDC, owner-funded 0 tUSDC, unverified 0 tUSDC, not in the event log 0 tUSDC
-[buyer] the vault is 8 minutes old, so I spread the figures over 1.00 day(s) (at least 1, at most 30)
-[buyer] per day: independent revenue 0.6900 - on-chain gas 0.1298 = net 0.5602 tUSDC (hosting, bandwidth and operator time not included)
-[buyer] payback on chain-visible costs = (price 3 - cash 0.69) / net per day 0.5602 = 4.12 days
+[buyer] --- relay-11060332 (Webhook Relay) listed by outlive-seller2.testnet for 3 tUSDC, listing #1
+[buyer]   customer outlive-alice.testnet: 33 paid calls, 0.33 tUSDC -> counted: pays its own credit
+[buyer]   customer outlive-bob.testnet: 33 paid calls, 0.33 tUSDC -> counted: pays its own credit
+[buyer] independent revenue 0.66 tUSDC; not counted: owner 0 tUSDC, owner-funded 0 tUSDC, unverified 0 tUSDC, not in the event log 0 tUSDC
+[buyer] per day: independent revenue 0.6600 - on-chain gas 0.1227 = net 0.5373 tUSDC (hosting, bandwidth and operator time not included)
+[buyer] payback on chain-visible costs = (price 3 - cash 0.66) / net per day 0.5373 = 4.36 days
+[buyer] check pass seller owns the token: token owner outlive-seller2.testnet, vault owner outlive-seller2.testnet
 [buyer] check pass vault locked for this listing: locked=true lock_id=1 epoch=1
-[buyer] check pass every owner known: 1 ownership epoch(s) read from the event log; excluded: outlive.testnet, outlivel12-seller.testnet, relay-1103hard.outlive.testnet
-[buyer] check pass independent paying customers: 2 independent of 2 paying customers, need 2
-[buyer] check pass no single customer dominates: largest payer outlivelab-alice.testnet has 54% of independent revenue, limit 80%
-[buyer] check pass vault observed long enough: vault is 0.1 h old, need 0 h
-[buyer] check pass endpoint answers: http://127.0.0.1:7603 serves this vault with the registered worker key
-[buyer] decision: BUY (payback on chain-visible costs 4.1 days is under 30)
+[buyer] check pass worker key registered: ed25519:9zAZfCHaovVVxDyWz9AnkRXHCwfM59wPvsEyEUanNCL3
+[buyer] check pass endpoint answers: http://127.0.0.1:7621 serves this vault with the registered worker key
+[buyer] decision: BUY (payback on chain-visible costs 4.4 days is under 30)
 [buyer] funding from eth:usdc with NEAR Intents 1Click: mainnet dry quote (dry:true), nothing executed:
-[buyer]   would pay 3.035391 USDC on eth (about 3.033336040293 USD) -> would receive 3.0 USDC on NEAR at 2e365a12...
-[buyer]   estimated time 45 s. No deposit address exists for a dry quote; nothing was sent or swapped.
-[buyer] buying: ft_transfer_call 3 tUSDC to outlive.testnet with msg {"buy":{"token_id":"relay-1103hard","max_price":"3000000","listing_id":1}}
-[buyer] bought: https://testnet.nearblocks.io/txns/v2ty1Yv86qX62FbsTqLaU8yXTa88e4SuVBjgghNBXED
-[buyer] outlive owner now outlivelab-buyer.testnet, vault owner now outlivelab-buyer.testnet (epoch 2, locked false)
+[buyer]   would pay 3.035282 USDC on eth (about 3.033727935616 USD) -> would receive 3.0 USDC on NEAR at 6d3bcc7f...
+[buyer] token owner now outlive-buyer.testnet (epoch 2, locked false)
 ```
 
-alice and bob are the project's own traffic agents. They pay their own credit with tUSDC they
-minted themselves, so the appraisal counts them as independent; that is exactly the limit
-stated in [DESIGN.md](DESIGN.md#buyer-agent).
+alice and bob are the project's own traffic agents. They pay their own credit with tUSDC they minted themselves, so the appraisal counts them as independent; that is exactly the limit stated in [DESIGN.md](DESIGN.md#buyer-agent).
 
-The funding quote is a NEAR Intents 1Click mainnet dry quote (`"dry": true`), nothing executed:
-it shows what paying from Ethereum would cost, but no deposit address exists and nothing moves.
-The purchase itself uses tUSDC.
+The funding quote is a NEAR Intents 1Click mainnet dry quote (`"dry": true`), nothing executed: it shows what paying from Ethereum would cost, but no deposit address exists and nothing moves. The purchase itself uses tUSDC.
 
 ### 8. The seller's withdraw reverts
 
 ```
-[owner outlivelab-seller.testnet] withdraw: FAILED https://testnet.nearblocks.io/txns/... (... "Smart contract panicked: only the token owner")
+=== 8. the seller's withdraw now reverts
+withdraw: FAILED ... Smart contract panicked: only the token owner
 ```
+
+The seller still holds the account and the old worker key. Neither is enough any more.
 
 ### 9. Worker B and one rotation
 
-The script opens a short outage at the echo target so worker A holds undelivered, paid
-deliveries. The buyer generates key B, starts worker B (it waits until the key is registered),
-then sends `set_worker` and `set_config` (new endpoint) in one transaction.
+The script opens a short outage at the echo target so worker A holds undelivered, paid deliveries. The buyer generates key B, starts worker B (it waits until the key is registered), then sends `set_worker` and `set_config` (new endpoint) in one transaction. Rotation deletes A's key and authorises B's in the same transaction.
+
+```
+ok   buyer rotates the worker key and endpoint in one transaction
+worker B is serving
+```
 
 ### 10. Worker A retires by itself
 
 ```
-[worker 7601] HANDOVER: vault worker key is now ed25519:GWvGGo...; endpoint http://127.0.0.1:7602. This worker stops accepting and charging.
-[worker 7601] 8 charges were not sent before the handover; they go to the next worker with the hand-off
-[worker 7601] hand-off attempt 1 failed: fetch failed
-[worker 7601] hand-off to http://127.0.0.1:7602: 21 of 21 obligations taken over
-[worker 7602] hand-off received from the previous worker: 21 taken over (4 charged as new), 0 already here, 0 rejected
-[worker 7601] exiting after handover
+worker-a exited (code 0)
+ok   worker A stops by itself after the rotation  (hand-off to http://127.0.0.1:7622: 40 of 40 obligations taken over)
+ok   worker B holds every open obligation of worker A  (hand-off received from the previous worker: 40 taken over (24 charged as new), 0 already here, 0 rejected)
 ```
 
-Receipts whose seq was already charged on chain (worker B compares with each customer's
-`last_seq` when it first sees them) are delivered without a new charge; the rest are charged
-by B with fresh receipts. In this run 8 charges were still open at A, 4 of them had in fact
-landed in A's last charge transaction, so B charged only the other 4. Customers that call
-worker A now get 410 with the new endpoint (or a refused connection once it exited); the SDK
-reads the endpoint from the vault again and presents its open receipts. Whichever reaches B
-first takes the obligation over; the other finds it already there.
+A polls the vault, sees a key it no longer owns, offers its queue to the endpoint now on chain, and exits. Receipts whose seq was already charged on chain (worker B compares with each customer's `last_seq` when it first sees them) are delivered without a new charge; the rest are charged by B with fresh receipts. Customers that call worker A now get 410 with the new endpoint (or a refused connection once it exited); the SDK reads the endpoint from the vault again and presents its open receipts. Whichever reaches B first takes the obligation over; the other finds it already there.
 
 ### 11. Traffic continues through worker B
 
-The outage ends, worker B delivers what it took over, and new receipts are signed by key B.
-When the traffic agent stops it waits until every receipt it holds is confirmed delivered.
+The outage ends, worker B delivers what it took over, and new receipts are signed by key B. When the traffic agent stops it waits until every receipt it holds is confirmed delivered.
 
 ```
-[traffic] summary alice: 70 accepted, 60 delivered, 10 pending, 1 x 402, workers {"3cjYRK":70}          (during the outage)
-[traffic] summary alice: 78 accepted, 76 delivered, 2 pending, 1 x 402, workers {"3cjYRK":70,"GWvGGo":8}
-[traffic] summary alice: 96 accepted, 96 delivered, 0 pending, 1 x 402, workers {"3cjYRK":70,"GWvGGo":26}
+=== 11. traffic continues through worker B
+vault revenue 1.4200 tUSDC (now the buyer's), 142 charges, endpoint http://127.0.0.1:7622
+ok   every pending obligation was delivered  (outlive-alice: 40 accepted, 40 delivered, 0 failed; outlive-bob: 40 accepted, 40 delivered, 0 failed)
+ok   receipts were signed by both workers  (2 worker keys)
 ```
 
 ### 12. The buyer withdraws
 
+```
+=== 12. buyer withdraws the revenue
+vault revenue 1.46 tUSDC, owner on chain outlive-buyer.testnet, locked false; withdrawing 1.46
+ok   buyer withdraws revenue
+final: owner outlive-buyer.testnet (epoch 2), 146 calls, revenue 1.4600 tUSDC over the run
+```
+
 The buyer withdraws the revenue earned since the purchase and pushes the stats again.
 
-## Recorded run (3 November 2026, `relay-1103hard`, 18 of 18 steps)
+## Recorded run (6 November 2026, `relay-11060332`, 18 of 18 steps)
 
-Seller `outlivel12-seller.testnet` (fresh faucet account), buyer `outlivelab-buyer.testnet`, customers
-`outlivelab-alice` and `outlivelab-bob`. All steps are in `deployments/testnet.json` under `demo`.
+Seller `outlive-seller2.testnet` (fresh faucet account), buyer `outlive-buyer.testnet`, customers `outlive-alice.testnet` and `outlive-bob.testnet`. All steps are in `deployments/testnet.json` under `demo`.
 
-| Step | Transaction |
-|---|---|
-| Seller mints the token; the token creates the vault sub-account (no access key) | [34S7Fe…](https://testnet.nearblocks.io/txns/34S7FeZ1fc1bQv4dHUmCY11f6ubhctRr9hzKr3Q6sf5r) |
-| Seller registers worker key A and the endpoint in one transaction | [6YsReh…](https://testnet.nearblocks.io/txns/6YsRehEyXA2hiYSm5Jcjb4gqmAp4axMnFooajGVxSEc7) |
-| Customers get 402 and pay credit with `ft_transfer_call` | [RMa2kE…](https://testnet.nearblocks.io/txns/RMa2kEVrWy9N3vt1AzhgMVX9S6tWUPWV8Wyv3yY9Zov), [B6MGDS…](https://testnet.nearblocks.io/txns/B6MGDS6cknmqaETV5jjNi5kabayk9MX7MgDbcTrSrkGw) |
-| Worker A charges a batch, signed as the vault with its function-call key | [9xBRsX…](https://testnet.nearblocks.io/txns/9xBRsXfny8CapwFSrmSjwiBgN1R1E9xgB1KatYpdwy3p) |
-| Stats pushed; the NFT certificate updates | [6Xu6C6…](https://testnet.nearblocks.io/txns/6Xu6C67VjG4XaeRdgPDe58FSAcGcnt5SJfCQb4fnjzSK) |
-| Seller withdraws revenue | [EgXTNe…](https://testnet.nearblocks.io/txns/EgXTNek5UuNnarCrVyA73R8qJDmbHj4ErdwCp12ehgHQ) |
-| Seller lists for 3 tUSDC (the vault locks) | [7gsv5E…](https://testnet.nearblocks.io/txns/7gsv5EojrbKYKGs4MQAxD51mxbAL57LawFLhgvf46m9c) |
-| Buyer agent (demo policy) appraises 0.69 tUSDC of independent revenue, payback on chain-visible costs 4.12 days, buys | [v2ty1Y…](https://testnet.nearblocks.io/txns/v2ty1Yv86qX62FbsTqLaU8yXTa88e4SuVBjgghNBXED) |
-| Seller's withdraw after the sale reverts (`only the token owner`) | [39fQiK…](https://testnet.nearblocks.io/txns/39fQiK98qxZL6kPH9mwn8miyXXVCoiSiJnQ2Vcn2nvnD) |
-| Buyer rotates worker key and endpoint in one transaction | [Ai6eou…](https://testnet.nearblocks.io/txns/Ai6eou54iAhaA2tf3kdp89EowKMf7TVNdUQecgj4ubzn) |
-| Worker B charges with the new key | [JD99Ne…](https://testnet.nearblocks.io/txns/JD99NeTceMUQ7EF33oARm8Da2UrGkqrqwcNiMFvJ1nLx) |
-| Buyer withdraws revenue | [AgUyC6…](https://testnet.nearblocks.io/txns/AgUyC6uQydhYgoUN1GcyWwX3QJGPNjPbJfisUSoQS34F) |
-| Stats pushed after the sale | [6TJjtT…](https://testnet.nearblocks.io/txns/6TJjtTaT5oBDDAvCHYQvDdnVT9mZWaBUiKD4xdrSe5aY) |
+| # | Step | Result | Transaction |
+| --- | --- | --- | --- |
+| 1 | seller mints relay-11060332 | ok | [`7Xq3CbuP…`](https://testnet.nearblocks.io/txns/7Xq3CbuPXj2gXQ5x1kKzyQuNfENLiazb81XtGL8XZpCu) |
+| 2 | seller sets worker key A and endpoint | ok | [`7UoENpUn…`](https://testnet.nearblocks.io/txns/7UoENpUn7BDZm6Yi57BPVU2QRFiiA1hqQByHkrcLjxyQ) |
+| 3 | customer deposit after a 402 (ft_transfer_call) | ok | [`GnFZufQ9…`](https://testnet.nearblocks.io/txns/GnFZufQ9QMqCnZUEctLfBGcce1BWw3KK17CUmKrY1EuC) |
+| 4 | customer deposit after a 402 (ft_transfer_call) | ok | [`2wmE6rMw…`](https://testnet.nearblocks.io/txns/2wmE6rMws4pkctSoG9ZRDx55WkZeetWN3BuQc1hwoptU) |
+| 5 | worker A charges a batch (4 items, signed by the worker key) | ok | [`Fp7VNa4n…`](https://testnet.nearblocks.io/txns/Fp7VNa4nHeMTy6fTXs6bv58cA7BYh7En86DYxeEadxRP) |
+| 6 | push_stats updates the dynamic NFT metadata | ok | [`39HP1E6J…`](https://testnet.nearblocks.io/txns/39HP1E6JmEWwxPBgU6CA48wxtuKaGN6AtKnGgapoNRMA) |
+| 7 | seller withdraws revenue before listing | ok | [`49j6rfJC…`](https://testnet.nearblocks.io/txns/49j6rfJCqwHz4QvixHuWrV7gZr93pMT411uB3Kgz87d8) |
+| 8 | seller lists relay-11060332 for 3 tUSDC | ok | [`BnDnbvp2…`](https://testnet.nearblocks.io/txns/BnDnbvp2PeB6koM3vpruotwwpvAABXtDr2qWvLKePw6n) |
+| 9 | buyer agent buys relay-11060332 | ok | [`HeTSJDPe…`](https://testnet.nearblocks.io/txns/HeTSJDPesRMDm5KK8Br9T4RYheNdSjHbbpok8RNAKQDZ) |
+| 10 | seller withdraw after the sale reverts (only the token owner) | ok | [`An746jXr…`](https://testnet.nearblocks.io/txns/An746jXrJscGBxarMQE2UKNSdWXqziprs5BoaAFFDTqN) |
+| 11 | buyer rotates the worker key and endpoint in one transaction | ok | [`9J2SNdXc…`](https://testnet.nearblocks.io/txns/9J2SNdXcUJUN8oRanqFQTRNaJGjvRXsmnXMAtxVSGZYF) |
+| 12 | worker A stops by itself after the rotation | ok |  |
+| 13 | worker B holds every open obligation of worker A | ok |  |
+| 14 | every pending obligation was delivered | ok |  |
+| 15 | receipts were signed by both workers | ok |  |
+| 16 | worker B charges with the new key (36 items) | ok | [`J1GDpy4m…`](https://testnet.nearblocks.io/txns/J1GDpy4muKuBqfAa1WKS6ANSfwN6QytyfwBsfimUrU8A) |
+| 17 | buyer withdraws revenue | ok | [`FhRcKBsr…`](https://testnet.nearblocks.io/txns/FhRcKBsrYoSqdm35qPT3FcigMt92aERUPfbDi67ZwAbe) |
+| 18 | push_stats after the sale | ok | [`8MemftHB…`](https://testnet.nearblocks.io/txns/8MemftHBk41E7egbcj1nJxUsNVQnqiWH8pSt69H12GjG) |
 
-Off chain in the same run: worker A saw the rotation, handed 25 open obligations to worker B and
-exited by itself; customers presenting their receipts after the 410 reached B first for most of
-them (B charged 10 as new in total, the rest had been charged by A). Alice had 34 jobs accepted
-and delivered, bob 35, none failed, receipts signed by both worker keys. The buyer agent's 1Click
-mainnet dry quote (nothing executed) for funding the 3 USDC from Ethereum came back at 3.035391
-USDC.
+Off chain in the same run: worker A saw the rotation, handed 40 open obligations to worker B and exited by itself; alice and bob each had 40 jobs accepted and delivered, none failed, receipts signed by both worker keys. The buyer agent's 1Click mainnet dry quote (nothing executed) for funding the 3 USDC from Ethereum came back at 3.035282 USDC.
+
+### The same run, attacked
+
+`scripts/theft-proof.mjs` replays the actions a stolen worker key would try on this vault. All six are blocked before execution or on chain; no funds move.
+
+```
+theft-proof check on relay-11060332.outlive2.outlive.testnet
+The API server holds this key. What NEAR allows it to do:
+   receiver relay-11060332.outlive2.outlive.testnet   methods ["charge"]   no deposits
+▸ 1. Worker key calls withdraw
+   BLOCKED by the protocol before execution: MethodNameMismatch
+▸ 2. Worker key sends the vault's NEAR away
+   BLOCKED by the protocol before execution: RequiresFullAccess
+▸ 3. Worker key gives itself a full-access key
+   BLOCKED by the protocol before execution: RequiresFullAccess
+▸ 4. Worker key calls the token contract directly
+   BLOCKED by the protocol before execution: ReceiverMismatch
+▸ 5. A stranger calls withdraw:  BLOCKED on-chain: only the token owner
+6/6 attempts blocked.  Withdrawable 0.00 tUSDC → 0.00 tUSDC, vault balance 8.54 tUSDC → 8.54 tUSDC
+```
+
+This is the tested actions only, not a proof that no other path exists.
 
 ## What it shows
 
-- The token carries the service instance: the buyer gets the withdrawable proceeds, the revenue
-  from the next charge on and the customer ledger, and the seller's withdraw fails.
+- The token carries the service instance: the buyer gets the withdrawable proceeds, the revenue from the next charge on and the customer ledger, and the seller's withdraw fails.
+- The contract, not the seller, owns the vault's keys: after the sale the vault answers to the token owner.
 - One key rotation moves the work to a new server; the old one stops by itself.
 - Paid obligations survive a cooperative move: nothing is lost, nothing is charged twice.
-- An agent can appraise and buy a token from on-chain data alone, here with the relaxed demo
-  policy (printed by the agent). All traffic in this run comes from the project's own agents,
-  alice and bob, so the payback figure describes that traffic, not demand.
+- An agent can appraise and buy a token from on-chain data alone, here with the relaxed demo policy (printed by the agent). All traffic in this run comes from the project's own agents, alice and bob, so the payback figure describes that traffic, not demand.
 
-What it does not show: a seller that does not cooperate (see "Hostile seller" below) and a
-seller that inflates revenue (see "Wash revenue rejected" below).
+What it does not show: demand from strangers, mainnet economics, or a market of many buyers. A seller that does not cooperate is covered below, and so is a seller that inflates revenue.
 
 # Hostile seller
 
-`bash scripts/hostile-seller.sh` (about 20 minutes, 10 of them the vault's refund delay). The
-seller sells the token and kills its worker with SIGKILL before any hand-off, while alice and bob
-have jobs in flight. Logs go to `demo-logs/<run>/`, links to `deployments/testnet.json` under
-`hostileSeller`. The analysis behind it is in
-[DESIGN.md](DESIGN.md#hostile-seller-the-old-worker-is-killed-not-handed-off).
+`bash scripts/hostile-seller.sh` (about 20 minutes, 10 of them the vault's refund delay). The seller sells the token and kills its worker with SIGKILL before any hand-off, while alice and bob have jobs in flight. Logs go to `demo-logs/<run>/`, links to `deployments/testnet.json` under `hostileSeller`. The analysis behind it is in [DESIGN.md](DESIGN.md#hostile-seller-the-old-worker-is-killed-not-handed-off).
 
-1. The seller mints a token and runs worker A; alice and bob deposit 1.5 tUSDC each and send 3
-   jobs each, which are delivered and charged.
+1. The seller mints a token and runs worker A; alice and bob deposit 1.5 tUSDC each and send 3 jobs each, which are delivered and charged.
 2. The seller lists the token for 2 tUSDC; the buyer buys it.
-3. The target goes down. Each customer sends 3 more jobs; A charges them but cannot deliver
-   them. Each sends 2 more; A accepts them. Then the seller kills A with SIGKILL: no flush, no
-   hand-off. The script reads each customer's `last_seq` on chain and sorts the open receipts
-   into charged-not-delivered and accepted-not-charged.
-4. The buyer starts worker B and rotates key and endpoint in one transaction (A's key is
-   deleted). The target comes back.
-5. Alice's process "restarts": a new `OutliveClient` loads her receipts from its file store and
-   `resubmit()`s them to the endpoint now on chain. B delivers the charged ones without a new
-   charge and charges the uncharged ones once. Two new calls of alice are served by B.
-6. Bob asks for his money back: `request_refund`, then he resubmits. B delivers the jobs A
-   charged and refuses to charge the others while the refund is pending. After the refund delay
-   bob claims his whole unspent credit.
-7. Ledger check: each customer's number of charges on chain and the tUSDC it spent equal price x
-   distinct jobs charged. Double charges must be 0.
+3. The target goes down. Each customer sends 3 more jobs; A charges them but cannot deliver them. Each sends 2 more; A accepts them. Then the seller kills A with SIGKILL: no flush, no hand-off. The script reads each customer's `last_seq` on chain and sorts the open receipts into charged-not-delivered and accepted-not-charged.
+4. The buyer starts worker B and rotates key and endpoint in one transaction (A's key is deleted). The target comes back.
+5. Alice's process "restarts": a new `OutliveClient` loads her receipts from its file store and `resubmit()`s them to the endpoint now on chain. B delivers the charged ones without a new charge and charges the uncharged ones once. Two new calls of alice are served by B.
+6. Bob asks for his money back: `request_refund`, then he resubmits. B delivers the jobs A charged and refuses to charge the others while the refund is pending. After the refund delay bob claims his whole unspent credit.
+7. Ledger check: each customer's number of charges on chain and the tUSDC it spent equal price x distinct jobs charged. Double charges must be 0.
 
-Recorded run `hostile-1103c` (3 November 2026, seller `outlivel15-seller.testnet`, buyer
-`outlivelab-buyer.testnet`, customers `outlivelab-alice` and `outlivelab-bob`, all the project's own
-accounts):
+Recorded run `hostile-11060310` (6 November 2026, seller `outlive-hostile.testnet`, buyer `outlive-buyer.testnet`, customers `outlive-alice.testnet` and `outlive-bob.testnet`, all the project's own accounts):
 
 | | Result |
 |---|---|
 | Jobs in flight at the kill | 10: 6 charged on chain but not delivered, 4 accepted but not charged (3 + 2 per customer) |
-| Delivered by worker B | 8 of the 10 (alice's 5 after her restart: 3 without a new charge, 2 charged once by B; bob's 3 charged ones without a new charge), plus 2 new calls of alice |
+| Delivered by worker B | 10 of the 10 (alice's 5 after her restart: 3 without a new charge, 2 charged once by B; bob's 3 charged ones without a new charge), plus 2 new calls served by B |
 | Refunded | bob's 2 uncharged jobs were refused while his refund was pending; he got 1.44 tUSDC back (1.5 deposited minus 6 charged calls) |
 | Double charges | 0: alice 10 charges on chain for 10 distinct jobs (0.10 tUSDC), bob 6 for 6 (0.06 tUSDC) |
 
+```
+worker-a exited (SIGKILL)
+jobs in flight at the kill: 10 (charged on chain, not delivered: 6; accepted, not charged: 4)
+ok   worker B takes over alice's receipts (3 already charged by A: no new charge; 2 never charged: charged once by B)
+ok   bob claims his refund (unspent credit, including every job A never charged)  (1.44 tUSDC back)
+alice: 10 charges on chain for 10 distinct jobs, spent 0.1 tUSDC.  bob: 6 charges for 6 distinct jobs
+ok   double charges: 0  (0 double charges; spend matches price x distinct jobs: true)
+```
+
 | Step | Transaction |
 |---|---|
-| Seller mints `hostile-1103c` | [Bmcnzq…](https://testnet.nearblocks.io/txns/Bmcnzq2c7VK1t4izhQs5y4P3icBDUCF9yHMJe6BtHZCS) |
-| Seller registers worker A | [7NgGkS…](https://testnet.nearblocks.io/txns/7NgGkSZsDd4ju49cxymstoAZqZxjthE5Zm9eU358qefD) |
-| Alice deposits 1.5 tUSDC | [HTvniA…](https://testnet.nearblocks.io/txns/HTvniAxBheCC8pc9qZ1cGiozEQZh6csVA763FcxcwbV6) |
-| Bob deposits 1.5 tUSDC | [Dg66Xm…](https://testnet.nearblocks.io/txns/Dg66XmY5yy6XjMbun8FsnmTjHav6KjZUHVJxKWV4rMQH) |
-| Seller lists for 2 tUSDC | [6PkN67…](https://testnet.nearblocks.io/txns/6PkN67HwBebUNpqFhZ33VsqX63yUBWjND3KprSkYmD8M) |
-| Buyer buys | [mHAh5Q…](https://testnet.nearblocks.io/txns/mHAh5Qq6NGh8C8xAK3yeEKGACpnyGQq1ynFWD9PPiZN) |
-| Worker A charges jobs it could not deliver (then SIGKILL) | [258RKq…](https://testnet.nearblocks.io/txns/258RKqqggkxNrcYzTNG4hasKMsM2ErRs7s6WA9ktQjun) |
-| Buyer rotates key and endpoint (A's key deleted) | [xeMWP3…](https://testnet.nearblocks.io/txns/xeMWP37Q7UAFT9YtuKkoWp9AC7uZQrbzEa4wtz2tAYy) |
-| Worker B charges with the new key (alice's 2 uncharged and her 2 new calls) | [F7nDmo…](https://testnet.nearblocks.io/txns/F7nDmoKJQx5D4Lc14GR1yrr6LLbCFJeAm4xAmNRqMKfx) |
-| Bob requests a refund | [2bePEp…](https://testnet.nearblocks.io/txns/2bePEps9BjogecpvWHpWrhRoo2n3E5MHJHdAFUBs92fZ) |
-| Bob claims 1.44 tUSDC after the refund delay | [3kF65x…](https://testnet.nearblocks.io/txns/3kF65xRXtGC4gz7CCxbBU2ff8MQK3XsU75BahytmPD1H) |
+| Seller mints `hostile-11060310` | [see record](https://testnet.nearblocks.io/address/hostile-11060310.outlive2.outlive.testnet) |
+| Buyer buys the token | [AKbLaJ1M…](https://testnet.nearblocks.io/txns/AKbLaJ1MwikfTa9zsU9D6NkxdTyxLWpgbY3LFkbmbhYx) |
+| Buyer rotates key and endpoint (A's key deleted) | [BXAg3YUT…](https://testnet.nearblocks.io/txns/BXAg3YUTXQAsLiYaWiZZxtBrTModihuJXW4WMUB6SLL6) |
+| Bob requests a refund | [GBvXW8ft…](https://testnet.nearblocks.io/txns/GBvXW8ftYyo7bQHqsAcZECtQr9TMJBE44ZGjBb8hXdfr) |
+| Bob claims 1.44 tUSDC after the refund delay | [9KawW61j…](https://testnet.nearblocks.io/txns/9KawW61jwDQLceAzgthecTfYjR8YeEAQrkhxdc9HdtvH) |
 
-Two earlier attempts are recorded as failed in `hostileSeller_runs`. `hostile-1103a`: the
-script assumed which jobs A would have charged by the kill; A's flush timer charged two of the
-"uncharged" ones first. Every job was still charged once (alice 10 for 10, bob 7 for 7), but the
-script's fixed expectations miscounted, so it now classifies receipts against the chain at the
-kill. `hostile-1103b`: presenting receipts to the fresh worker B took longer than the SDK's
-15-second request timeout (B was waiting on chain reads); the SDK now allows 90 seconds for
-that request, as the worker's own hand-off does.
+The refund delay is 600 seconds on this deployment; the run waits it out rather than shortening it for the camera.
 
 # Wash revenue rejected
 
-`node scripts/wash-reject.mjs` (about 4 minutes). The seller mints a token, creates two fresh
-accounts and funds them itself: the first gets 3 tUSDC by `ft_transfer` and deposits 2 as its
-own credit, the second gets 2 tUSDC of credit deposited by the seller (`deposit_for`). Both send
-8 paid jobs, worker A charges all 16, the seller lists. The buyer agent runs with
-`--policy demo --dry-run` and skips. Links in `deployments/testnet.json` under `washReject`.
+`node scripts/wash-reject.mjs` (about 4 minutes). The seller mints a token, creates two fresh accounts and funds them itself: the first gets 3 tUSDC by `ft_transfer`, the second gets its credit deposited by the seller (`deposit_for`). Both send 8 paid jobs, worker A charges all 16, the seller lists. The buyer agent runs with `--policy demo --dry-run` and skips. Links in `deployments/testnet.json` under `washReject`.
 
-Recorded run `wash-1103a` (3 November 2026, seller `outlivel10-seller.testnet`):
-
-| Step | Transaction |
-|---|---|
-| Seller mints `wash-1103a` | [2V1bJT…](https://testnet.nearblocks.io/txns/2V1bJTjJxb1Sy7LZKxqanrx3aVsTrZ2XktFA24maeAB7) |
-| Seller creates customer account `wash-1103a-c1.testnet` | [5rLgd5…](https://testnet.nearblocks.io/txns/5rLgd5wPjni4qi4iSks8VhXJgK3e1sMdhipUDN6pmVKb) |
-| Seller creates customer account `wash-1103a-c2.testnet` | [9qWmCX…](https://testnet.nearblocks.io/txns/9qWmCXCXLtLTkwcHddpusY3MozWMUtWaSR3aKBgfn3xE) |
-| Seller sends 3 tUSDC to c1 (`ft_transfer`) | [HydByr…](https://testnet.nearblocks.io/txns/HydByarnc17gtbt9AXaTzscWrcVCx9cRrVaEXvqR1bF4) |
-| c1 deposits it as its own credit (sender == customer) | [Cy5eL7…](https://testnet.nearblocks.io/txns/Cy5eL7CbxuZQVYv74DrxtVkkXcRnm2zC1w6GSX7DiPRi) |
-| Seller deposits credit for c2 (`deposit_for`) | [JEEQsG…](https://testnet.nearblocks.io/txns/JEEQsGsSnSGWrAdeMf3N8H6u6VtencgVseYesDARzqgE) |
-| Worker A charges the 16 jobs | [CiU2uo…](https://testnet.nearblocks.io/txns/CiU2uooHCz9xZPun7ECGLSx5fNBGeYTe1o4sABfkSJRV) |
-| Seller lists for 1 tUSDC | [8AAV2N…](https://testnet.nearblocks.io/txns/8AAV2NZdo8YGJ8MscADZ1WVrKNrgamUWYHgRzvKfN6Rx) |
-| Seller cancels the listing after the agent's answer | [5Rmjf5…](https://testnet.nearblocks.io/txns/5Rmjf597VFjuNtnS2PhvaDcBxtC5gQP6tq8U4za2LKG8) |
-
-The agent's output (shortened):
+Recorded run `wash-11060325` (6 November 2026, seller `outlive-wash.testnet`):
 
 ```
-[buyer] policy demo: at least 2 independent paying customers, none above 80% of independent revenue, vault at least 0 h old
-[buyer] demo policy: thresholds relaxed for a 10-minute run
-[buyer]   customer wash-1103a-c1.testnet: 8 paid calls, 0.08 tUSDC -> NOT counted (owner-funded): funded by outlivel10-seller.testnet (signed a transaction touching the account, tx 5rLgd5...)
-[buyer]   customer wash-1103a-c2.testnet: 8 paid calls, 0.08 tUSDC -> NOT counted (owner-funded): credit deposited by outlivel10-seller.testnet (deposit_for)
+=== Wash-revenue rejection on testnet: outlive outlive2.outlive.testnet, new business wash-11060325
+ok   seller creates customer account wash-11060325-c1.testnet
+ok   seller deposits credit for wash-11060325-c2.testnet (deposit_for, sender != customer)
+[buyer]   customer wash-11060325-c1.testnet: 8 paid calls, 0.08 tUSDC -> NOT counted (owner-funded): funded by outlive-wash.testnet (signed a transaction touching the account)
+[buyer]   customer wash-11060325-c2.testnet: 8 paid calls, 0.08 tUSDC -> NOT counted (owner-funded): credit deposited by outlive-wash.testnet (deposit_for)
 [buyer] independent revenue 0 tUSDC; not counted: owner 0 tUSDC, owner-funded 0.16 tUSDC, unverified 0 tUSDC, not in the event log 0 tUSDC
 [buyer] check FAIL independent paying customers: 0 independent of 2 paying customers, need 2; revenue from owner-funded customers excluded (...)
 [buyer] check FAIL no single customer dominates: no independent revenue at all
-[buyer] check pass endpoint answers: http://127.0.0.1:7605 serves this vault with the registered worker key
-[buyer] decision: SKIP (failed checks: independent paying customers (0 independent of 2 paying customers, need 2; revenue from owner-funded customers excluded ...
+[buyer] decision: SKIP (failed checks: independent paying customers (...); no single customer dominates (no independent revenue at all))
 ```
 
-The vault itself reports 16 calls and 0.16 tUSDC of revenue; without the appraisal the old
-agent would have counted all of it.
+| Step | Transaction |
+|---|---|
+| Seller creates customer account `wash-11060325-c1.testnet` | [GjFQ6oY6…](https://testnet.nearblocks.io/txns/GjFQ6oY6pv2a8AcLwkbVeHhSmVpe8NffsSyBdoYxhGYm) |
+| Seller creates customer account `wash-11060325-c2.testnet` | [2w5TXDce…](https://testnet.nearblocks.io/txns/2w5TXDCer3q3uSa8hnk6JX7aeua2jC7qjunSk9z2inWn) |
+| Seller sends 3 tUSDC to c1 (`ft_transfer`) | [5qKQQVtX…](https://testnet.nearblocks.io/txns/5qKQQVtXtXvp668mWiaCY5nYKYLCUQ88pBvpSeiv5Wz2) |
+| Seller deposits credit for c2 (`deposit_for`) | [F4DD3yVF…](https://testnet.nearblocks.io/txns/F4DD3yVFwHadxD77Xp9h39xzsUBiQmYUtfs65sfx4n4S) |
+| Seller lists for 1 tUSDC | [6zhzgzn8…](https://testnet.nearblocks.io/txns/6zhzgzn8Q7Va6P4886Xa7vPe8RBbEKYtjM4m8kpvSGz1) |
+| Seller cancels the listing after the agent's answer | [FbnMLgQX…](https://testnet.nearblocks.io/txns/FbnMLgQXchzkk2sAp4bfrgQVUQnbG65c4x6D8JuwgdXX) |
+
+The vault itself reports 16 calls and 0.16 tUSDC of revenue; without the appraisal the old agent would have counted all of it. The trace is the point: the agent finds the funding transaction for the first customer and the `deposit_for` call for the second, and subtracts both. Faking demand costs the seller the same tUSDC as real demand, and still does not count.

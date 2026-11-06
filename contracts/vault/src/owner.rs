@@ -1,5 +1,5 @@
 //! Owner powers: withdraw revenue, rotate the worker key, change config and price.
-//! All of them are refused while the outlive is listed for sale.
+//! All of them are refused while the token is listed for sale.
 
 use near_contract_standards::fungible_token::core::ext_ft_core;
 use near_sdk::json_types::U128;

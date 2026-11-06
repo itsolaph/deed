@@ -257,7 +257,7 @@ async function main() {
   const push1 = await run("agents/dist/src/owner.js", ["push-stats", "--as", A.seller, "--vault", VAULT], "05-push-stats");
   step("push_stats updates the dynamic NFT metadata", { tx: push1.tx, success: push1.success });
   const outliveView = await view(OUTLIVE, "get_token", { token_id: SLUG });
-  say(`outlive stats now: ${outliveView.stats?.calls_30d} calls, revenue ${fmt(outliveView.stats?.revenue_30d ?? "0")} tUSDC`);
+  say(`token stats now: ${outliveView.stats?.calls_30d} calls, revenue ${fmt(outliveView.stats?.revenue_30d ?? "0")} tUSDC`);
 
   // 6. The seller takes the cash out, then lists.
   banner("6. seller withdraws revenue, then lists the token (the vault locks)");

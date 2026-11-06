@@ -21,7 +21,7 @@ ours in the path). Three-minute demo with the recorded runs:
 | Do | See | Time |
 |---|---|---|
 | `npm ci && bash scripts/check.sh` | Contract wasm builds, 41 contract unit tests, 19 sandbox integration tests (near-workspaces), 57 Node tests (sdk 28, worker 20, agents 5, web 4) and the web build pass; ends with `== all checks passed`. `SKIP_SANDBOX=1` skips the sandbox tests (they download `neard` once). | 3 to 6 min |
-| `npm run build && node agents/dist/src/buyer.js --account <any testnet account> --dry-run` | Read only. The buyer agent prints its policy (strict by default), then for every listing on `outlive.testnet`: each customer with its paid revenue and whether it counts as independent, the payback on chain-visible costs, every check with pass/FAIL and the reason, and its decision. The listings on testnet today are past demo runs; each is skipped with its reasons (too few independent customers, too young, worker stopped). | 15 s |
+| `npm run build && node agents/dist/src/buyer.js --account <any testnet account> --dry-run` | Read only. The buyer agent prints its policy (strict by default), then for every listing on `outlive2.outlive.testnet`: each customer with its paid revenue and whether it counts as independent, the payback on chain-visible costs, every check with pass/FAIL and the reason, and its decision. The listings on testnet today are past demo runs; each is skipped with its reasons (too few independent customers, too young, worker stopped). | 15 s |
 | `node examples/customer.mjs --account <you>.testnet`, then `--fund 2` | Become a paying customer of the hosted relay: HTTP 402 with the exact payment call, then mint test tUSDC, prepay, a signed receipt and a signed delivery proof. See [docs/TRY-AS-CUSTOMER.md](docs/TRY-AS-CUSTOMER.md). | 10 min |
 | `npm run dev -w web`, open http://127.0.0.1:7650 | Every token with live figures and its on-chain certificate. Open one for its earnings history per holder, its customers (our demo traffic agents marked), and for a listing the payback on chain-visible costs with the worked formula. Connect a testnet wallet to buy, list, withdraw, rotate the worker or manage relay credit. `npm run build -w web` writes a static site to `web/dist/`. | 1 min |
 | Open a token in the web app and connect a testnet wallet that owns it; otherwise stay disconnected or connect another account | The holder console in the token detail: withdraw revenue, rotate the worker, list/set config and manage customer credit and refunds. Without the holder wallet it shows "Holder console - locked", the owner read live with `nft_token`, and a hint to connect as that account. | 2 min |
@@ -63,11 +63,11 @@ The corrected hostile-seller run and regression tests are the evidence for that 
 | Six specified unauthorized actions are rejected on testnet | `scripts/theft-proof.mjs` | stranger withdraw [3ZARmS…](https://testnet.nearblocks.io/txns/3ZARmSniQehNWMReyEADnUvJtyDZASn4VpkU1qCCdD9f); other rejected requests may leave no transaction | 1:03–1:25 (selected actions) |
 | Listing locks the vault; a sale moves token ownership and revenue rights; the former owner cannot withdraw | sandbox listing and sale tests | v2 list [F5M1FMc…](https://testnet.nearblocks.io/txns/F5M1FMcQWV9F5iKr7xB3YKCnGmD9VAcvbMBuJKjWZCHh), buy [HsaNut7…](https://testnet.nearblocks.io/txns/HsaNut74t6ssVUq9SMe6AgWQPz4JKWt2Jc17PQVTMmFr), rejected withdraw [Dki6iHn…](https://testnet.nearblocks.io/txns/Dki6iHnU27fsRKJbANsAYqhByUjczWJaUocshxafDAwc) | 1:50–2:09 |
 | Unspent customer credit is not owner revenue and remains refundable after the delay | sandbox `withdraw_rules`, refund tests | v2 refund [2frLN1R…](https://testnet.nearblocks.io/txns/2frLN1RDnbAPFggsQRxaVnS1cuVHA3wTRzKo9Bhoi7mg) | 2:09–2:28 |
-| Unknown customers get HTTP 402; signed requests receive receipts and delivery proofs | worker paid-delivery test | v2 customer deposit [4X6kvvw…](https://testnet.nearblocks.io/txns/4X6kvvwA6ZP7wh9Wi6ukB5V1f8UY8HjyRtRp65wGTJMX) | 0:43–1:03 |
-| Rotation moves authorization and hands open obligations to a new worker | worker handover tests | v2 rotation [6tJr9gk…](https://testnet.nearblocks.io/txns/6tJr9gkPj4u8odBdJHBTjL5hKC5eucvrVFhQxhLLS2wK); 30/30 obligations handed over in recorded main run | 1:50–2:09 |
-| After a hostile seller kills its worker, receipts can be resumed and unused credit refunded; corrected hostile run reports 0 double charges | worker hostile-seller and concurrent-admission regression tests; `scripts/hostile-seller.sh` | `hostile-1103v2b`: 10 in flight, 8 resumed deliveries plus 2 new calls, 2 uncharged jobs refunded; refund [2frLN1R…](https://testnet.nearblocks.io/txns/2frLN1RDnbAPFggsQRxaVnS1cuVHA3wTRzKo9Bhoi7mg) | 2:09–2:28 |
-| The buyer excludes demonstrated owner-funded revenue and skips the listing | `sdk/test/appraisal.test.ts`; `scripts/wash-reject.mjs` | `wash-1103v2a`: seller transfer [C8xZr2w…](https://testnet.nearblocks.io/txns/C8xZr2wz6WbZLgcz34gTQ96X4jUi71fGgUnuNeGWWuza); buyer SKIP in `deployments/testnet.json` | 2:28–2:41 |
-| An agent appraises and buys a listed token under the explicitly relaxed demo policy | agents buyer test; `scripts/demo-testnet.sh` | `relay-1103v2b`: buy [HsaNut7…](https://testnet.nearblocks.io/txns/HsaNut74t6ssVUq9SMe6AgWQPz4JKWt2Jc17PQVTMmFr); 7.48-day payback on chain-visible costs, using project-generated traffic | 1:25–1:50 |
+| Unknown customers get HTTP 402; signed requests receive receipts and delivery proofs | worker paid-delivery test | customer deposit after a 402 [GnFZufQ9…](https://testnet.nearblocks.io/txns/GnFZufQ9QMqCnZUEctLfBGcce1BWw3KK17CUmKrY1EuC) | 0:43–1:03 |
+| Rotation moves authorization and hands open obligations to a new worker | worker handover tests | rotation [9J2SNdXc…](https://testnet.nearblocks.io/txns/9J2SNdXcUJUN8oRanqFQTRNaJGjvRXsmnXMAtxVSGZYF); 40/40 obligations handed over in recorded main run | 1:50–2:09 |
+| After a hostile seller kills its worker, receipts can be resumed and unused credit refunded; corrected hostile run reports 0 double charges | worker hostile-seller and concurrent-admission regression tests; `scripts/hostile-seller.sh` | `hostile-11060310`: 10 in flight, 10 deliveries resumed plus 2 new calls, 2 uncharged jobs refunded; refund [9KawW61j…](https://testnet.nearblocks.io/txns/9KawW61jwDQLceAzgthecTfYjR8YeEAQrkhxdc9HdtvH) | 2:09–2:28 |
+| The buyer excludes demonstrated owner-funded revenue and skips the listing | `sdk/test/appraisal.test.ts`; `scripts/wash-reject.mjs` | `wash-11060325`: seller transfer [GjFQ6oY6…](https://testnet.nearblocks.io/txns/GjFQ6oY6pv2a8AcLwkbVeHhSmVpe8NffsSyBdoYxhGYm); buyer SKIP in `deployments/testnet.json` | 2:28–2:41 |
+| An agent appraises and buys a listed token under the explicitly relaxed demo policy | agents buyer test; `scripts/demo-testnet.sh` | `relay-11060332`: buy [HeTSJDPe…](https://testnet.nearblocks.io/txns/HeTSJDPesRMDm5KK8Br9T4RYheNdSjHbbpok8RNAKQDZ); 4.36-day payback on chain-visible costs, using project-generated traffic | 1:25–1:50 |
 | Earnings are reconstructed per ownership epoch from NEP-297 events | `sdk/test/history.test.ts` (recorded fixture) | web Earnings history and vault counters | 2:41–2:59 |
 | 1Click integration produces mainnet dry quotes only; no cross-chain payment was executed | agents 1Click test refuses `dry: false` | recorded buyer funding quote; no transaction by design | 1:44–1:48 |
 
@@ -77,7 +77,7 @@ The corrected hostile-seller run and regression tests are the evidence for that 
 - [x] **Control passes on transfer and the old owner cannot keep access.** `contracts/outlive/src/ownership.rs` bumps `owner_epoch` and pushes the new owner to the vault after every transfer/sale; every owner method starts with `assert_owner` against that pushed owner in `contracts/vault/src/owner.rs`, so the old account's withdraw/rotate calls revert. Sandbox tests: `contracts/tests/tests/integration/ownership.rs`, `sale.rs`, `owner_powers.rs`.
 - [x] **Holder-gated page (the new console).** `web/src/gate.ts` (`isHolder`, 4 cases in `web/test/gate.test.ts`); `web/src/main.ts` reads the live owner with `nft_token(token_id)` and renders either the holder actions or the locked card.
 - [x] **Per-NFT history: what it earned, what it paid out, who held it.** `sdk/src/history.ts` builds ownership epochs from the vault's NEP-297 events; `web/src/earnings.ts` reads the index and `web/src/main.ts` renders the ledger. Test: `sdk/test/history.test.ts` (recorded fixture under `sdk/test/fixtures/`).
-- [x] **Transfer-path tests, including a sale with a payout in flight.** `contracts/tests/tests/integration/sale.rs` and `ownership.rs`; `scripts/hostile-seller.sh` sells the token mid-run, then kills worker A with jobs in flight. Recorded run `hostile-1103v2b` in `deployments/testnet.json` (`hostileSeller`) reports 0 double charges and is summarized in [`docs/DEMO.md`](docs/DEMO.md#hostile-seller).
+- [x] **Transfer-path tests, including a sale with a payout in flight.** `contracts/tests/tests/integration/sale.rs` and `ownership.rs`; `scripts/hostile-seller.sh` sells the token mid-run, then kills worker A with jobs in flight. Recorded run `hostile-11060310` in `deployments/testnet.json` (`hostileSeller`) reports 0 double charges and is summarized in [`docs/DEMO.md`](docs/DEMO.md#hostile-seller).
 
 ## NEAR features used
 
@@ -102,8 +102,8 @@ Not used: gas keys (NEP-611), global contracts (NEP-591), Chain Signatures. See 
 - No TEE. The worker's image hash in the vault is a published claim, not attested.
 - No Chain Signatures.
 - Testnet only, with a test token (tUSDC) anyone can mint.
-- Traffic in the recorded demos comes from the project's own agents (`outlivelab-alice`,
-  `outlivelab-bob`, and accounts funded by `outlivel*-seller` accounts) unless shown otherwise; the
+- Traffic in the recorded demos comes from the project's own agents (`outlive-alice`,
+  `outlive-bob`, and accounts funded by `outlive-seller*`, `outlive-hostile` and `outlive-wash`) unless shown otherwise; the
   web app marks them. The payback figures in the demos are figures of that traffic, not evidence
   of demand.
 - Payback is payback on chain-visible costs: revenue minus on-chain gas. Hosting, bandwidth and
@@ -182,9 +182,9 @@ Not enforced, and said plainly:
 
 | | |
 |---|---|
-| Outlive contract | [`outlive.testnet`](https://testnet.nearblocks.io/address/outlive.testnet) |
+| Outlive contract | [`outlive2.outlive.testnet`](https://testnet.nearblocks.io/address/outlive2.outlive.testnet) |
 | Payment token (tUSDC, test only) | [`tusdc.outlive.testnet`](https://testnet.nearblocks.io/address/tusdc.outlive.testnet) |
-| Hosted relay (customer quickstart) | [`relay-live.outlive.testnet`](https://testnet.nearblocks.io/address/relay-live.outlive.testnet); endpoint in its `get_info` |
+| Hosted relay (customer quickstart) | [`relay-live.outlive2.outlive.testnet`](https://testnet.nearblocks.io/address/relay-live.outlive2.outlive.testnet); endpoint in its `get_info` |
 | Code hashes | in [`deployments/testnet.json`](deployments/testnet.json); `vault_code_hash()` on the token returns the hash every vault runs |
 
 The recorded runs, with every transaction, are in `deployments/testnet.json` (`demo`,

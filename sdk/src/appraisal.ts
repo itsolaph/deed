@@ -178,7 +178,7 @@ export function appraise(input: AppraisalInput, policy: AppraisalPolicy): Apprai
     const ownerFunder = funding?.funders.find((f) => excludedSet.has(f.account) && f.account !== input.vault && f.account !== input.outlive);
     if (excludedSet.has(customer)) {
       cls = "owner";
-      reason = customer === input.vault || customer === input.outlive ? "the vault or outlive account itself" : "an owner (now or before) paying its own business";
+      reason = customer === input.vault || customer === input.outlive ? "the vault or the Outlive account itself" : "an owner (now or before) paying its own business";
     } else if (parent) {
       cls = "owner-funded";
       reason = `sub-account of ${parent}`;

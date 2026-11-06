@@ -21,6 +21,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { loadDeployments, saveDeployments, ROOT } from "./lib/deployments.mjs";
 import { addressLink, txLink, view } from "./lib/near.mjs";
+import { reconcile, rotationCoverage } from "./lib/reconcile.mjs";
+import { loadRunJournals } from "./reconcile-run.mjs";
 
 // Ports bind 127.0.0.1 and can be overridden with DEMO_ECHO_PORT, DEMO_PORT_A
 // and DEMO_PORT_B when the defaults are taken by long-running services.
@@ -307,33 +309,28 @@ async function main() {
   // Open obligations reach B two ways: A's signed hand-off carries the work the chain already
   // charged, and customers presenting their receipts after a 410 recover everything uncharged
   // (a revoked key may not mint new charges through its successor). Whichever comes first takes
-  // an obligation over; the other finds it known. Nothing may be lost: both paths together must
-  // cover every open obligation, and step 11 proves the final zero-pending. The customers
+  // an obligation over; the other finds it known. Event counts overlap: only the distinct
+  // delivery ids in the journals prove every original obligation is held exactly once.
+  // Step 11 proves the final zero-pending. The customers
   // re-present as soon as their next request sees the 410, which can land a second or two after
   // worker A stops, so poll the log briefly before judging.
   const bLines = () => [...logText("worker-b").matchAll(/(hand-off received from the previous worker|receipts presented by \S+): .*/g)].map((m) => m[0]);
-  const handed = handoff.match(/(\d+) of (\d+) obligations taken over/);
-  const takenOver = (line) => { const m = line.match(/(\d+) taken over \((\d+) charged as new\)/); return m ? Number(m[1]) : 0; };
-  const chargedAsNew = (line) => { const m = line.match(/(\d+) taken over \((\d+) charged as new\)/); return m ? Number(m[2]) : 0; };
   const coverage = () => {
-    const lines = bLines();
-    const open = handed !== null ? Number(handed[2]) : 0;
-    const fromHandoff = handed !== null ? Number(handed[1]) : 0;
-    const presented = lines.filter((l) => l.startsWith("receipts presented"));
-    const fromCustomers = presented.reduce((n, l) => n + takenOver(l), 0);
-    return { lines, open, heldByB: fromHandoff + fromCustomers, fromHandoff, fromCustomers, chargedAsNewTotal: presented.reduce((n, l) => n + chargedAsNew(l), 0) };
+    const report = reconcile(loadRunJournals(LOGS, { allowPartialTail: true }), { vault: VAULT, pricePerCall: healthA.price_per_call });
+    return { ...rotationCoverage(report, "worker-a", "worker-b"), lines: bLines(),
+      seqConflictIds: report.seqConflictIds, sequenceCollisions: report.sequenceCollisions };
   };
   let cov = coverage();
   const deadline = Date.now() + 30_000;
-  while (cov.heldByB < cov.open && Date.now() < deadline) {
+  while (cov.missingIds.length > 0 && Date.now() < deadline) {
     await sleep(2_000);
     cov = coverage();
   }
   step("worker B holds every open obligation of worker A", {
-    success: cov.heldByB >= cov.open,
-    note: `${cov.heldByB} of ${cov.open} open obligations: hand-off ${handed ? `${handed[1]}/${handed[2]}` : "-"} (settled only, 0 charged as new), ${cov.fromCustomers} via customer presentations (${cov.chargedAsNewTotal} charged as new); ${cov.lines.join("; ") || "no lines"}`,
+    success: aExited && cov.ok,
+    note: `${cov.heldIds.length} of ${cov.originalIds.length} distinct open delivery ids held once; ${cov.missingIds.length} missing; ${cov.doubleChargedIds.length} ids charged by both workers; ${cov.seqConflictIds.length} sequence conflicts; ${cov.sequenceCollisions.length} customer/sequence collisions${cov.missingIds.length ? `; missing ids: ${cov.missingIds.join(", ")}` : ""}`,
   });
-  record.handoff = { worker_a: handoff, worker_b: cov.lines };
+  record.handoff = { worker_a: handoff, worker_b: cov.lines, identity_coverage: cov };
   await sleep(5_000);
   fs.rmSync(OUTAGE_FILE, { force: true });
   say("the echo target is back: worker B delivers the obligations it took over");

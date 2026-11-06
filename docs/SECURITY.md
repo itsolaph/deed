@@ -64,6 +64,13 @@ before the fix.
   charged within the customer's balance and cap. The hand-off now delivers only work the chain
   already charged, classified against a fresh inclusive ledger read; anything uncharged must
   come from the customer itself (`worker/test/hardening.test.ts`, `worker/test/relay.test.ts`).
+  Exercised against a deployed vault, not only in unit tests: with the removed key of
+  `relay-11061238.outlive3.outlive.testnet` we signed a receipt and a 2xx proof for a sequence
+  the chain had never charged and posted them to that vault's successor, which answered
+  `rejected: uncharged obligation requires customer presentation` while `last_seq`, balance,
+  revenue, `charged_items` and liabilities stayed identical over a 12 s window pinned to
+  finalized blocks; the same customer then presented its own receipt and was delivered and
+  charged exactly once (`scripts/verify-revoked-handoff.mjs`).
 - **Takeover input validation:** resubmissions now reject a non-positive or malformed receipt
   price before any reservation, and check the target with the same SSRF rules as a fresh
   admission so a takeover cannot reserve or charge for a URL the worker would refuse to send

@@ -16,14 +16,17 @@ payback on chain-visible costs, and buys. Testnet only. Built for the NEAR hacka
 afternoon; you cannot copy the corner, the four years of people walking past it, or the till it
 fills. Software has no resale value for exactly that reason: the code is the machine and the
 customers are the corner, so a buyer can get one but never the other. Outlive sells the corner with
-the machine — one token, one running service, its customers and its till.
+the machine — one token, one running service, its customers and its till. The film makes this
+concrete with generated footage of a machine on a pavement, then redraws it as a line plate.
 
 <p align="center"><img src="docs/media/outlive-plate.png" width="760" alt="Line drawing of a vending machine on a pavement with people walking past, labelled: the machine (copyable), the corner (not), the till"></p>
 
 ## Try it
 
 Hosted demo: <https://itsolaph.github.io/outlive/> (static page, reads testnet directly, no backend of
-ours in the path). Ninety-four-second film with the recorded runs, cut 4:5 so it reads on a phone and on a desktop, subtitled:
+ours in the path). Ninety-four-second film, cut 4:5 so it reads on a phone and on a desktop,
+subtitled. The vending-machine shots are generated film and are labelled as such in frame; every
+number in it comes from a recorded testnet run:
 [docs/media/outlive-demo.mp4](docs/media/outlive-demo.mp4) ·
 [poster](docs/media/outlive-poster.jpg) ·
 [subtitles](docs/media/outlive-demo.srt).

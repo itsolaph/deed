@@ -5,6 +5,8 @@ import {
   HANDOFF_DOMAIN,
   canonicalJson,
   randomBytes,
+  requestHash,
+  receiptMatchesRequest,
   sha256Hex,
   signDocument,
   signOutbound,
@@ -27,7 +29,7 @@ import {
   type StatusResponse,
   type VaultInfo,
 } from "@outlive/sdk";
-import { Charger, type PendingCharge, type RefusalReason } from "./charger.js";
+import { Charger, ChargerStoppedError, type PendingCharge, type RefusalReason } from "./charger.js";
 import { Journal } from "./journal.js";
 import { validateRequest } from "./requests.js";
 import { classify, nextAttemptAt } from "./retry.js";
@@ -101,7 +103,8 @@ export class Worker {
   /** Admissions still waiting on the charger, by customer + idempotency key. A client that times
    * out and retries while the first request waits on a chain read gets the same delivery, not a
    * second one (seen on testnet under a slow RPC: one job charged twice). */
-  private readonly admitting = new Map<string, Promise<HttpReply>>();
+  private readonly admitting = new Map<string, { hash: string; promise: Promise<HttpReply> }>();
+  private readonly takingOver = new Map<string, Promise<ObligationResult>>();
   private info: VaultInfo | null = null;
   private history: { at: number; keys: Set<string> } | null = null;
   private timers: NodeJS.Timeout[] = [];
@@ -266,6 +269,8 @@ export class Worker {
 
   private newReceipt(fields: { id: string; customer: string; seq: number; price: bigint; request: DeliveryRequest; acceptedAt: number }): Signed<ObligationReceipt> {
     return signReceipt(this.signer, {
+      receipt_version: 2,
+      request_sha256: requestHash(fields.request),
       delivery_id: fields.id,
       vault: this.vault,
       customer: fields.customer,
@@ -326,15 +331,20 @@ export class Worker {
     const known = this.idempotency.get(idemKey);
     if (known) {
       const d = this.deliveries.get(known)!;
+      if (requestHash(d.request) !== requestHash(request)) return { status: 409, body: { error: "idempotency key conflicts with existing request" } };
       return { status: 200, body: { delivery_id: d.id, receipt: d.receipt } };
     }
     const inflight = this.admitting.get(idemKey);
     if (inflight) {
-      const first = await inflight;
+      if (inflight.hash !== requestHash(request)) return { status: 409, body: { error: "idempotency key conflicts with pending request" } };
+      const first = await inflight.promise;
       return first.status === 202 ? { status: 200, body: first.body } : first;
     }
-    const admission = this.admitNew(customer, request);
-    this.admitting.set(idemKey, admission);
+    const admission = this.admitNew(customer, request).catch((e) => {
+      if (e instanceof ChargerStoppedError && this.gone) return this.goneReply();
+      throw e;
+    });
+    this.admitting.set(idemKey, { hash: requestHash(request), promise: admission });
     try {
       return await admission;
     } finally {
@@ -614,11 +624,26 @@ export class Worker {
     if (!(await this.isVaultWorkerKey(r.worker_public_key))) return reject("receipt key was never a worker key of this vault");
     const request = validateRequest(entry.request);
     if (typeof request === "string") return reject(`bad request: ${request}`);
-    if (sha256Hex(request.url) !== r.target_url_sha256 || sha256Hex(request.body) !== r.body_sha256) return reject("request does not match the receipt");
+    if (!receiptMatchesRequest(r, request)) return reject("request does not match the receipt");
 
     const existing = this.deliveries.get(id);
     if (existing) return { delivery_id: id, result: "known", receipt: existing.receipt };
 
+    const inflight = this.takingOver.get(id);
+    if (inflight) return inflight;
+    const taking = this.takeOverValidated(entry, customer, request).catch((e) => {
+      if (e instanceof ChargerStoppedError) return reject("worker retired");
+      throw e;
+    });
+    this.takingOver.set(id, taking);
+    try { return await taking; } finally { this.takingOver.delete(id); }
+  }
+
+  private async takeOverValidated(entry: ObligationEntry, customer: string | null, request: DeliveryRequest): Promise<ObligationResult> {
+    const r = entry.receipt.payload;
+    const id = r.delivery_id;
+    const reject = (reason: string): ObligationResult => ({ delivery_id: id, result: "rejected", reason });
+    if (this.gone) return reject("worker retired");
     let floor: number | null;
     try {
       floor = await this.charger.floorOf(r.customer);
@@ -626,6 +651,7 @@ export class Worker {
       return reject(`chain read failed: ${e instanceof Error ? e.message : String(e)}`);
     }
     if (floor === null) return reject("customer has no entry in the vault");
+    if (this.gone) return reject("worker retired");
     const already = r.seq <= floor;
     let receipt = entry.receipt;
     let charge = false;

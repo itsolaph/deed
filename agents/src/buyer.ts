@@ -74,9 +74,11 @@ export interface Evaluation {
 
 /** Pure decision rule, unit tested: every check must pass and payback must be under the bar. */
 export function decide(result: PaybackResult, checks: Check[], maxPaybackDays: number): { decision: "buy" | "skip"; why: string } {
+  if (!Number.isFinite(maxPaybackDays) || maxPaybackDays <= 0) return { decision: "skip", why: "max payback days must be finite and positive" };
   const failed = checks.filter((c) => !c.ok);
   if (failed.length > 0) return { decision: "skip", why: `failed checks: ${failed.map((c) => `${c.name} (${c.detail})`).join("; ")}` };
   if (result.paybackDays === null) return { decision: "skip", why: "net independent revenue is not positive, it never pays back" };
+  if (!Number.isFinite(result.paybackDays) || result.paybackDays < 0) return { decision: "skip", why: "computed payback must be finite and nonnegative" };
   if (result.paybackDays > maxPaybackDays) return { decision: "skip", why: `${PAYBACK_LABEL} ${result.paybackDays.toFixed(1)} days is over ${maxPaybackDays}` };
   return { decision: "buy", why: `${PAYBACK_LABEL} ${result.paybackDays.toFixed(1)} days is under ${maxPaybackDays}` };
 }
@@ -119,12 +121,13 @@ export function staticChecks(listing: ListingView, outlive: OutliveView, info: V
   ];
 }
 
-async function endpointCheck(info: VaultInfo): Promise<Check> {
+export async function endpointCheck(info: VaultInfo): Promise<Check> {
   try {
     const res = await fetch(`${info.endpoint.replace(/\/+$/, "")}/v1/health`, { signal: AbortSignal.timeout(8000) });
     const h = (await res.json()) as HealthResponse;
-    const ok = res.ok && h.vault !== undefined && h.worker_public_key === info.worker_key;
-    return { name: "endpoint answers", ok, detail: ok ? `${info.endpoint} serves this vault with the registered worker key` : `${info.endpoint} answered ${res.status}` };
+    const expectedVault = `${info.token_id}.${info.outlive_id}`;
+    const ok = res.ok && h.ok === true && h.accepting === true && h.vault === expectedVault && info.worker_key !== null && h.worker_public_key === info.worker_key;
+    return { name: "endpoint answers", ok, detail: ok ? `${info.endpoint} serves ${expectedVault} with the registered worker key` : `${info.endpoint} answered ${res.status}; expected accepting vault ${expectedVault}, got ${h.vault ?? "(missing)"} (ok=${h.ok}, accepting=${h.accepting})` };
   } catch (e) {
     return { name: "endpoint answers", ok: false, detail: `${info.endpoint}: ${e instanceof Error ? e.message : String(e)}` };
   }

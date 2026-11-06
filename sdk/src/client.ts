@@ -5,7 +5,7 @@ import { Rpc } from "./chain.js";
 import { sha256Hex } from "./encoding.js";
 import { Signer } from "./keys.js";
 import { signRequest } from "./nep413.js";
-import { ObligationReceipt, Signed, verifyProof, verifyReceipt } from "./receipts.js";
+import { ObligationReceipt, Signed, receiptMatchesRequest, verifyProof, verifyReceipt } from "./receipts.js";
 import type {
   AcceptedResponse,
   DeliveryRequest,
@@ -148,6 +148,7 @@ export class OutliveClient {
     if (r.customer !== this.accountId) return "receipt names another customer";
     if (!verifyReceipt(doc)) return "bad receipt signature";
     if (request) {
+      if (!receiptMatchesRequest(r, request)) return "receipt does not bind this complete request (v2 required)";
       if (r.target_url_sha256 !== sha256Hex(request.url)) return "receipt target hash does not match";
       if (r.body_sha256 !== sha256Hex(request.body)) return "receipt body hash does not match";
     }
@@ -201,6 +202,9 @@ export class OutliveClient {
     if (status === 402) throw new PaymentRequiredError(json as PaymentRequired);
     if (status !== 202 && status !== 200) throw new RelayError(`delivery refused (${status})`, status, json);
     const accepted = json as AcceptedResponse;
+    if (accepted.delivery_id !== accepted.receipt.payload.delivery_id) {
+      throw new RelayError("receipt for another delivery", status, json);
+    }
     const problem = await this.verifyReceiptForVault(accepted.receipt, request);
     if (problem) throw new RelayError(`invalid receipt: ${problem}`, status, json);
     this.pending.set(accepted.delivery_id, { entry: { receipt: accepted.receipt, request } });
@@ -213,6 +217,11 @@ export class OutliveClient {
     const { status, json } = await this.send("GET", `/v1/deliveries/${encodeURIComponent(deliveryId)}`, undefined);
     if (status !== 200) throw new RelayError(`status failed (${status})`, status, json);
     const s = json as StatusResponse;
+    if (s.delivery_id !== deliveryId || s.receipt.payload.delivery_id !== deliveryId) {
+      throw new RelayError("receipt for another delivery", status, json);
+    }
+    const problem = await this.verifyReceiptForVault(s.receipt, this.pending.get(deliveryId)?.entry.request);
+    if (problem) throw new RelayError(`invalid receipt: ${problem}`, status, json);
     const keys = await this.workerKeys();
     for (const proof of s.attempts) {
       if (proof.payload.delivery_id !== deliveryId || proof.payload.vault !== this.vault) {
@@ -239,16 +248,17 @@ export class OutliveClient {
     const results = (json as { results: ObligationResult[] }).results;
     for (const r of results) {
       const p = this.pending.get(r.delivery_id);
-      // Refused for good (refund pending, unpaid, bad receipt): stop presenting it. A failed
-      // chain read on the worker's side is not final, so that one stays pending.
-      if (p && r.result === "rejected" && !/^chain read failed/.test(r.reason ?? "")) {
+      // Payment constraints and retirement can clear later. Keep the original receipt
+      // and request durable so a restart can present exactly the same obligation.
+      const temporary = /^(chain read failed|payment_required:|worker retired$)/.test(r.reason ?? "");
+      if (p && r.result === "rejected" && !temporary) {
         this.pending.delete(r.delivery_id);
         this.rejected.set(r.delivery_id, { entry: p.entry, reason: r.reason ?? "rejected" });
         continue;
       }
       if (p && r.receipt) {
         const problem = await this.verifyReceiptForVault(r.receipt, p.entry.request);
-        if (!problem) p.entry = { ...p.entry, receipt: r.receipt };
+        if (!problem && r.receipt.payload.delivery_id === r.delivery_id) p.entry = { ...p.entry, receipt: r.receipt };
       }
     }
     this.persist();

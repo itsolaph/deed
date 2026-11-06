@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { generateSecretKey, payback, sha256Hex, signOutbound, signerFromSecretKey, type OutliveView, type ListingView, type VaultInfo } from "@outlive/sdk";
 
-import { decide, resolvePolicy, staticChecks } from "../src/buyer.js";
+import { decide, endpointCheck, resolvePolicy, staticChecks } from "../src/buyer.js";
 import { startEchoTarget } from "../src/echo-target.js";
 import { NEAR_USDC_ASSET, dryQuote, findAsset, fundingQuoteRequest, nearPriceFrom, payoutQuoteRequest, type OneClickToken } from "../src/oneclick.js";
 import { withdrawCommand } from "../src/withdraw-xchain.js";
@@ -82,6 +82,28 @@ test("buyer: a failed appraisal gate skips with its reason, and policies print t
   assert.equal(custom.policy.name, "strict with overrides");
   assert.deepEqual(custom.overridden, ["--min-age-hours 24"]);
   assert.throws(() => resolvePolicy("strict", { maxShare: "1.5" }), /bad --max-share/);
+});
+
+test("buyer: non-finite payback or invalid policy limits can never authorize a purchase", () => {
+  const good = payback({ price: 5_000_000n, cash: 0n, revenue30d: 5_000_000n, gasSpent30dYocto: 0n, vaultCreatedAtMs: 0, nowMs: Date.now(), nearPrice: 3, tokenDecimals: 6 });
+  for (const limit of [NaN, Infinity, -1, 0]) {
+    assert.equal(decide(good, [], limit).decision, "skip", `invalid max-payback-days ${limit}`);
+  }
+  for (const days of [NaN, Infinity, -1]) {
+    assert.equal(decide({ ...good, paybackDays: days }, [], 30).decision, "skip", `invalid computed payback ${days}`);
+  }
+});
+
+test("buyer: endpoint must serve the exact vault and still accept work", async (t) => {
+  let body = { ok: true, vault: "other.outlive.testnet", worker_public_key: info.worker_key, accepting: true };
+  t.mock.method(globalThis, "fetch", async () => new Response(JSON.stringify(body)));
+  assert.equal((await endpointCheck(info)).ok, false, "matching key on a different vault is not this service");
+  body = { ...body, vault: "relay.outlive.testnet", accepting: false };
+  assert.equal((await endpointCheck(info)).ok, false, "retired worker must not pass buyer health gate");
+  body = { ...body, accepting: true, ok: false };
+  assert.equal((await endpointCheck(info)).ok, false, "unhealthy worker must not pass buyer health gate");
+  body = { ...body, ok: true };
+  assert.equal((await endpointCheck(info)).ok, true);
 });
 
 test("1Click: asset lookup, NEAR price and dry quote requests", async () => {

@@ -217,6 +217,17 @@ test("funding read: only transactions the customer did not sign are read; owner 
   assert.deepEqual(inboundTransfers([transfer("seller.testnet", "w1.testnet")], "other.testnet", "w1.testnet"), [], "another token is ignored");
 });
 
+test("funding read: omitted transaction bodies are incomplete, never independent funding", async () => {
+  const fetchFn: FetchLike = async (url) => ({
+    ok: true, status: 200,
+    json: async () => url.endsWith("/v0/account")
+      ? { account_txs: [{ transaction_hash: "T-owner-funding", tx_block_height: 1, tx_block_timestamp: "1", is_signer: false, is_event_log: false }], txs_count: 1 }
+      : { transactions: [] },
+  });
+  const result = await readFunding(new TxIndex("https://index.test", fetchFn), "customer.testnet", TOKEN);
+  assert.equal(result.complete, false);
+});
+
 test("demo-account labels: the project's own traffic agents and seller-funded accounts", () => {
   assert.equal(isProjectDemoAccount("outlive-alice.testnet"), true);
   assert.equal(isProjectDemoAccount("wash1.outlive-seller.testnet"), true);

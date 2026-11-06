@@ -88,9 +88,18 @@ automatically and retry.
 
 `POST /v1/deliveries` takes `{url, method, headers, body (max 64 KB), idempotency_key}` and
 answers 202 with an obligation receipt signed by the worker key:
-`{delivery_id, vault, customer, seq, price, target_url_sha256, body_sha256, accepted_at,
-worker_public_key}`. The same idempotency key returns the same delivery and never a second
-charge.
+`{receipt_version: 2, request_sha256, delivery_id, vault, customer, seq, price,
+ target_url_sha256, body_sha256, accepted_at, worker_public_key}`. `request_sha256` binds the
+canonical normalized URL, HTTP method, header names and values, body and idempotency key. A
+request reusing an idempotency key with different content receives HTTP 409, including while
+the first admission is still waiting for RPC. Concurrent customer resubmission and worker
+handoff of one obligation share one admission and one charge.
+
+Legacy receipts without the complete request hash still have verifiable signatures, but the
+SDK and takeover path reject them: their method, headers and idempotency key cannot be
+authenticated. Do not upgrade a worker with open v1 obligations; drain them on the old worker
+first. Existing locally journaled deliveries can still be replayed; that is not an upgrade of
+customer-held v1 receipts.
 
 Attempts follow `worker/src/retry.ts`: right away, then after 1 s, 5 s, 30 s, 2 min, 10 min,
 then hourly, with 20 percent jitter, until 24 hours after acceptance. 2xx is delivered, 4xx
@@ -110,9 +119,12 @@ most 3); connect and response timeouts; responses are hashed up to 64 KB. Target
 once before a delivery is accepted, so a blocked target never costs the customer anything. For
 local demos one exact `ip:port` can be allowed with `--allow-target`; the worker logs a warning.
 
-The only local state is an append-only journal (`worker/src/journal.ts`). On restart the
-worker replays it, continues pending deliveries and sends unconfirmed charges again; the vault
-reports already applied sequence numbers as `duplicate`, so nothing is charged twice.
+The journal (`worker/src/journal.ts`) is append-only and synchronized to disk before each append
+returns. Startup truncates an incomplete final record before appending again, preserves complete
+records without a trailing newline, and refuses to start on corrupt complete records rather than
+silently dropping accounting. On restart the worker replays it, continues pending deliveries and
+sends unconfirmed charges again; the vault reports already applied sequence numbers as
+`duplicate`, so an uncertain RPC response is retried with the original sequence, not a new bill.
 
 ### Charging
 
@@ -120,11 +132,18 @@ Each accepted delivery is one charge item (`units = 1`) at the vault price. The 
 (`worker/src/charger.ts`) batches up to 40 items every few seconds and signs `charge` as the
 vault with the worker key. Sequence numbers per customer continue from the vault's `last_seq`.
 
-Pre-accounting: for each customer the worker keeps the last chain view plus the charges the
-view does not include yet (not sent, in flight, confirmed after the view was read). It accepts
-a delivery only if the balance and the remaining daily cap, minus those charges, still cover
-the price. A scheduled cap decrease is planned for at once. So the worker never promises more
-than the vault will let it charge.
+Pre-accounting: for each customer the worker keeps the last chain view plus charges not yet
+included by its `last_seq` (not sent, in flight, or confirmed but absent from a lagging RPC
+view). Wall-clock ordering alone never proves inclusion. Confirmed charges reserve their actual
+returned cost. A duplicate response with an unknown original debit blocks new admissions until
+a ledger including that sequence is read. A scheduled cap decrease is planned for at once.
+
+The current immutable vault charges at the on-chain price when the batch executes. The receipt's
+`price` is an admission quote/reservation, not an enforceable price lock; a delayed batch crossing
+a scheduled price change may debit a different amount. Drain pending work before price changes.
+Exact accepted-price settlement needs a new contract API, not just an RPC timing check.
+Temporary payment, cap, refund and retirement rejections during resubmission keep the customer's
+saved obligation pending; they do not erase the receipt or request.
 
 ### Handover
 

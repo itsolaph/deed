@@ -306,7 +306,8 @@ export async function readFunding(index: TxIndex, customer: string, token: strin
     const batch = todo.slice(i, i + TX_BATCH_LIMIT);
     const txs = await index.transactions(batch);
     requests++;
-    read += batch.length;
+    const returned = new Set(txs.map((tx) => tx.transaction.hash));
+    read += batch.filter((hash) => returned.has(hash)).length;
     for (const tx of txs) {
       if (tx.transaction.signer_id !== customer) funders.push({ account: tx.transaction.signer_id, tx: tx.transaction.hash, how: "signed a transaction touching the account" });
     }

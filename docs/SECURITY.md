@@ -6,9 +6,11 @@ money into it.
 
 ## Scope
 
-The three contracts in `contracts/` (`outlive`, `vault`, `tusdc`), reviewed in October 2026
-before the hackathon submission. The worker, SDK, agents and web app were not part of that
-review; their threat model and known limits are in [DESIGN.md](DESIGN.md#threat-model-off-chain-parts).
+The initial self-review covered the three contracts in `contracts/` (`outlive`, `vault`,
+`tusdc`). A subsequent engineering pass covered worker admission, charging, handover, receipt
+binding, journal recovery and buyer funding checks; regression tests for those fixes are listed
+below. Neither pass is an independent security audit. The off-chain threat model and limits are
+in [DESIGN.md](DESIGN.md#threat-model-off-chain-parts).
 The worker's outbound requests are guarded against server-side request forgery and covered by
 tests (`worker/test/`), but that code has had no outside review either.
 
@@ -34,6 +36,30 @@ before the fix.
 | Low | A token could be transferred to the Outlive contract or to its own vault, which can never use the owner powers. | Refused. |
 | Low | Stats pushes that arrived out of order could overwrite newer figures. | Older pushes are ignored. |
 
+## Off-chain regression fixes
+
+- **Concurrent takeover:** customer resubmission and a signed worker handoff could admit the
+  same delivery more than once. A shared per-delivery promise now serializes admission after
+  each caller's input has been authenticated (`worker/test/hardening.test.ts`).
+- **Incomplete receipt binding:** URL and body hashes alone did not authenticate method,
+  headers or idempotency key. Receipt v2 signs a canonical complete-request hash; modified and
+  legacy unbound resubmissions are rejected. This intentionally breaks takeover of v1 receipts;
+  drain old obligations before upgrading (`worker/test/hardening.test.ts`).
+- **Ambiguous charge responses:** thrown, malformed or incomplete responses could strand a
+  batch or settle it without evidence. The batch stays retryable with its original sequences;
+  an already applied charge comes back as `duplicate` (`worker/test/hardening.test.ts`).
+- **Retirement during admission:** a customer RPC read could finish after the charger stopped
+  and still reserve a charge. Admission checks retirement again after the read.
+- **Idempotency conflicts:** the same key with different request content now returns HTTP 409,
+  including concurrent requests, rather than a misleading successful receipt.
+- **Journal crash recovery:** a torn final line could swallow the next accepted record on
+  replay. Startup repairs only the torn tail, fails closed on corrupt complete records, and
+  appends are synchronized (`worker/test/journal.test.ts`).
+- **Buyer verification:** endpoint health must identify the exact vault and an accepting,
+  healthy worker. Non-finite payback values cannot authorize a purchase. Missing transaction
+  bodies mark funding history incomplete rather than independently funded
+  (`agents/test/agents.test.ts`, `sdk/test/appraisal.test.ts`).
+
 ## Main remaining risks
 
 - **The contract account key.** On testnet the token account keeps a full-access key so the code
@@ -41,6 +67,18 @@ before the fix.
   vault, withdraw revenue and register a worker key that charges customers within their caps.
   Vaults cannot be upgraded, but they trust their parent contract. For mainnet the token account's
   full-access keys must be removed, or upgrades must go through a DAO with a delay.
+- **Price at settlement.** The immutable vault charges at the on-chain price when a batch
+  executes, not at the `price` quoted in an earlier receipt. A delayed batch can cross a
+  scheduled increase; a decrease can also change the final debit. The receipt is not a
+  contract-enforced price lock. Keep customer caps and balances small, and drain pending
+  work before changing prices. Exact accepted-price settlement requires a new vault API;
+  an off-chain timing check cannot guarantee it for an already submitted transaction.
+- **Overlapping key rotations.** `set_worker` publishes proposed key/history before its
+  key-action callback. A conditional failure-order trace can leave a proposed predecessor
+  advertised even though it was never installed. The full failure/interleaving has not been
+  reproduced on chain. Serialize rotations through complete transaction finality and verify
+  both `get_info` and the account's actual access keys before starting the replacement worker.
+  Existing vaults are immutable; an operator workaround is not a contract-level fix.
 - **The owner runs the worker.** The worker key can charge customers within their balance and
   daily cap without serving them. Signed receipts make this visible; caps and the refund delay
   limit it. Customers should keep low caps and small balances.

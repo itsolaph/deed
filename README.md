@@ -33,8 +33,8 @@ number in it comes from a recorded testnet run:
 
 | Do | See | Time |
 |---|---|---|
-| `npm ci && bash scripts/check.sh` | Contract wasm builds, 41 contract unit tests, 19 sandbox integration tests (near-workspaces), 57 Node tests (sdk 28, worker 20, agents 5, web 4) and the web build pass; ends with `== all checks passed`. `SKIP_SANDBOX=1` skips the sandbox tests (they download `neard` once). | 3 to 6 min |
-| `npm run build && node agents/dist/src/buyer.js --account <any testnet account> --dry-run` | Read only. The buyer agent prints its policy (strict by default), then for every listing on `outlive2.outlive.testnet`: each customer with its paid revenue and whether it counts as independent, the payback on chain-visible costs, every check with pass/FAIL and the reason, and its decision. The listings on testnet today are past demo runs; each is skipped with its reasons (too few independent customers, too young, worker stopped). | 15 s |
+| `npm ci && bash scripts/check.sh` | Contract wasm builds, 41 passing contract unit tests (plus one ignored SVG preview), 19 sandbox integration tests (near-workspaces), the Node suites and the web build pass; ends with `== all checks passed`. `SKIP_SANDBOX=1` skips the sandbox tests (they download `neard` once). | 3 to 6 min |
+| `npm run build && node agents/dist/src/buyer.js --account <any testnet account> --dry-run` | Read only; no customer or buyer key is needed for a dry run. The buyer agent prints its policy (strict by default), then evaluates each current listing on `outlive2.outlive.testnet`: attributed revenue, payback on chain-visible costs, and each pass/FAIL reason. Listings come and go as demos run; `no listings found` is a valid result. A short demo does not satisfy the strict policy. | 15 s |
 | `node examples/customer.mjs --account <you>.testnet`, then `--fund 2` | Become a paying customer of the hosted relay: HTTP 402 with the exact payment call, then mint test tUSDC, prepay, a signed receipt and a signed delivery proof. See [docs/TRY-AS-CUSTOMER.md](docs/TRY-AS-CUSTOMER.md). | 10 min |
 | `npm run dev -w web`, open http://127.0.0.1:7650 | Every token with live figures and its on-chain certificate. Open one for its earnings history per holder, its customers (our demo traffic agents marked), and for a listing the payback on chain-visible costs with the worked formula. Connect a testnet wallet to buy, list, withdraw, rotate the worker or manage relay credit. `npm run build -w web` writes a static site to `web/dist/`. | 1 min |
 | Open a token in the web app and connect a testnet wallet that owns it; otherwise stay disconnected or connect another account | The holder console in the token detail: withdraw revenue, rotate the worker, list/set config and manage customer credit and refunds. Without the holder wallet it shows "Holder console - locked", the owner read live with `nft_token`, and a hint to connect as that account. | 2 min |
@@ -165,6 +165,7 @@ Not used: gas keys (NEP-611), global contracts (NEP-591), Chain Signatures. See 
 More detail: [docs/DESIGN.md](docs/DESIGN.md) (design, buyer appraisal, hostile seller, threat
 model), [docs/CONTRACTS.md](docs/CONTRACTS.md) (every method and invariant),
 [docs/DEMO.md](docs/DEMO.md) (the runs step by step), [docs/SECURITY.md](docs/SECURITY.md),
+[docs/ENGINEERING-REVIEW.md](docs/ENGINEERING-REVIEW.md) (core fixes, executed checks and remaining boundaries),
 [docs/TRY-AS-CUSTOMER.md](docs/TRY-AS-CUSTOMER.md).
 
 Running a worker yourself: `node worker/dist/src/cli.js --vault <vault> --network testnet --port 7601`.

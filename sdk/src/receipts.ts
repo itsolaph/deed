@@ -2,7 +2,8 @@
 // signatures and hand-off envelopes. Each kind has its own domain prefix so a signature for
 // one kind can never be replayed as another.
 
-import { canonicalJson, fromBase64, toBase64, utf8 } from "./encoding.js";
+import { canonicalJson, fromBase64, toBase64, utf8, sha256Hex } from "./encoding.js";
+import type { DeliveryRequest } from "./relay.js";
 import { Signer, verifySignature } from "./keys.js";
 
 export const RECEIPT_DOMAIN = "outlive-obligation:v1\n";
@@ -12,17 +13,32 @@ export const HANDOFF_DOMAIN = "outlive-handoff:v1\n";
 
 /** What the worker promises when it accepts a paid delivery. */
 export interface ObligationReceipt {
+  /** v2 binds the complete normalized request; absent on legacy receipts. */
+  receipt_version?: 2;
+  request_sha256?: string;
   delivery_id: string;
   vault: string;
   customer: string;
   /** Charge sequence number for this customer on the vault. */
   seq: number;
-  /** Price per call (payment token units) at acceptance. */
+  /** Quoted reservation at acceptance; existing vaults debit the execution-time price. */
   price: string;
   target_url_sha256: string;
   body_sha256: string;
   accepted_at: number;
   worker_public_key: string;
+}
+
+/** Hash the same normalized fields that worker validation returns (defaults and header case). */
+export function requestHash(request: DeliveryRequest): string {
+  const headers: Record<string, string> = {};
+  for (const [name, value] of Object.entries(request.headers ?? {})) headers[name.toLowerCase()] = value;
+  return sha256Hex(canonicalJson({ url: request.url, method: (request.method ?? "POST").toUpperCase(), headers, body: request.body ?? "", idempotency_key: request.idempotency_key }));
+}
+
+export function receiptMatchesRequest(receipt: ObligationReceipt, request: DeliveryRequest): boolean {
+  return receipt.receipt_version === 2 && receipt.request_sha256 === requestHash(request)
+    && receipt.target_url_sha256 === sha256Hex(request.url) && receipt.body_sha256 === sha256Hex(request.body ?? "");
 }
 
 /** One delivery attempt, signed by the worker that made it. */

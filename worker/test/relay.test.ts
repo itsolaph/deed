@@ -450,8 +450,8 @@ test("hostile seller: worker A killed without hand-off; a restarted customer res
     assert.equal(bobResults.get(b1.delivery_id)!.result, "accepted");
     assert.equal(bobResults.get(b2.delivery_id)!.result, "rejected");
     assert.match(bobResults.get(b2.delivery_id)!.reason!, /refund_pending/);
-    assert.deepEqual(bob.rejectedEntries().map((r) => r.entry.receipt.payload.delivery_id), [b2.delivery_id], "refused for good: no longer presented");
-    assert.deepEqual(bob.pendingEntries().map((e) => e.receipt.payload.delivery_id), [b1.delivery_id]);
+    assert.deepEqual(bob.rejectedEntries(), [], "a refund request can be cancelled; do not discard the saved obligation");
+    assert.deepEqual(bob.pendingEntries().map((e) => e.receipt.payload.delivery_id), [b1.delivery_id, b2.delivery_id]);
 
     await until(() => target.hits.some((h) => h.relayOk && h.key === b.signer.publicKey && h.path.endsWith("n=11")), 5000);
     await b.worker.flushCharges();

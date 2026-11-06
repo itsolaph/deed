@@ -4,11 +4,15 @@
 //
 // For each customer the worker keeps the last chain view and three lists of charges that view
 // does not include yet: `pending` (not sent), `inFlight` (in the current charge transaction)
-// and `unseen` (confirmed, but the view was read before). What it may still accept is
+// and `unseen` (confirmed, but not yet reflected in the view). What it may still accept is
 // chargeable_today(view) minus the cost of those three lists.
 
 import type { ChargeItem, CustomerView } from "@outlive/sdk";
-import type { VaultChain } from "./vault-chain.js";
+import type { ChargeOutcome, VaultChain } from "./vault-chain.js";
+
+export class ChargerStoppedError extends Error {
+  constructor() { super("charger stopped"); }
+}
 
 export const MAX_BATCH = 40;
 export const VIEW_MAX_AGE_MS = 30_000;
@@ -37,6 +41,8 @@ interface Account {
   pending: PendingCharge[];
   inFlight: PendingCharge[];
   unseen: PendingCharge[];
+  /** Duplicate outcomes omit their original debit; require a ledger including this seq. */
+  uncertainThrough: number;
 }
 
 export interface ChargerHooks {
@@ -69,7 +75,7 @@ export class Charger {
   private account(customer: string): Account {
     let a = this.accounts.get(customer);
     if (!a) {
-      a = { view: null, fetchedAt: 0, loading: null, lastAssigned: 0, floor: null, pending: [], inFlight: [], unseen: [] };
+      a = { view: null, fetchedAt: 0, loading: null, lastAssigned: 0, floor: null, pending: [], inFlight: [], unseen: [], uncertainThrough: 0 };
       this.accounts.set(customer, a);
     }
     return a;
@@ -93,9 +99,14 @@ export class Charger {
     a.loading = this.chain
       .customer(customer)
       .then((view) => {
+        // A finalized RPC can lag even a confirmed transaction. Never replace a newer
+        // ledger with an older seq/day (or a transient missing-customer response).
+        if (a.view && (!view || Number(view.last_seq) < Number(a.view.last_seq) || view.day < a.view.day)) return;
         a.view = view;
         a.fetchedAt = startedAt;
-        a.unseen = a.unseen.filter((i) => (i.confirmedAt ?? 0) > startedAt);
+        // Sequence inclusion, not wall-clock order, proves a debit is in this view.
+        // Pending/in-flight reservations stay conservative if a read races a flush.
+        if (view) a.unseen = a.unseen.filter((i) => i.seq > Number(view.last_seq));
         if (view) {
           const lastSeq = Number(view.last_seq);
           if (a.floor === null) {
@@ -124,6 +135,7 @@ export class Charger {
     if (!a.view) return null;
     const reserved = sum(a.pending) + sum(a.inFlight) + sum(a.unseen);
     const v = a.view;
+    if (Number(v.last_seq) < a.uncertainThrough) return { balance: 0n, capLeft: 0n };
     const balance = BigInt(v.balance) - reserved;
     let capLeft = BigInt(v.chargeable_today) - reserved;
     // A scheduled cap decrease: plan with the lower cap already.
@@ -140,8 +152,9 @@ export class Charger {
    * can take the same seq.
    */
   async admit(customer: string, price: bigint, make: (seq: number) => { id: string; receiptsRoot: string }): Promise<{ ok: true; item: PendingCharge } | { ok: false; reason: RefusalReason; balance: bigint }> {
-    if (this.stopped) throw new Error("charger stopped");
+    if (this.stopped) throw new ChargerStoppedError();
     await this.refresh(customer);
+    if (this.stopped) throw new ChargerStoppedError();
     const a = this.account(customer);
     if (!a.view) return { ok: false, reason: "unknown_customer", balance: 0n };
     if (a.view.refund_requested_at_ms !== null) return { ok: false, reason: "refund_pending", balance: BigInt(a.view.balance) };
@@ -195,7 +208,27 @@ export class Charger {
     const batch = this.takeBatch();
     if (batch.length === 0) return;
     const items: ChargeItem[] = batch.map((i) => ({ customer: i.customer, seq: i.seq, units: 1, receipts_root: i.receiptsRoot }));
-    const out = await this.chain.charge(items);
+    let out: ChargeOutcome;
+    try {
+      out = await this.chain.charge(items);
+      if (!out || typeof out.ok !== "boolean") throw new Error("malformed charge outcome");
+      // Validate the complete response before changing accounting. An incomplete response
+      // may have charged on chain: retry the original seqs, never renumber them.
+      if (out.ok && (!Array.isArray(out.results) || out.results.length !== batch.length || batch.some(item =>
+        out.results.filter(r => r && r.customer === item.customer && r.seq === item.seq &&
+          ["charged", "duplicate", "seq_gap", "unknown_customer", "insufficient_balance", "over_daily_cap", "invalid_units", "overflow", "invalid_receipts_root"].includes(r.status) &&
+          (r.status !== "charged" || (typeof r.cost === "string" && /^[0-9]+$/.test(r.cost) && BigInt(r.cost) > 0n))).length !== 1))) {
+        throw new Error("malformed or incomplete charge results");
+      }
+    } catch (e) {
+      for (const item of batch) {
+        const a = this.account(item.customer);
+        a.inFlight = a.inFlight.filter(i => i !== item);
+        a.pending.push(item);
+      }
+      this.hooks.onBatchFailed(e instanceof Error ? e.message : String(e));
+      return;
+    }
     const touched = new Set(batch.map((i) => i.customer));
 
     if (!out.ok) {
@@ -216,8 +249,14 @@ export class Charger {
       const r = out.results.find((x) => x.customer === item.customer && x.seq === item.seq);
       const status = r?.status ?? "missing_result";
       if (status === "charged" || status === "duplicate") {
+        // Existing vaults settle at execution-time price. Reserve the actual debit,
+        // not the receipt quote; duplicate responses do not reveal the original cost.
+        if (status === "charged") item.cost = BigInt(r!.cost);
+        else a.uncertainThrough = Math.max(a.uncertainThrough, item.seq);
         item.confirmedAt = now;
-        if (status === "charged") a.unseen.push(item);
+        // A duplicate already included in our view is not a fresh debit. A retry
+        // after an ambiguous response still needs reservation until its seq is seen.
+        if (item.seq > Number(a.view?.last_seq ?? 0)) a.unseen.push(item);
         this.hooks.onSettled(item, status, out.hash);
       } else if (status === "seq_gap" && item.retries < MAX_SEQ_RETRIES) {
         item.retries += 1;

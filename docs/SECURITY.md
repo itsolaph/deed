@@ -59,6 +59,22 @@ before the fix.
   healthy worker. Non-finite payback values cannot authorize a purchase. Missing transaction
   bodies mark funding history incomplete rather than independently funded
   (`agents/test/agents.test.ts`, `sdk/test/appraisal.test.ts`).
+- **Revoked-key charging through hand-off (high):** a worker key removed by a rotation kept its
+  signing secret and could hand its successor freshly forged obligations, which the successor
+  charged within the customer's balance and cap. The hand-off now delivers only work the chain
+  already charged, classified against a fresh inclusive ledger read; anything uncharged must
+  come from the customer itself (`worker/test/hardening.test.ts`, `worker/test/relay.test.ts`).
+- **Takeover input validation:** resubmissions now reject a non-positive or malformed receipt
+  price before any reservation, and check the target with the same SSRF rules as a fresh
+  admission so a takeover cannot reserve or charge for a URL the worker would refuse to send
+  (`worker/test/hardening.test.ts`).
+- **Sequence reuse after a gap:** renumbering after a refused batch item could hand out
+  sequences already confirmed inside the same worker while the chain view lagged. Renumbering
+  starts past every sequence the worker sent or saw confirmed (`worker/test/hardening.test.ts`).
+- **Same-key rotation history (protocol v2):** renewing the active key appended a duplicate
+  history entry, evicting an older distinct key from the 10-slot ring early. A renewal now
+  replaces its entry in place (`contracts/vault/src/v2_tests.rs`,
+  `contracts/tests/tests/integration/v2.rs`).
 
 ## Main remaining risks
 

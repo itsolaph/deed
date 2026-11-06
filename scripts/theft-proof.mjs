@@ -22,6 +22,10 @@ import { parseArgs } from "node:util";
 import { Account, JsonRpcProvider } from "near-api-js";
 import { ONE_YOCTO, TGAS, NEAR, RPC_URLS, actions, loadPrivateKey, newKeyPair, provider, send, txLink, view } from "./lib/near.mjs";
 
+import { loadDeployments } from "./lib/deployments.mjs";
+
+const deployment = loadDeployments();
+
 // Attempts go through one plain provider: the failover wrapper would log each expected rejection
 // as a stack trace and hide the reason behind "Exceeded 1 providers".
 const direct = new JsonRpcProvider({ url: RPC_URLS[0] });
@@ -31,10 +35,10 @@ const WORKERS = path.join(process.env.NEAR_CREDENTIALS_DIR || path.join(HOME, ".
 
 const { values } = parseArgs({
   options: {
-    vault: { type: "string", default: "relay-live.outlive.testnet" },
+    vault: { type: "string", default: deployment.live?.vault ?? `relay-live.${deployment.accounts.outlive}` },
     "key-file": { type: "string" },
     stranger: { type: "string", default: "outlive-alice.testnet" },
-    "old-vault": { type: "string", default: "relay-1102ripe.outlive.testnet" },
+    "old-vault": { type: "string", default: deployment.demo?.vault ?? "relay-11061040.outlive2.outlive.testnet" },
     "old-key-file": { type: "string" },
     slow: { type: "string", default: "1200" },
   },

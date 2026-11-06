@@ -5,6 +5,7 @@
 mod common;
 
 mod integration {
+    pub mod v2;
     pub mod charge;
     pub mod customers;
     pub mod metadata;

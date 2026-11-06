@@ -54,7 +54,7 @@ pub async fn start_sandbox() -> Result<(near_sandbox::Sandbox, Worker<Sandbox>)>
 }
 
 pub fn item(customer: &AccountId, seq: u64, units: u32) -> Value {
-    json!({ "customer": customer, "seq": seq, "units": units, "receipts_root": ROOT_HEX })
+    json!({ "customer": customer, "seq": seq, "units": units, "quoted_price": PRICE.to_string(), "receipts_root": ROOT_HEX })
 }
 
 /// Asserts the final outcome succeeded and returns it.

@@ -4,13 +4,14 @@ Three contracts live in `contracts/`:
 
 | Contract | Testnet account | Role |
 |---|---|---|
-| `outlive` | `outlive2.outlive.testnet` | NEP-171 registry. Mints one token per business, creates its vault, runs the built-in sale. |
-| `vault` | `<slug>.outlive2.outlive.testnet` | One per business. Treasury, price list, customer ledger, worker key. |
+| `outlive` | `outlive3.outlive.testnet` | NEP-171 registry. Mints one token per business, creates its vault, runs the built-in sale. |
+| `vault` | `<slug>.outlive3.outlive.testnet` | One per business. Treasury, price list, customer ledger, worker key. |
 | `tusdc` | `tusdc.outlive.testnet` | Testnet-only test token (NEP-141). Has no value. |
 
-`outlive.outlive.testnet` ran the first version, before the self-review fixes in
-[`SECURITY.md`](SECURITY.md). Nothing in this repo points at it any more; every account named
-in `deployments/testnet.json` is under `outlive2.outlive.testnet`.
+`outlive.outlive.testnet` and `outlive2.outlive.testnet` are legacy factories. The current
+factory creates protocol-v2 vaults; previous factories and vaults were not upgraded. Their
+complete deployment/run records remain under `superseded` in `deployments/testnet.json`.
+The current factory's `vault_code_hash()` describes its own vault generation only.
 
 All amounts are `u128` in the payment token's smallest unit (tUSDC and USDC have 6 decimals)
 and are passed as JSON strings. Arithmetic on balances is checked. Every state change that
@@ -46,7 +47,7 @@ used for display in the certificate.
   The contract registers the vault on the payment token.
 - The vault wasm is embedded in the token at build time (`scripts/build.sh` builds the vault
   first). `vault_code_hash()` returns its sha256 (hex and base58) so anyone can compare it
-  with the code hash of any `<slug>.outlive2.outlive.testnet` on an explorer.
+  with the code hash of any `<slug>.outlive3.outlive.testnet` on an explorer.
 
 Scale note: NEP-591 global contracts (deploy once, reference by hash) are the way to run many
 vaults. Publishing a global contract burns about 10 NEAR per 100 KB once, so for a handful of
@@ -129,7 +130,7 @@ the stored one is ignored.
 it cannot move tokens, cannot withdraw anything, cannot change or lock a vault and cannot
 change the payment token. There is no admin method at all.
 
-What is not trustless: the token account `outlive2.outlive.testnet` holds a full-access key, so
+What is not trustless: the token account `outlive3.outlive.testnet` holds a full-access key, so
 whoever holds that key can redeploy the token code on testnet. Redeployed code could push a
 fake owner to every vault (the vault trusts its parent outlive), then withdraw revenue and
 register its own worker key to charge customers within their caps. On mainnet the token account's
@@ -186,7 +187,13 @@ entry, so old receipts can never be charged again after a customer comes back.
 
 ### Charge
 
-`charge(items: [{customer, seq, units, receipts_root}])`, 1 to 40 items.
+`charge(items: [{customer, seq, units, quoted_price, receipts_root}])`, 1 to 40 items.
+
+Protocol v2 requires an explicit positive `quoted_price` per item. For the supplied worker,
+this is the exact price signed in its admission receipt and preserved through restart and
+customer-authorized takeover. Changing the schedule does not change an existing quote. The
+contract enforces the worker-supplied amount within balance/cap limits; it does not verify a
+customer signature or independently prove that the worker quoted honestly.
 
 - Callable only by a transaction signed as the vault account itself
   (predecessor == current account) with the registered worker key
@@ -209,10 +216,12 @@ All need 1 yocto, are owner only and are refused while the vault is locked:
 - `withdraw(amount, receiver_id?, memo?)`: at most `revenue`. Sends `ft_transfer` to the
   receiver (default the owner). A receiver lets the owner pay out to a NEAR Intents 1Click
   deposit address for a cross-chain withdrawal. The callback restores revenue on failure.
-- `set_worker(public_key, allowance?)`: deletes the previous worker key and adds the new
-  function-call key in one batch. The callback restores the previous state if the batch
-  failed. The last 10 worker keys are kept in `get_worker_history()` with the time and owner
-  epoch, so clients can verify receipts signed by earlier workers.
+- `set_worker(public_key, allowance?)`: serializes a pending key update, deletes the previous
+  key and adds the replacement in one batch. Active key and history change only after a
+  successful callback matching the operation id. Failure clears the pending operation without
+  publishing a phantom key or evicting history. An overlapping rotation is rejected. The last
+  10 successfully installed worker keys remain in `get_worker_history()`. Same-key allowance
+  renewal still deletes and re-adds the key atomically.
 - `set_config(endpoint, image_hash)`.
 - `set_price(price)`: a decrease (or the current price) applies at once and drops a scheduled
   increase. An increase applies only after 24 hours (`pending_price`,

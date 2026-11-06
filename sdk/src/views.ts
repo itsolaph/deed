@@ -3,6 +3,9 @@
 import { Rpc } from "./chain.js";
 
 export interface VaultInfo {
+  /** Explicit capability; receipt versions do not identify vault protocols. */
+  protocol_version?: number;
+  worker_rotation_pending?: { op_id: number; public_key: string; previous: string | null; allowance: string; owner_epoch: number } | null;
   outlive_id: string;
   token_id: string;
   owner_id: string;
@@ -67,6 +70,8 @@ export interface WorkerKeyView {
 }
 
 export interface ChargeItem {
+  /** Required and enforced by v2; legacy v1 ignores this field. */
+  quoted_price?: string;
   customer: string;
   seq: number;
   units: number;

@@ -1,5 +1,10 @@
 # Core engineering review
 
+**Version scope:** this report records the first hardening pass at commit `3cc8bcf`, using
+legacy protocol-v1 vaults. Later protocol-v2 changes and deployments are described in
+[VAULT-V2.md](VAULT-V2.md); the evidence and limitations below are historical, not claims about
+an upgrade to existing immutable vaults.
+
 This pass hardened the working testnet prototype. It did not change the contracts, record a
 new video, send a submission or publish a social post. This is a project self-review assisted
 by models, not an independent security audit.

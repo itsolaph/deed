@@ -29,6 +29,25 @@ export function loadDeployments() {
   return JSON.parse(fs.readFileSync(DEPLOYMENTS_FILE, "utf8"));
 }
 
+export function assertFactoryVaultCompatible(advertisedHash, builtHash) {
+  if (advertisedHash !== builtHash) throw new Error('vault protocol changed: use a new factory account; existing vaults are immutable');
+}
+
+export function archiveCurrentDeployment(data, replacement, at = new Date().toISOString()) {
+  const previous = data.accounts?.outlive;
+  if (!previous || previous === replacement) return;
+  const { superseded = [], ...snapshot } = structuredClone(data);
+  data.superseded = [...superseded, {
+    ...snapshot,
+    outlive: previous,
+    superseded_at: at,
+    reason: `replaced by ${replacement}; previous immutable vaults and their evidence remain unchanged`,
+  }];
+  for (const key of ['deploy', 'smoke', 'demo', 'demo_runs', 'hostileSeller', 'hostileSeller_runs', 'washReject', 'washReject_runs', 'outliveKeys', 'live']) delete data[key];
+  delete data.accounts.vault;
+  data.links = {};
+}
+
 export function saveDeployments(data) {
   fs.mkdirSync(path.dirname(DEPLOYMENTS_FILE), { recursive: true });
   data.updated_at = new Date().toISOString();

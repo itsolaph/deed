@@ -182,7 +182,7 @@ export class Worker {
     const info = this.info!;
     let price = BigInt(info.price_per_call);
     // A price increase that lands soon: reserve at the new price already.
-    if (info.pending_price !== null && info.price_effective_at_ms !== null && Number(info.price_effective_at_ms) - this.now() < 120_000) {
+    if (info.protocol_version !== 2 && info.pending_price !== null && info.price_effective_at_ms !== null && Number(info.price_effective_at_ms) - this.now() < 120_000) {
       const pending = BigInt(info.pending_price);
       if (pending > price) price = pending;
     }
@@ -517,7 +517,9 @@ export class Worker {
     // Let attempts that already started finish (they have their own timeout).
     for (let i = 0; i < 150 && this.running > 0; i++) await new Promise((r) => setTimeout(r, 100));
     // Pending deliveries go over to be delivered; delivered ones whose charge never went out
-    // go over with their signed proofs, to be charged by the next worker.
+    // go over with their signed proofs. The successor only delivers work the chain already
+    // charged; anything uncharged it refuses there and the customers re-present their saved
+    // receipts, so a revoked key cannot mint new obligations through the hand-over.
     const entries: ObligationEntry[] = [];
     for (const d of this.deliveries.values()) {
       if (d.state === "pending") entries.push({ receipt: d.receipt, request: d.request });
@@ -621,6 +623,7 @@ export class Worker {
     if (r.vault !== this.vault) return reject("receipt for another vault");
     if (customer !== null && r.customer !== customer) return reject("receipt of another customer");
     if (!verifyReceipt(entry.receipt)) return reject("bad receipt signature");
+    if (typeof r.price !== "string" || !/^[1-9][0-9]*$/.test(r.price)) return reject("bad price");
     if (!(await this.isVaultWorkerKey(r.worker_public_key))) return reject("receipt key was never a worker key of this vault");
     const request = validateRequest(entry.request);
     if (typeof request === "string") return reject(`bad request: ${request}`);
@@ -644,6 +647,10 @@ export class Worker {
     const id = r.delivery_id;
     const reject = (reason: string): ObligationResult => ({ delivery_id: id, result: "rejected", reason });
     if (this.gone) return reject("worker retired");
+    // Check the target exactly like a fresh admission: a takeover must not reserve balance
+    // or charge for a request the worker would refuse to send.
+    const blocked = await this.checkTarget(request.url);
+    if (blocked) return reject(`target refused: ${blocked}`);
     let floor: number | null;
     try {
       floor = await this.charger.floorOf(r.customer);
@@ -652,11 +659,21 @@ export class Worker {
     }
     if (floor === null) return reject("customer has no entry in the vault");
     if (this.gone) return reject("worker retired");
-    const already = r.seq <= floor;
+    let already = r.seq <= floor;
+    // Revocation must take effect: a hand-off (no customer present) may only carry work the
+    // chain already charged. Uncharged obligations need the customer itself, or any key that
+    // ever was a worker key could keep minting new billable obligations through its successor.
+    if (!already && customer === null) {
+      // The first-contact floor can predate the predecessor's final charges, so classify
+      // against a fresh inclusive read before refusing settled work.
+      already = r.seq <= (await this.charger.settledThrough(r.customer));
+      if (!already) return reject("uncharged obligation requires customer presentation");
+    }
     let receipt = entry.receipt;
     let charge = false;
     if (!already) {
-      const price = this.price();
+      // Keep the original accepted quote when another worker takes over unpaid work.
+      const price = BigInt(r.price);
       const admitted = await this.charger.admit(r.customer, price, (seq) => {
         receipt = this.newReceipt({ id, customer: r.customer, seq, price, request, acceptedAt: r.accepted_at });
         return { id, receiptsRoot: sha256Hex(canonicalJson(receipt)) };

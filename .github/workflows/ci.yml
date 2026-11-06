@@ -49,6 +49,8 @@ jobs:
       - run: npm ci
       - name: Script syntax
         run: for f in scripts/*.mjs scripts/lib/*.mjs; do node --check "$f"; done
+      - name: Deployment evidence tests
+        run: node --test scripts/test/*.test.mjs
       - name: sdk, worker and agents tests
         run: npm test
       - name: Web build

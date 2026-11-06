@@ -288,7 +288,7 @@ test("handover: old worker answers 410 and hands off; new worker delivers withou
   }
 });
 
-test("delivered but uncharged work is handed over with its proofs and charged once by the new worker", async () => {
+test("delivered but uncharged work is refused by the hand-off; the customer's receipt recovers it", async () => {
   const target = await startTarget(() => 0);
   const fake = new FakeVault();
   let retired = false;
@@ -305,13 +305,18 @@ test("delivered but uncharged work is handed over with its proofs and charged on
   const stopB = await b.start();
   try {
     await until(() => retired, 5000);
-    const s = b.worker.status("alice.test", d.delivery_id);
-    assert.equal((s.body as { state: string }).state, "delivered");
-    assert.equal((s.body as { attempts: unknown[] }).attempts.length, 1, "A's proof came along");
+    // Revocation: the hand-off carries only settled work, even with valid delivery proofs
+    // (a revoked key could forge those). The customer's own presentation is the recovery path.
+    assert.equal(b.worker.status("alice.test", d.delivery_id).status, 404);
+    await b.worker.flushCharges();
+    assert.equal(fake.revenue, 0n, "B does not bill A's obligation behind the customer's back");
+    assert.equal(target.hits.length, hitsBefore, "not delivered again behind the customer's back");
+    // The customer still holds the receipt and presents it: charged and delivered exactly once.
+    const res = await b.worker.acceptObligations("alice.test", { entries: [{ request: request(1), receipt: d.receipt }] });
+    assert.equal((res.body as { results: { result: string; charged_as_new?: boolean }[] }).results[0]!.charged_as_new, true);
+    await until(async () => target.hits.length > hitsBefore, 5000);
     await b.worker.flushCharges();
     assert.equal(fake.revenue, fake.price, "charged once, by B");
-    await new Promise((r) => setTimeout(r, 300));
-    assert.equal(target.hits.length, hitsBefore, "not delivered a second time");
   } finally {
     await stopA().catch(() => undefined);
     await stopB();

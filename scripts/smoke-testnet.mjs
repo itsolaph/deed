@@ -101,9 +101,10 @@ function receiptsRoot(label) {
 
 async function chargeItems(specs) {
   const items = [];
+  const info = await view(VAULT, "get_info");
   for (const [customer, units] of specs) {
     const seq = await nextSeq(customer);
-    items.push({ customer, seq, units, receipts_root: receiptsRoot(`${customer}:${seq}`) });
+    items.push({ customer, seq, units, quoted_price: info.price_per_call, receipts_root: receiptsRoot(`${customer}:${seq}`) });
   }
   return items;
 }

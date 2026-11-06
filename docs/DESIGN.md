@@ -159,9 +159,15 @@ The new worker accepts obligations signed by any earlier worker key of the vault
 (`get_worker_history`), from the old worker's hand-off or from customers re-presenting their
 receipts (`POST /v1/obligations`). For each customer it records the vault's `last_seq` the first
 time it sees them, after it became the registered worker. A receipt with a seq at or below that
-mark was charged by an earlier worker: it is delivered without charging again. A higher seq was
-never charged: the new worker charges it as new and issues a fresh receipt. Paid obligations
-move with the token even if the old server is gone.
+mark was charged by an earlier worker: it is delivered without charging again.
+
+A hand-off may only carry work the chain already charged. An obligation the old worker accepted
+but never charged is refused there and reaches the new worker only through its customer, who
+authenticates with NEP-413. Without that rule, any key that ever was a worker key could keep
+minting new billable obligations through its successor after revocation: history proves a key
+once charged for the vault, not that it still may. Delivery proofs prove nothing more — the
+same revoked key could forge them. In the delivered-but-uncharged window the customer's saved
+receipt is the recovery path; a client that already dropped it leaves the call unbilled.
 
 The SDK re-reads the endpoint from the vault after a 410 or a failed connection and presents
 its pending receipts again before retrying.
@@ -259,15 +265,16 @@ The contract threat model is in [CONTRACTS.md](CONTRACTS.md#threat-model). Off c
 | A different customer | Send their own paid requests. | Act as another customer without that account's full-access key; replay a signed request (nonce and 5-minute window); read another customer's deliveries. |
 | Someone with a stolen receipt | Present it to the worker again. | Get it charged twice (seq and delivery id are checked); change its target or body (hashes are signed). |
 | A customer choosing targets | Point deliveries at any public URL. | Reach loopback, private, link-local or metadata addresses, directly, through DNS answers or through redirects. |
-| Old worker after a sale | Keep serving until the buyer rotates; then only hand its queue over. Or be killed without a hand-off (see "Hostile seller"). | Charge after the rotation (its key is deleted, and the vault checks the signer key). |
+| Old worker after a sale | Keep serving until the buyer rotates; then only hand settled work over, and re-present nothing new without the customer. Or be killed without a hand-off (see "Hostile seller"). | Charge after the rotation (its key is deleted, and the vault checks the signer key); mint obligations through the successor (the hand-off only delivers work the chain already charged). |
 | Seller inflating revenue before a sale | Pay its own vault from accounts it funds. | Get that revenue counted by the buyer agent when the funding is one hop away (see "Buyer agent"). |
 
 Known limits of the worker:
 
-- Deliveries a worker made but did not charge before its key was rotated go to the next worker
-  with the hand-off and its proofs, and are charged once there. Without a hand-off (worker
-  killed) they are charged once by the next worker only if the customer resubmits the receipt,
-  and then delivered a second time.
+- A delivery a worker made but did not charge before its key was rotated is refused by the
+  hand-off (a revoked key could forge both receipts and proofs) and is recovered only through
+  the customer's saved receipt, which charges it once and delivers it again — the request's
+  idempotency key makes that re-delivery a no-op for a conforming target. A customer that
+  already dropped the receipt leaves the call unbilled.
 - If a worker crashes without its journal, customers can still present their receipts, but
   attempts it made are lost from the status history.
 - The worker trusts its RPC nodes for the chain view.

@@ -7,8 +7,8 @@ accepted job, a signed proof of every delivery attempt, and a refund of unspent 
 Everything here is testnet. The payment token, tUSDC, is a test token without value that anyone
 can mint.
 
-The hosted relay is the token `relay-live` on `outlive2.outlive.testnet`; its vault is
-`relay-live.outlive2.outlive.testnet`. The worker URL is not written here because it changes (it
+The hosted relay is the token `relay-live` on `outlive3.outlive.testnet`; its vault is
+`relay-live.outlive3.outlive.testnet`. The worker URL is not written here because it changes (it
 runs behind a temporary tunnel): every step reads it from the vault's on-chain config, the same
 way the SDK does.
 
@@ -28,7 +28,7 @@ way the SDK does.
 ## 1. Read the endpoint from chain
 
 ```
-near contract call-function as-read-only relay-live.outlive2.outlive.testnet get_info json-args {} network-config testnet now
+near contract call-function as-read-only relay-live.outlive3.outlive.testnet get_info json-args {} network-config testnet now
 ```
 
 `endpoint` is the worker URL, `price_per_call` the price in tUSDC units (6 decimals, so `10000`
@@ -44,12 +44,12 @@ node examples/customer.mjs --account <you>.testnet
 Expected output (the endpoint differs):
 
 ```
-vault relay-live.outlive2.outlive.testnet: endpoint on chain https://<tunnel>.trycloudflare.com, price 0.01 tUSDC per call, first deposit at least 1 tUSDC
+vault relay-live.outlive3.outlive.testnet: endpoint on chain https://<tunnel>.trycloudflare.com, price 0.01 tUSDC per call, first deposit at least 1 tUSDC
 402 payment required (unknown_customer). The worker says how to pay:
 {
   "contract": "tusdc.outlive.testnet",
   "method": "ft_transfer_call",
-  "args": { "receiver_id": "relay-live.outlive2.outlive.testnet", "amount": "1000000", "msg": "" },
+  "args": { "receiver_id": "relay-live.outlive3.outlive.testnet", "amount": "1000000", "msg": "" },
   ...
   "near_cli": "near contract call-function as-transaction tusdc.outlive.testnet ft_transfer_call ..."
 }
@@ -122,7 +122,7 @@ import { OutliveClient, Rpc, signerFromSecretKey } from "../sdk/dist/src/index.j
 import { NodeSigner, createNodeTransactor, fileStore } from "../sdk/dist/src/node.js";
 
 const client = new OutliveClient({
-  vault: "relay-live.outlive2.outlive.testnet",
+  vault: "relay-live.outlive3.outlive.testnet",
   accountId: "you.testnet",
   signer: signerFromSecretKey(secretKey),                 // NEP-413 request signing
   rpc: new Rpc(),

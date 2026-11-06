@@ -65,6 +65,16 @@ pub struct WorkerKeyRecord {
     pub owner_epoch: u64,
 }
 
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Debug)]
+pub struct WorkerRotation {
+    pub op_id: u64,
+    pub public_key: PublicKey,
+    pub previous: Option<PublicKey>,
+    pub allowance: U128,
+    pub owner_epoch: u64,
+}
+
 #[near(contract_state)]
 #[derive(PanicOnDefault)]
 pub struct Vault {
@@ -85,6 +95,8 @@ pub struct Vault {
     refund_delay_ns: u64,
     stats_interval_ns: u64,
     worker_key: Option<PublicKey>,
+    worker_rotation_pending: Option<WorkerRotation>,
+    worker_rotation_id: u64,
     /// Most recent worker keys, newest last, so clients can verify old receipts.
     worker_history: Vec<WorkerKeyRecord>,
     customers: LookupMap<AccountId, Customer>,
@@ -175,6 +187,8 @@ impl Vault {
             refund_delay_ns: refund_delay_sec * NS_PER_SEC,
             stats_interval_ns: stats_interval_sec.saturating_mul(NS_PER_SEC),
             worker_key: None,
+            worker_rotation_pending: None,
+            worker_rotation_id: 0,
             worker_history: Vec::new(),
             customers: LookupMap::new(StorageKey::Customers),
             customer_count: 0,
@@ -221,3 +235,6 @@ impl Vault {
         self.gas_checkpoint = balance;
     }
 }
+
+#[cfg(test)]
+mod v2_tests;

@@ -24,6 +24,7 @@ export interface PendingCharge {
   id: string;
   customer: string;
   seq: number;
+  /** Original receipt quote while unpaid; actual debit after legacy v1 settlement. */
   cost: bigint;
   receiptsRoot: string;
   retries: number;
@@ -129,6 +130,16 @@ export class Charger {
     return a.floor;
   }
 
+  /**
+   * Highest seq the chain currently shows as charged, freshly read. The first-contact floor
+   * can predate a predecessor worker's final charges, so hand-off classification uses this.
+   */
+  async settledThrough(customer: string): Promise<number> {
+    const a = this.account(customer);
+    await this.refresh(customer, true);
+    return Math.max(a.floor ?? 0, Number(a.view?.last_seq ?? 0));
+  }
+
   /** What the customer can still be charged today, minus everything not yet on chain. */
   available(customer: string): { balance: bigint; capLeft: bigint } | null {
     const a = this.account(customer);
@@ -207,7 +218,7 @@ export class Charger {
     if (this.stopped) return;
     const batch = this.takeBatch();
     if (batch.length === 0) return;
-    const items: ChargeItem[] = batch.map((i) => ({ customer: i.customer, seq: i.seq, units: 1, receipts_root: i.receiptsRoot }));
+    const items: ChargeItem[] = batch.map((i) => ({ customer: i.customer, seq: i.seq, units: 1, quoted_price: i.cost.toString(), receipts_root: i.receiptsRoot }));
     let out: ChargeOutcome;
     try {
       out = await this.chain.charge(items);
@@ -249,7 +260,7 @@ export class Charger {
       const r = out.results.find((x) => x.customer === item.customer && x.seq === item.seq);
       const status = r?.status ?? "missing_result";
       if (status === "charged" || status === "duplicate") {
-        // Existing vaults settle at execution-time price. Reserve the actual debit,
+        // Legacy v1 vaults settle at execution-time price. Reserve the actual debit,
         // not the receipt quote; duplicate responses do not reveal the original cost.
         if (status === "charged") item.cost = BigInt(r!.cost);
         else a.uncertainThrough = Math.max(a.uncertainThrough, item.seq);
@@ -279,7 +290,11 @@ export class Charger {
   private renumber(customer: string): void {
     const a = this.account(customer);
     if (!a.view) return;
-    let seq = Number(a.view.last_seq);
+    // Never reuse a sequence this worker may already have sent or seen confirmed: the chain
+    // view can lag behind items confirmed during the same batch (`unseen`, `inFlight`).
+    let seq = Math.max(Number(a.view.last_seq), a.lastAssigned);
+    for (const i of a.unseen) seq = Math.max(seq, i.seq);
+    for (const i of a.inFlight) seq = Math.max(seq, i.seq);
     a.pending.sort((x, y) => x.seq - y.seq);
     for (const item of a.pending) {
       seq += 1;

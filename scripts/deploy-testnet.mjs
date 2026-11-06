@@ -12,11 +12,11 @@ import {
   NEAR, TGAS, account, accountExists, actions, addressLink, call, newKeyPair, provider,
   saveKeyPair, send, txLink, view,
 } from "./lib/near.mjs";
-import { codeHash, loadDeployments, readWasm, saveDeployments } from "./lib/deployments.mjs";
+import { archiveCurrentDeployment, assertFactoryVaultCompatible, codeHash, loadDeployments, readWasm, saveDeployments } from "./lib/deployments.mjs";
 
 const PARENT = process.env.OUTLIVE_PARENT || "outlive.testnet";
-// outlive.<parent> runs the Phase A code; the reviewed code (new state layout) lives on outlive2.
-const OUTLIVE_ID = process.env.OUTLIVE_ACCOUNT || `outlive2.${PARENT}`;
+// Protocol-v2 vaults get a new factory. Older factories and their vaults remain unchanged.
+const OUTLIVE_ID = process.env.OUTLIVE_ACCOUNT || `outlive3.${PARENT}`;
 const TUSDC_ID = process.env.TUSDC_ACCOUNT || `tusdc.${PARENT}`;
 const FT_STORAGE = 1_250_000_000_000_000_000_000n; // 0.00125 NEAR
 
@@ -69,6 +69,10 @@ async function ensureCode(id, wasmBytes, probe, initArgs) {
     console.log(`code of ${id} is current (${local})`);
     return;
   }
+  if (initialized && id === OUTLIVE_ID) {
+    const advertised = await view(id, "vault_code_hash");
+    assertFactoryVaultCompatible(advertised.sha256_base58, codeHash(readWasm("vault")).sha256_base58);
+  }
   const txActions = [actions.deployContract(new Uint8Array(wasmBytes))];
   if (!initialized) txActions.push(actions.functionCall("new", initArgs, 100n * TGAS, 0n));
   record(`${initialized ? "redeploy" : "deploy and init"} ${id}`, await send(account(id), id, txActions));
@@ -102,24 +106,7 @@ async function main() {
   }
 
   const data = loadDeployments();
-  const previousOutlive = data.accounts && data.accounts.outlive;
-  if (previousOutlive && previousOutlive !== OUTLIVE_ID) {
-    data.superseded = [
-      ...(data.superseded || []),
-      {
-        outlive: previousOutlive,
-        vault: data.accounts.vault,
-        code_hashes: data.code_hashes,
-        deploy: data.deploy,
-        smoke: data.smoke,
-        superseded_at: new Date().toISOString(),
-        reason: `replaced by ${OUTLIVE_ID} (new state layout after the self-review fixes, see docs/SECURITY.md)`,
-      },
-    ];
-    delete data.deploy;
-    delete data.smoke;
-    delete data.accounts.vault;
-  }
+  archiveCurrentDeployment(data, OUTLIVE_ID);
   data.network = "testnet";
   data.explorer = "https://testnet.nearblocks.io";
   data.accounts = {

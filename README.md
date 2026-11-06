@@ -34,7 +34,7 @@ number in it comes from a recorded testnet run:
 | Do | See | Time |
 |---|---|---|
 | `npm ci && bash scripts/check.sh` | Contract wasm builds, 41 passing contract unit tests (plus one ignored SVG preview), 19 sandbox integration tests (near-workspaces), the Node suites and the web build pass; ends with `== all checks passed`. `SKIP_SANDBOX=1` skips the sandbox tests (they download `neard` once). | 3 to 6 min |
-| `npm run build && node agents/dist/src/buyer.js --account <any testnet account> --dry-run` | Read only; no customer or buyer key is needed for a dry run. The buyer agent prints its policy (strict by default), then evaluates each current listing on `outlive2.outlive.testnet`: attributed revenue, payback on chain-visible costs, and each pass/FAIL reason. Listings come and go as demos run; `no listings found` is a valid result. A short demo does not satisfy the strict policy. | 15 s |
+| `npm run build && node agents/dist/src/buyer.js --account <any testnet account> --dry-run` | Read only; no customer or buyer key is needed for a dry run. The buyer agent prints its policy (strict by default), then evaluates each current listing on `outlive3.outlive.testnet`: attributed revenue, payback on chain-visible costs, and each pass/FAIL reason. Listings come and go as demos run; `no listings found` is a valid result. A short demo does not satisfy the strict policy. | 15 s |
 | `node examples/customer.mjs --account <you>.testnet`, then `--fund 2` | Become a paying customer of the hosted relay: HTTP 402 with the exact payment call, then mint test tUSDC, prepay, a signed receipt and a signed delivery proof. See [docs/TRY-AS-CUSTOMER.md](docs/TRY-AS-CUSTOMER.md). | 10 min |
 | `npm run dev -w web`, open http://127.0.0.1:7650 | Every token with live figures and its on-chain certificate. Open one for its earnings history per holder, its customers (our demo traffic agents marked), and for a listing the payback on chain-visible costs with the worked formula. Connect a testnet wallet to buy, list, withdraw, rotate the worker or manage relay credit. `npm run build -w web` writes a static site to `web/dist/`. | 1 min |
 | Open a token in the web app and connect a testnet wallet that owns it; otherwise stay disconnected or connect another account | The holder console in the token detail: withdraw revenue, rotate the worker, list/set config and manage customer credit and refunds. Without the holder wallet it shows "Holder console - locked", the owner read live with `nft_token`, and a hint to connect as that account. | 2 min |
@@ -197,9 +197,9 @@ Not enforced, and said plainly:
 
 | | |
 |---|---|
-| Outlive contract | [`outlive2.outlive.testnet`](https://testnet.nearblocks.io/address/outlive2.outlive.testnet) |
+| Outlive contract | [`outlive3.outlive.testnet`](https://testnet.nearblocks.io/address/outlive3.outlive.testnet) |
 | Payment token (tUSDC, test only) | [`tusdc.outlive.testnet`](https://testnet.nearblocks.io/address/tusdc.outlive.testnet) |
-| Hosted relay (customer quickstart) | [`relay-live.outlive2.outlive.testnet`](https://testnet.nearblocks.io/address/relay-live.outlive2.outlive.testnet); endpoint in its `get_info` |
+| Hosted relay (customer quickstart) | [`relay-live.outlive3.outlive.testnet`](https://testnet.nearblocks.io/address/relay-live.outlive3.outlive.testnet); endpoint in its `get_info` |
 | Code hashes | in [`deployments/testnet.json`](deployments/testnet.json); `vault_code_hash()` on the token returns the hash every vault runs |
 
 The recorded runs, with every transaction, are in `deployments/testnet.json` (`demo`,

@@ -9,6 +9,8 @@ use crate::{Vault, VaultExt, MIN_CUSTOMER_DEPOSIT};
 
 #[near(serializers = [json])]
 pub struct VaultInfo {
+    pub protocol_version: u32,
+    pub worker_rotation_pending: Option<crate::WorkerRotation>,
     pub outlive_id: AccountId,
     pub token_id: String,
     pub owner_id: AccountId,
@@ -120,6 +122,8 @@ impl Vault {
         let now = env::block_timestamp();
         let pending = self.price.pending.filter(|(_, at)| now < *at);
         VaultInfo {
+            protocol_version: 2,
+            worker_rotation_pending: self.worker_rotation_pending.clone(),
             outlive_id: self.outlive_id.clone(),
             token_id: self.token_id.clone(),
             owner_id: self.owner_id.clone(),

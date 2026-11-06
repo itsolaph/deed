@@ -28,6 +28,7 @@ export interface VaultChain {
 
 export class RpcVaultChain implements VaultChain {
   private readonly views: VaultViews;
+  private protocolVersion: number | undefined;
   private readonly signer: NodeSigner;
 
   constructor(
@@ -40,8 +41,10 @@ export class RpcVaultChain implements VaultChain {
     this.signer = new NodeSigner(vault, workerPrivateKey, rpc.urls);
   }
 
-  info() {
-    return this.views.info();
+  async info() {
+    const info = await this.views.info();
+    this.protocolVersion = info.protocol_version ?? 1;
+    return info;
   }
 
   customer(accountId: string) {
@@ -67,6 +70,14 @@ export class RpcVaultChain implements VaultChain {
 
   async charge(items: ChargeItem[]): Promise<ChargeOutcome> {
     try {
+      if (this.protocolVersion === undefined) await this.info();
+      // v1 ignores the added field and still settles at execution-time price.
+      // Only an explicit v2 capability guarantees exact quote settlement.
+      if (this.protocolVersion === 2 && items.some(i =>
+        typeof i.quoted_price !== "string" || !/^[0-9]+$/.test(i.quoted_price) ||
+        BigInt(i.quoted_price) <= 0n || BigInt(i.quoted_price) >= (1n << 128n))) {
+        return { ok: false, results: [], error: "v2 requires an explicit positive U128 quoted_price" };
+      }
       const out = await withRpcRetry(() => this.signer.call(this.vault, {
         method: "charge",
         args: { items },

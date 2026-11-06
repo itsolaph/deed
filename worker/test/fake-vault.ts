@@ -1,5 +1,6 @@
-// In-memory vault with the same charge rules as contracts/vault (seq, balance, daily cap,
-// worker key), so worker tests run without a chain.
+// In-memory legacy v1 vault (seq, balance, daily cap, worker key). It deliberately
+// ignores quoted_price so the existing suite continues to cover v1 compatibility.
+// Contract tests exercise v2 settlement; worker tests also inspect submitted quotes.
 
 import type { ChargeItem, ChargeResult, CustomerView, VaultInfo, WorkerKeyView } from "@outlive/sdk";
 import type { ChargeOutcome, KeyPermission, VaultChain } from "../src/vault-chain.js";

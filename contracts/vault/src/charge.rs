@@ -13,6 +13,8 @@ pub struct ChargeItem {
     pub customer: AccountId,
     pub seq: u64,
     pub units: u32,
+    /// Exact quote supplied by the trusted worker; this is not proof of customer consent.
+    pub quoted_price: U128,
     /// Hex sha256 over this batch's delivery receipts for this customer. Goes into the event only.
     pub receipts_root: String,
 }
@@ -43,10 +45,12 @@ impl Vault {
         );
         require!(!items.is_empty() && items.len() <= MAX_CHARGE_ITEMS, "1 to 40 items per batch");
 
+        require!(items.iter().all(|i| i.quoted_price.0 > 0), "quoted price must be positive");
         self.track_gas(0);
         let now = env::block_timestamp();
         let today = self.today();
         self.price.settle(now);
+        // Schedule price is diagnostic only; every debit uses the worker-supplied item quote.
         let price = self.price.current;
 
         let mut results = Vec::with_capacity(items.len());
@@ -62,7 +66,7 @@ impl Vault {
                     None => ("unknown_customer", 0),
                     Some(c) => {
                         c.settle_cap(now);
-                        match c.try_charge(item.seq, item.units, price, today) {
+                        match c.try_charge(item.seq, item.units, item.quoted_price.0, today) {
                             ChargeOutcome::Charged(cost) => ("charged", cost),
                             other => (other.as_str(), 0),
                         }
@@ -80,6 +84,7 @@ impl Vault {
                 "customer": item.customer,
                 "seq": item.seq,
                 "units": item.units,
+                "quoted_price": item.quoted_price,
                 "cost": U128(cost),
                 "status": status,
                 "receipts_root": item.receipts_root,

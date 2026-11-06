@@ -81,15 +81,16 @@ impl Vault {
         );
 
         let current = env::current_account_id();
-        let previous = self.worker_key.replace(public_key.clone());
-        self.worker_history.push(WorkerKeyRecord {
-            public_key: public_key.clone(),
-            set_at: env::block_timestamp(),
-            owner_epoch: self.owner_epoch,
+        require!(self.worker_rotation_pending.is_none(), "worker rotation pending");
+        self.worker_rotation_id = self.worker_rotation_id.checked_add(1).expect("rotation id overflow");
+        let op_id = self.worker_rotation_id;
+        // Until the callback commits, get_info keeps the last confirmed key. Between the
+        // key batch and callback, the newly installed key cannot charge yet.
+        let previous = self.worker_key.clone();
+        self.worker_rotation_pending = Some(crate::WorkerRotation {
+            op_id, public_key: public_key.clone(), previous: previous.clone(),
+            allowance: U128(allowance.as_yoctonear()), owner_epoch: self.owner_epoch,
         });
-        if self.worker_history.len() > WORKER_HISTORY_LEN {
-            self.worker_history.remove(0);
-        }
 
         let mut batch = Promise::new(current.clone());
         if let Some(old) = previous.clone() {
@@ -105,37 +106,38 @@ impl Vault {
             .then(
                 Self::ext(current)
                     .with_static_gas(GAS_CALLBACK)
-                    .on_worker_set(previous, public_key, U128(allowance.as_yoctonear())),
+                    .on_worker_set(op_id),
             )
     }
 
     #[private]
-    pub fn on_worker_set(
-        &mut self,
-        previous: Option<PublicKey>,
-        public_key: PublicKey,
-        allowance: U128,
-    ) -> bool {
+    pub fn on_worker_set(&mut self, op_id: u64) -> bool {
+        let Some(pending) = self.worker_rotation_pending.as_ref() else { return false; };
+        if pending.op_id != op_id { return false; }
+        let pending = self.worker_rotation_pending.take().unwrap();
         let ok = promise_succeeded();
         if ok {
-            events::emit(
-                "vault_worker_set",
-                json!({
-                    "public_key": public_key,
-                    "previous": previous,
-                    "allowance": allowance,
-                    "owner_epoch": self.owner_epoch,
-                }),
-            );
+            // Commit the installed key even if ownership changed while the batch ran.
+            // Cancelling here would leave the actual access key inconsistent with state.
+            self.worker_key = Some(pending.public_key.clone());
+            // A same-key renewal replaces its history entry instead of pushing a duplicate,
+            // so a full ring never evicts an older distinct key early.
+            match self.worker_history.last_mut() {
+                Some(rec) if rec.public_key == pending.public_key => {
+                    rec.set_at = env::block_timestamp();
+                    rec.owner_epoch = pending.owner_epoch;
+                }
+                _ => {
+                    self.worker_history.push(WorkerKeyRecord {
+                        public_key: pending.public_key.clone(), set_at: env::block_timestamp(),
+                        owner_epoch: pending.owner_epoch,
+                    });
+                    if self.worker_history.len() > WORKER_HISTORY_LEN { self.worker_history.remove(0); }
+                }
+            }
+            events::emit("vault_worker_set", json!(pending));
         } else {
-            // The key batch failed as a whole, so the chain still has `previous`.
-            if self.worker_key.as_ref() == Some(&public_key) {
-                self.worker_key = previous;
-            }
-            if self.worker_history.last().is_some_and(|r| r.public_key == public_key) {
-                self.worker_history.pop();
-            }
-            events::emit("vault_worker_set_failed", json!({ "public_key": public_key }));
+            events::emit("vault_worker_set_failed", json!(pending));
         }
         ok
     }

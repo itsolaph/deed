@@ -3,7 +3,7 @@
 const params = new URLSearchParams(location.search);
 
 export const NETWORK = "testnet" as const;
-export const OUTLIVE_CONTRACT = params.get("outlive") || "outlive2.outlive.testnet";
+export const OUTLIVE_CONTRACT = params.get("outlive") || "outlive3.outlive.testnet";
 export const EXPLORER = "https://testnet.nearblocks.io";
 /** Transaction index for the earnings history (FastNEAR; NearBlocks' testnet indexer lags). */
 export const TX_INDEX = params.get("tx_index") || "https://tx.test.fastnear.com";

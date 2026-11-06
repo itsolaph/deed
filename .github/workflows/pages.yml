@@ -12,6 +12,7 @@ on:
       - "sdk/**"
       - "package.json"
       - "package-lock.json"
+      - "docs/media/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -36,6 +37,8 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npm run build -w web
+      # the demo film and its poster ship with the page, so one link is enough
+      - run: mkdir -p web/dist/media && cp docs/media/* web/dist/media/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

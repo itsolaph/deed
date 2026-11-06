@@ -18,6 +18,8 @@ fills. Software has no resale value for exactly that reason: the code is the mac
 customers are the corner, so a buyer can get one but never the other. Outlive sells the corner with
 the machine — one token, one running service, its customers and its till.
 
+<p align="center"><img src="docs/media/outlive-plate.png" width="760" alt="Line drawing of a vending machine on a pavement with people walking past, labelled: the machine (copyable), the corner (not), the till"></p>
+
 ## Try it
 
 Hosted demo: <https://itsolaph.github.io/outlive/> (static page, reads testnet directly, no backend of

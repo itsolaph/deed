@@ -32,7 +32,7 @@
     }
   },
   "mint_cost_yocto": "2899460000000000000000000",
-  "updated_at": "2026-11-06T12:24:51.120Z",
+  "updated_at": "2026-11-06T12:44:38.461Z",
   "superseded": [
     {
       "network": "testnet",
@@ -967,12 +967,34 @@
       "run": "2026-11-06T12-18-22-254Z-relay-11061218",
       "ok": false,
       "finished_at": "2026-11-06T12:24:51.120Z"
+    },
+    {
+      "run": "2026-11-06T12-26-24-363Z-relay-11061226",
+      "ok": false,
+      "finished_at": "2026-11-06T12:27:16.122Z",
+      "error": "mint failed"
+    },
+    {
+      "run": "2026-11-06T12-27-59-157Z-relay-11061227",
+      "ok": false,
+      "finished_at": "2026-11-06T12:28:50.918Z",
+      "error": "mint failed"
+    },
+    {
+      "run": "2026-11-06T12-30-43-018Z-relay-11061230",
+      "ok": false,
+      "finished_at": "2026-11-06T12:37:08.494Z"
+    },
+    {
+      "run": "2026-11-06T12-38-42-747Z-relay-11061238",
+      "ok": true,
+      "finished_at": "2026-11-06T12:44:38.460Z"
     }
   ],
   "demo": {
-    "run": "2026-11-06T12-18-22-254Z-relay-11061218",
-    "slug": "relay-11061218",
-    "vault": "relay-11061218.outlive3.outlive.testnet",
+    "run": "2026-11-06T12-38-42-747Z-relay-11061238",
+    "slug": "relay-11061238",
+    "vault": "relay-11061238.outlive3.outlive.testnet",
     "outlive": "outlive3.outlive.testnet",
     "accounts": {
       "seller": "outlive-seller2.testnet",
@@ -982,103 +1004,103 @@
         "outlive-bob.testnet"
       ]
     },
-    "started_at": "2026-11-06T12:18:22.259Z",
+    "started_at": "2026-11-06T12:38:42.748Z",
     "steps": [
       {
-        "step": "seller mints relay-11061218",
+        "step": "seller mints relay-11061238",
         "expect": "success",
         "ok": true,
-        "tx": "5rV4nQewahMzffbo5LK8VVFai4gPWSNWq7cD1P6ULgrd",
-        "link": "https://testnet.nearblocks.io/txns/5rV4nQewahMzffbo5LK8VVFai4gPWSNWq7cD1P6ULgrd"
+        "tx": "J5QtF8zCKQoxGPE1zcsKRJG59TkiLBuZdrT1bg1zeuat",
+        "link": "https://testnet.nearblocks.io/txns/J5QtF8zCKQoxGPE1zcsKRJG59TkiLBuZdrT1bg1zeuat"
       },
       {
         "step": "seller sets worker key A and endpoint",
         "expect": "success",
         "ok": true,
-        "tx": "FJR5gnsQys42obmAEtu2UnUpcardrf9yJxCvr8g5ZUvt",
-        "link": "https://testnet.nearblocks.io/txns/FJR5gnsQys42obmAEtu2UnUpcardrf9yJxCvr8g5ZUvt"
+        "tx": "CgnG8HGWV44eMcu7phqe1hpkmsAt9kssHWbKfk2PoBbF",
+        "link": "https://testnet.nearblocks.io/txns/CgnG8HGWV44eMcu7phqe1hpkmsAt9kssHWbKfk2PoBbF"
       },
       {
         "step": "customer deposit after a 402 (ft_transfer_call)",
         "expect": "success",
         "ok": true,
-        "tx": "FH7JZPJXKMaRdK6jDFNJxZBe4cJ5gfcG29SXqbbLykpV",
-        "link": "https://testnet.nearblocks.io/txns/FH7JZPJXKMaRdK6jDFNJxZBe4cJ5gfcG29SXqbbLykpV"
+        "tx": "3kfQVbZtp6UpnBcmoEZVHfL3PW4RqRbPAiqJcFRkVdF1",
+        "link": "https://testnet.nearblocks.io/txns/3kfQVbZtp6UpnBcmoEZVHfL3PW4RqRbPAiqJcFRkVdF1"
       },
       {
         "step": "customer deposit after a 402 (ft_transfer_call)",
         "expect": "success",
         "ok": true,
-        "tx": "259kNcnMeoJjJDfMuxkmfcsDFEKRv3EztdCCkcPhL9bj",
-        "link": "https://testnet.nearblocks.io/txns/259kNcnMeoJjJDfMuxkmfcsDFEKRv3EztdCCkcPhL9bj"
+        "tx": "7Cb1Qzc96ddJjoR811XwMJGMhxHYdj1jNLYKhEg3frA4",
+        "link": "https://testnet.nearblocks.io/txns/7Cb1Qzc96ddJjoR811XwMJGMhxHYdj1jNLYKhEg3frA4"
       },
       {
-        "step": "worker A charges a batch (4 items, signed by the worker key)",
+        "step": "worker A charges a batch (6 items, signed by the worker key)",
         "expect": "success",
         "ok": true,
-        "tx": "CMnAmnpxFprKGTuXW1JnBx8ovoyReEABPST7FGVbW4sv",
-        "link": "https://testnet.nearblocks.io/txns/CMnAmnpxFprKGTuXW1JnBx8ovoyReEABPST7FGVbW4sv"
+        "tx": "JC6Q42a7WVX4sV6jdd3sbNppPdCsn2uTcQsjXtSnZnss",
+        "link": "https://testnet.nearblocks.io/txns/JC6Q42a7WVX4sV6jdd3sbNppPdCsn2uTcQsjXtSnZnss"
       },
       {
         "step": "push_stats updates the dynamic NFT metadata",
         "expect": "success",
         "ok": true,
-        "tx": "4nTd7pyimrByCbqYqaPuBJH9hZGB985rXVwJCUjAL1RC",
-        "link": "https://testnet.nearblocks.io/txns/4nTd7pyimrByCbqYqaPuBJH9hZGB985rXVwJCUjAL1RC"
+        "tx": "5aWuXQdVErbcyYae5RzMzScE5frscNXkLu4Stb9fTNfU",
+        "link": "https://testnet.nearblocks.io/txns/5aWuXQdVErbcyYae5RzMzScE5frscNXkLu4Stb9fTNfU"
       },
       {
         "step": "seller withdraws revenue before listing",
         "expect": "success",
         "ok": true,
-        "tx": "6Bhex8TPShgJ71LvujLvccXXnEC7ub9V7ie3XXR71nBD",
-        "link": "https://testnet.nearblocks.io/txns/6Bhex8TPShgJ71LvujLvccXXnEC7ub9V7ie3XXR71nBD"
+        "tx": "JoVDVM6b72ztDAfxuhDWVZE7oqxC2cXyATxxCjZfetv",
+        "link": "https://testnet.nearblocks.io/txns/JoVDVM6b72ztDAfxuhDWVZE7oqxC2cXyATxxCjZfetv"
       },
       {
-        "step": "seller lists relay-11061218 for 3 tUSDC",
+        "step": "seller lists relay-11061238 for 3 tUSDC",
         "expect": "success",
         "ok": true,
-        "tx": "6EdMziiU2NHLNJEhDbfW9WSTDqMQxAJvjHPnr2xyTrhH",
-        "link": "https://testnet.nearblocks.io/txns/6EdMziiU2NHLNJEhDbfW9WSTDqMQxAJvjHPnr2xyTrhH"
+        "tx": "jnorf61WcLoTALum2aAN5sKojpz33UNXCnUagSdp31w",
+        "link": "https://testnet.nearblocks.io/txns/jnorf61WcLoTALum2aAN5sKojpz33UNXCnUagSdp31w"
       },
       {
-        "step": "buyer agent buys relay-11061218",
+        "step": "buyer agent buys relay-11061238",
         "expect": "success",
         "ok": true,
-        "tx": "9FmqC7Sj854BHoF71XEQFePdd8MvUFNVisWDW6PPwN59",
-        "link": "https://testnet.nearblocks.io/txns/9FmqC7Sj854BHoF71XEQFePdd8MvUFNVisWDW6PPwN59",
-        "note": "payback on chain-visible costs 4.38 days on independent revenue 0.6600 tUSDC, policy demo"
+        "tx": "D295pqzDU9dZaxyjnEoa9Cr3zCXsA5dUnEYpZRB8YWaB",
+        "link": "https://testnet.nearblocks.io/txns/D295pqzDU9dZaxyjnEoa9Cr3zCXsA5dUnEYpZRB8YWaB",
+        "note": "payback on chain-visible costs 4.19 days on independent revenue 0.6800 tUSDC, policy demo"
       },
       {
         "step": "seller withdraw after the sale reverts (only the token owner)",
         "expect": "failure",
         "ok": true,
-        "tx": "7ndrMeH6ZrTkNACMQtfpGaq1ewCd5d9n8wkLxdcGsv6C",
-        "link": "https://testnet.nearblocks.io/txns/7ndrMeH6ZrTkNACMQtfpGaq1ewCd5d9n8wkLxdcGsv6C"
+        "tx": "EMuxP4YEFCCj2XKdLaX2FpcsiFZ6yYSbEu2fqwQiqAt5",
+        "link": "https://testnet.nearblocks.io/txns/EMuxP4YEFCCj2XKdLaX2FpcsiFZ6yYSbEu2fqwQiqAt5"
       },
       {
         "step": "buyer rotates the worker key and endpoint in one transaction",
         "expect": "success",
         "ok": true,
-        "tx": "B8RrSHt3MQbnR4TBrbmiqnSBRXzV7Uj33WyPJboKsnPc",
-        "link": "https://testnet.nearblocks.io/txns/B8RrSHt3MQbnR4TBrbmiqnSBRXzV7Uj33WyPJboKsnPc"
+        "tx": "4QM6Nu4huRTB48xzk8fvMF1n3VtN4dc2Q13YfD4tH4RH",
+        "link": "https://testnet.nearblocks.io/txns/4QM6Nu4huRTB48xzk8fvMF1n3VtN4dc2Q13YfD4tH4RH"
       },
       {
         "step": "worker A stops by itself after the rotation",
         "expect": "success",
         "ok": true,
-        "note": "hand-off to http://127.0.0.1:7604: 16 of 38 obligations taken over"
+        "note": "hand-off to http://127.0.0.1:7604: 18 of 40 obligations taken over"
       },
       {
         "step": "worker B holds every open obligation of worker A",
         "expect": "success",
-        "ok": false,
-        "note": "receipts presented by outlive-alice.testnet: 12 taken over (12 charged as new), 7 already here, 0 rejected; hand-off received from the previous worker: 14 taken over (0 charged as new), 2 already here, 22 rejected; receipts presented by outlive-bob.testnet: 12 taken over (12 charged as new), 7 already here, 0 rejected"
+        "ok": true,
+        "note": "42 of 40 open obligations: hand-off 18/40 (settled only, 0 charged as new), 24 via customer presentations (24 charged as new); receipts presented by outlive-alice.testnet: 12 taken over (12 charged as new), 8 already here, 0 rejected; hand-off received from the previous worker: 16 taken over (0 charged as new), 2 already here, 22 rejected; receipts presented by outlive-bob.testnet: 12 taken over (12 charged as new), 8 already here, 0 rejected"
       },
       {
         "step": "every pending obligation was delivered",
         "expect": "success",
         "ok": true,
-        "note": "alice: 40 accepted, 40 delivered, 0 failed; bob: 40 accepted, 40 delivered, 0 failed"
+        "note": "alice: 41 accepted, 41 delivered, 0 failed; bob: 41 accepted, 41 delivered, 0 failed"
       },
       {
         "step": "receipts were signed by both workers",
@@ -1087,42 +1109,42 @@
         "note": "2 worker keys"
       },
       {
-        "step": "worker B charges with the new key (28 items)",
+        "step": "worker B charges with the new key (26 items)",
         "expect": "success",
         "ok": true,
-        "tx": "BBE7m5v3HxWZdWxLdYMiVJYYv9THdvYczn88mt7yN9Lp",
-        "link": "https://testnet.nearblocks.io/txns/BBE7m5v3HxWZdWxLdYMiVJYYv9THdvYczn88mt7yN9Lp"
+        "tx": "EkkJxFSJHSVart34Mu6a9XVcQPz2BAYazVm24s2mPYcW",
+        "link": "https://testnet.nearblocks.io/txns/EkkJxFSJHSVart34Mu6a9XVcQPz2BAYazVm24s2mPYcW"
       },
       {
         "step": "buyer withdraws revenue",
         "expect": "success",
         "ok": true,
-        "tx": "HSdGwX9XS9WmZZVXb3kV8Nq9T5j938pTqN7eev9ezatP",
-        "link": "https://testnet.nearblocks.io/txns/HSdGwX9XS9WmZZVXb3kV8Nq9T5j938pTqN7eev9ezatP"
+        "tx": "AqAksHhBfPLVS3NsPej8TcCDVYu7wHWGr9PCdHihRSwZ",
+        "link": "https://testnet.nearblocks.io/txns/AqAksHhBfPLVS3NsPej8TcCDVYu7wHWGr9PCdHihRSwZ"
       },
       {
         "step": "push_stats after the sale",
         "expect": "success",
         "ok": true,
-        "tx": "4eeL5AGde5s6uDjtHmiwQeoeEvvnBeJnBaNx7AQBRNSZ",
-        "link": "https://testnet.nearblocks.io/txns/4eeL5AGde5s6uDjtHmiwQeoeEvvnBeJnBaNx7AQBRNSZ"
+        "tx": "7hjGVNo3dB2hvqci4tbPCAfx3DM9h2xNhxkMyf4eeBW9",
+        "link": "https://testnet.nearblocks.io/txns/7hjGVNo3dB2hvqci4tbPCAfx3DM9h2xNhxkMyf4eeBW9"
       }
     ],
     "links": {
-      "vault": "https://testnet.nearblocks.io/address/relay-11061218.outlive3.outlive.testnet",
+      "vault": "https://testnet.nearblocks.io/address/relay-11061238.outlive3.outlive.testnet",
       "customer_deposits": [
-        "https://testnet.nearblocks.io/txns/FH7JZPJXKMaRdK6jDFNJxZBe4cJ5gfcG29SXqbbLykpV",
-        "https://testnet.nearblocks.io/txns/259kNcnMeoJjJDfMuxkmfcsDFEKRv3EztdCCkcPhL9bj"
+        "https://testnet.nearblocks.io/txns/3kfQVbZtp6UpnBcmoEZVHfL3PW4RqRbPAiqJcFRkVdF1",
+        "https://testnet.nearblocks.io/txns/7Cb1Qzc96ddJjoR811XwMJGMhxHYdj1jNLYKhEg3frA4"
       ]
     },
     "image_hash": "sha256:fe9880e9460baf5774832a1419b0e8fab75a13363ac364d4c4b6d3f6fdc34572",
-    "worker_a_key": "ed25519:5DVSaf891SjvRLfat7KpUiYQR7UWxzhFrysip5YRgFkb",
+    "worker_a_key": "ed25519:23cZfbuc9qtmeG6Pju543aHZEgVMXwYVZqdhW6tJRCyd",
     "worker_a_charge_txs": [
-      "CMnAmnpxFprKGTuXW1JnBx8ovoyReEABPST7FGVbW4sv",
-      "73QBqnHEqE81REx2itpcg1Md5AiMTgPcbSxf4hVt1a5D",
-      "FGU9XRjncKCVsL4VmrK1rkJYxqrJ3nYxvgLxaEN2Dmco",
-      "6NhrpKJvbqb7L6Pq5jm3SwSj56iu4Vp6LHfCQE9koHKF",
-      "Fzk3H5USfatMFPibMVDhEMAKq6MeFfF9U1u96NNsZp6r"
+      "JC6Q42a7WVX4sV6jdd3sbNppPdCsn2uTcQsjXtSnZnss",
+      "HXZPtSxQbzjNUG2hnifvWa9z34pajV54aJhisje5WZdN",
+      "85FUNnfYWt2KzgC4iMXWnyX7x7sbxkLmF7aurJKySsB1",
+      "9tboj9LY7S9nEcvaDBLTJGXFmBKFc1bzpJPXa2m5Jnru",
+      "G9ZU8H9YJxnD1QhFFTzu2uetxqNaqPCSNvt9gacnsGoX"
     ],
     "buyer": {
       "decision": "buy",
@@ -1134,14 +1156,14 @@
       },
       "evaluated": [
         {
-          "token_id": "relay-11061218",
+          "token_id": "relay-11061238",
           "listing_id": 1,
           "price": "3000000",
-          "cash": "660000",
-          "customer_credit": "9340000",
-          "calls_30d": 66,
-          "revenue_30d": "660000",
-          "independent_revenue_30d": "660000",
+          "cash": "680000",
+          "customer_credit": "9320000",
+          "calls_30d": 68,
+          "revenue_30d": "680000",
+          "independent_revenue_30d": "680000",
           "excluded": {
             "owner": "0",
             "ownerFunded": "0",
@@ -1152,24 +1174,24 @@
             {
               "customer": "outlive-alice.testnet",
               "payer": "outlive-alice.testnet",
-              "calls": 33,
-              "revenue": "330000",
+              "calls": 34,
+              "revenue": "340000",
               "class": "independent",
               "reason": "pays its own credit"
             },
             {
               "customer": "outlive-bob.testnet",
               "payer": "outlive-bob.testnet",
-              "calls": 33,
-              "revenue": "330000",
+              "calls": 34,
+              "revenue": "340000",
               "class": "independent",
               "reason": "pays its own credit"
             }
           ],
-          "gas_spent_30d_yocto": "33484218243506899999998",
+          "gas_spent_30d_yocto": "33534086436177699999998",
           "window_days": 1,
-          "net_per_day": 0.5344341815868492,
-          "payback_days": 4.37846245734515,
+          "net_per_day": 0.5542471758643337,
+          "payback_days": 4.185858044981504,
           "checks": [
             {
               "name": "listing active",
@@ -1199,17 +1221,17 @@
             {
               "name": "worker key registered",
               "ok": true,
-              "detail": "ed25519:5DVSaf891SjvRLfat7KpUiYQR7UWxzhFrysip5YRgFkb"
+              "detail": "ed25519:23cZfbuc9qtmeG6Pju543aHZEgVMXwYVZqdhW6tJRCyd"
             },
             {
               "name": "listing not stale",
               "ok": true,
-              "detail": "listed 2026-11-06T12:21:02.131Z"
+              "detail": "listed 2026-11-06T12:41:19.840Z"
             },
             {
               "name": "every owner known",
               "ok": true,
-              "detail": "1 ownership epoch(s) read from the event log; excluded: outlive-seller2.testnet, outlive3.outlive.testnet, relay-11061218.outlive3.outlive.testnet"
+              "detail": "1 ownership epoch(s) read from the event log; excluded: outlive-seller2.testnet, outlive3.outlive.testnet, relay-11061238.outlive3.outlive.testnet"
             },
             {
               "name": "independent paying customers",
@@ -1224,109 +1246,109 @@
             {
               "name": "vault observed long enough",
               "ok": true,
-              "detail": "vault is 0.1 h old, need 0 h"
+              "detail": "vault is 0.0 h old, need 0 h"
             },
             {
               "name": "endpoint answers",
               "ok": true,
-              "detail": "http://127.0.0.1:7603 serves relay-11061218.outlive3.outlive.testnet with the registered worker key"
+              "detail": "http://127.0.0.1:7603 serves relay-11061238.outlive3.outlive.testnet with the registered worker key"
             }
           ],
           "decision": "buy",
-          "why": "payback on chain-visible costs 4.4 days is under 30"
+          "why": "payback on chain-visible costs 4.2 days is under 30"
         }
       ],
       "funding_quote_label": "mainnet dry quote (dry:true), nothing executed",
       "funding_quote": {
-        "amountIn": "3035306",
-        "amountInFormatted": "3.035306",
-        "amountInUsd": "3.033685146596",
-        "minAmountIn": "3004999",
+        "amountIn": "3035609",
+        "amountInFormatted": "3.035609",
+        "amountInUsd": "3.034094231109",
+        "minAmountIn": "3005299",
         "amountOut": "3000000",
         "amountOutFormatted": "3.0",
-        "amountOutUsd": "2.998398000000",
+        "amountOutUsd": "2.998503000000",
         "minAmountOut": "3000000",
         "timeEstimate": 45,
         "refundFee": "300000",
-        "withdrawFee": "4691"
+        "withdrawFee": "4690"
       },
       "funding_quote_error": null
     },
-    "worker_b_key": "ed25519:BuDTc1arY9eFucQKTPjxi4w57WUpA5pA7oeKi4wBjGGV",
+    "worker_b_key": "ed25519:4haXK8DXQ56mWhv5y3nKYdGAXRMRnR9yrGKPCeabzZuS",
     "handoff": {
-      "worker_a": "hand-off to http://127.0.0.1:7604: 16 of 38 obligations taken over",
+      "worker_a": "hand-off to http://127.0.0.1:7604: 18 of 40 obligations taken over",
       "worker_b": [
-        "receipts presented by outlive-alice.testnet: 12 taken over (12 charged as new), 7 already here, 0 rejected",
-        "hand-off received from the previous worker: 14 taken over (0 charged as new), 2 already here, 22 rejected",
-        "receipts presented by outlive-bob.testnet: 12 taken over (12 charged as new), 7 already here, 0 rejected"
+        "receipts presented by outlive-alice.testnet: 12 taken over (12 charged as new), 8 already here, 0 rejected",
+        "hand-off received from the previous worker: 16 taken over (0 charged as new), 2 already here, 22 rejected",
+        "receipts presented by outlive-bob.testnet: 12 taken over (12 charged as new), 8 already here, 0 rejected"
       ]
     },
     "vault_keys_after_rotation": [
       {
-        "public_key": "ed25519:BuDTc1arY9eFucQKTPjxi4w57WUpA5pA7oeKi4wBjGGV",
+        "public_key": "ed25519:4haXK8DXQ56mWhv5y3nKYdGAXRMRnR9yrGKPCeabzZuS",
         "permission": {
           "FunctionCall": {
-            "allowance": "2000000000000000000000000",
+            "allowance": "1999312699671044000000000",
             "method_names": [
               "charge"
             ],
-            "receiver_id": "relay-11061218.outlive3.outlive.testnet"
+            "receiver_id": "relay-11061238.outlive3.outlive.testnet"
           }
         }
       }
     ],
     "traffic": {
-      "finished_at": "2026-11-06T12:23:47.047Z",
+      "finished_at": "2026-11-06T12:44:06.268Z",
       "customers": [
         {
           "customer": "alice",
-          "sent": 40,
-          "accepted": 40,
+          "sent": 41,
+          "accepted": 41,
           "refused_402": 0,
           "errors": 0,
-          "delivered": 40,
+          "delivered": 41,
           "failed": 0,
           "pending": 0,
           "receipts_by_worker": {
-            "5DVSaf": 19,
-            "BuDTc1": 21
+            "23cZfb": 20,
+            "4haXK8": 21
           }
         },
         {
           "customer": "bob",
-          "sent": 40,
-          "accepted": 40,
+          "sent": 41,
+          "accepted": 41,
           "refused_402": 0,
           "errors": 0,
-          "delivered": 40,
+          "delivered": 41,
           "failed": 0,
           "pending": 0,
           "receipts_by_worker": {
-            "5DVSaf": 19,
-            "BuDTc1": 21
+            "23cZfb": 20,
+            "4haXK8": 21
           }
         }
       ]
     },
     "worker_b_charge_txs": [
-      "BBE7m5v3HxWZdWxLdYMiVJYYv9THdvYczn88mt7yN9Lp",
-      "DbYX2rHYS2Zb12qj12Rzp4ha96iz3UsE4KcQDirQoUbB",
-      "mn5sCTc2YKoo1kP6DTDzBgMskpd5S44i9sdzJNNvCXu",
-      "68E49g3FPQcnyoFk2fx5cTQJmeoQWt6PnFUYkcEPTKQv"
+      "EkkJxFSJHSVart34Mu6a9XVcQPz2BAYazVm24s2mPYcW",
+      "DQj4VK5dM6AsCqoMLAcXnYXePCjfqAuo1WSAknyeC4VY",
+      "AymH33RyjNfub7MKA7DHq9QFuM9ko9PsPpoXqA7tcXgj",
+      "6t9WGax6Sma4ZyHB2x4irWsfYv94Qyft89VtK6UfHPAq"
     ],
     "final": {
       "owner": "outlive-buyer.testnet",
       "owner_epoch": 2,
-      "worker_key": "ed25519:BuDTc1arY9eFucQKTPjxi4w57WUpA5pA7oeKi4wBjGGV",
+      "worker_key": "ed25519:4haXK8DXQ56mWhv5y3nKYdGAXRMRnR9yrGKPCeabzZuS",
       "endpoint": "http://127.0.0.1:7604",
-      "revenue": "0",
-      "liabilities": "8540000",
-      "calls_30d": 146,
-      "revenue_30d": "1460000",
-      "gas_spent_30d": "36568495655392199999995"
+      "revenue": "40000",
+      "liabilities": "8500000",
+      "calls_30d": 150,
+      "revenue_30d": "1500000",
+      "gas_spent_30d": "36638721579878199999995"
     },
-    "finished_at": "2026-11-06T12:24:51.120Z",
-    "ok": false,
-    "logs": "demo-logs/2026-11-06T12-18-22-254Z-relay-11061218/ (local only)"
+    "finished_at": "2026-11-06T12:44:38.460Z",
+    "ok": true,
+    "logs": "demo-logs/2026-11-06T12-38-42-747Z-relay-11061238/ (local only)"
   }
 }

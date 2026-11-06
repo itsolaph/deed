@@ -308,20 +308,32 @@ async function main() {
   // charged, and customers presenting their receipts after a 410 recover everything uncharged
   // (a revoked key may not mint new charges through its successor). Whichever comes first takes
   // an obligation over; the other finds it known. Nothing may be lost: both paths together must
-  // cover every open obligation, and step 11 proves the final zero-pending.
-  const bLines = [...logText("worker-b").matchAll(/(hand-off received from the previous worker|receipts presented by \S+): .*/g)].map((m) => m[0]);
+  // cover every open obligation, and step 11 proves the final zero-pending. The customers
+  // re-present as soon as their next request sees the 410, which can land a second or two after
+  // worker A stops, so poll the log briefly before judging.
+  const bLines = () => [...logText("worker-b").matchAll(/(hand-off received from the previous worker|receipts presented by \S+): .*/g)].map((m) => m[0]);
   const handed = handoff.match(/(\d+) of (\d+) obligations taken over/);
   const takenOver = (line) => { const m = line.match(/(\d+) taken over \((\d+) charged as new\)/); return m ? Number(m[1]) : 0; };
   const chargedAsNew = (line) => { const m = line.match(/(\d+) taken over \((\d+) charged as new\)/); return m ? Number(m[2]) : 0; };
-  const open = handed !== null ? Number(handed[2]) : 0;
-  const fromHandoff = handed !== null ? Number(handed[1]) : 0;
-  const fromCustomers = bLines.filter((l) => l.startsWith("receipts presented")).reduce((n, l) => n + takenOver(l), 0);
-  const heldByB = fromHandoff + fromCustomers;
+  const coverage = () => {
+    const lines = bLines();
+    const open = handed !== null ? Number(handed[2]) : 0;
+    const fromHandoff = handed !== null ? Number(handed[1]) : 0;
+    const presented = lines.filter((l) => l.startsWith("receipts presented"));
+    const fromCustomers = presented.reduce((n, l) => n + takenOver(l), 0);
+    return { lines, open, heldByB: fromHandoff + fromCustomers, fromHandoff, fromCustomers, chargedAsNewTotal: presented.reduce((n, l) => n + chargedAsNew(l), 0) };
+  };
+  let cov = coverage();
+  const deadline = Date.now() + 30_000;
+  while (cov.heldByB < cov.open && Date.now() < deadline) {
+    await sleep(2_000);
+    cov = coverage();
+  }
   step("worker B holds every open obligation of worker A", {
-    success: heldByB >= open,
-    note: `${heldByB} of ${open} open obligations: hand-off ${handed ? `${handed[1]}/${handed[2]}` : "-"} (settled only, 0 charged as new), ${fromCustomers} via customer presentations (${bLines.filter((l) => l.startsWith("receipts presented")).reduce((n, l) => n + chargedAsNew(l), 0)} charged as new); ${bLines.join("; ") || "no lines"}`,
+    success: cov.heldByB >= cov.open,
+    note: `${cov.heldByB} of ${cov.open} open obligations: hand-off ${handed ? `${handed[1]}/${handed[2]}` : "-"} (settled only, 0 charged as new), ${cov.fromCustomers} via customer presentations (${cov.chargedAsNewTotal} charged as new); ${cov.lines.join("; ") || "no lines"}`,
   });
-  record.handoff = { worker_a: handoff, worker_b: bLines };
+  record.handoff = { worker_a: handoff, worker_b: cov.lines };
   await sleep(5_000);
   fs.rmSync(OUTAGE_FILE, { force: true });
   say("the echo target is back: worker B delivers the obligations it took over");

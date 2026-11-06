@@ -17,11 +17,11 @@ The buyer agent runs with `--policy demo`: at least 2 independent paying custome
 
 ## Steps and expected output
 
-Excerpts below are from the recorded run `relay-11060332` (6 November 2026), some lines shortened. Hashes and numbers differ in every run.
+Excerpts below are from the recorded runs `relay-11060332` and `relay-11061238` (6 November 2026; the latter on the current protocol, whose hand-over carries only already-charged work), some lines shortened. Hashes and numbers differ in every run.
 
 ### 1. The seller mints the token
 
-`owner mint` calls `mint` on the token with the mint cost attached. The contract creates `<slug>.outlive2.outlive.testnet`, deploys the vault code, initializes it, and only then mints the token. The vault account has no access key at all.
+`owner mint` calls `mint` on the token with the mint cost attached. The contract creates `<slug>.<factory>.testnet` under the deployed factory (currently `outlive3.outlive.testnet`), deploys the vault code, initializes it, and only then mints the token. The vault account has no access key at all.
 
 ```
 === 1. seller mints the token; the Outlive contract creates the vault sub-account
@@ -131,11 +131,11 @@ worker B is serving
 
 ```
 worker-a exited (code 0)
-ok   worker A stops by itself after the rotation  (hand-off to http://127.0.0.1:7622: 40 of 40 obligations taken over)
-ok   worker B holds every open obligation of worker A  (hand-off received from the previous worker: 40 taken over (24 charged as new), 0 already here, 0 rejected)
+ok   worker A stops by itself after the rotation  (hand-off to http://127.0.0.1:7604: 18 of 40 obligations taken over)
+ok   worker B holds every open obligation of worker A  (42 of 40 open obligations: hand-off 18/40 (settled only, 0 charged as new), 24 via customer presentations (24 charged as new); receipts presented by outlive-alice.testnet: 12 taken over (12 charged as new), 8 already here, 0 rejected; hand-off received from the previous worker: 16 taken over (0 charged as new), 2 already here, 22 rejected; receipts presented by outlive-bob.testnet: 12 taken over (12 charged as new), 8 already here, 0 rejected)
 ```
 
-A polls the vault, sees a key it no longer owns, offers its queue to the endpoint now on chain, and exits. Receipts whose seq was already charged on chain (worker B compares with each customer's `last_seq` when it first sees them) are delivered without a new charge; the rest are charged by B with fresh receipts. Customers that call worker A now get 410 with the new endpoint (or a refused connection once it exited); the SDK reads the endpoint from the vault again and presents its open receipts. Whichever reaches B first takes the obligation over; the other finds it already there.
+A polls the vault, sees a key it no longer owns, hands the work the chain already charged to the endpoint now on chain, and exits. The hand-off carries only settled work: an obligation A accepted but never charged is refused there, because a key that was removed — or anyone holding its secret — could forge receipts and proofs, and history proves a key once charged, not that it still may. Those obligations reach worker B through their customers instead: the SDK reads the new endpoint from the vault after a 410 (or a refused connection once A exited) and presents its open receipts with NEP-413, and B charges them once as new. Whichever path reaches B first takes the obligation over; the other finds it already there.
 
 ### 11. Traffic continues through worker B
 
@@ -184,7 +184,7 @@ Seller `outlive-seller2.testnet` (fresh faucet account), buyer `outlive-buyer.te
 | 17 | buyer withdraws revenue | ok | [`FhRcKBsr…`](https://testnet.nearblocks.io/txns/FhRcKBsrYoSqdm35qPT3FcigMt92aERUPfbDi67ZwAbe) |
 | 18 | push_stats after the sale | ok | [`8MemftHB…`](https://testnet.nearblocks.io/txns/8MemftHBk41E7egbcj1nJxUsNVQnqiWH8pSt69H12GjG) |
 
-Off chain in the same run: worker A saw the rotation, handed 40 open obligations to worker B and exited by itself; alice and bob each had 40 jobs accepted and delivered, none failed, receipts signed by both worker keys. The buyer agent's 1Click mainnet dry quote (nothing executed) for funding the 3 USDC from Ethereum came back at 3.035282 USDC.
+Off chain in the same run (protocol v2, `relay-11061238`): worker A saw the rotation, handed the 18 obligations the chain had already charged to worker B, refused nothing else, and exited by itself; the 22 obligations it had accepted but not yet charged were refused by the hand-off and recovered by their customers, who presented their saved receipts to B and were charged once for each; alice and bob each had 41 jobs accepted and delivered, none failed, receipts signed by both worker keys. The buyer agent's 1Click mainnet dry quote (nothing executed) for funding the 3 USDC from Ethereum came back at 3.035282 USDC.
 
 ### The same run, attacked
 
@@ -206,14 +206,14 @@ The API server holds this key. What NEAR allows it to do:
 6/6 attempts blocked.  Withdrawable 0.00 tUSDC → 0.00 tUSDC, vault balance 8.54 tUSDC → 8.54 tUSDC
 ```
 
-This is the tested actions only, not a proof that no other path exists.
+This is the tested actions only, not a proof that no other path exists. Re-checked on the live protocol v2 relay `relay-live.outlive3.outlive.testnet` (6 November 2026): all six unauthorized actions rejected again, including the old owner's worker key after the sale (`AccessKeyDoesNotExist`).
 
 ## What it shows
 
 - The token carries the service instance: the buyer gets the withdrawable proceeds, the revenue from the next charge on and the customer ledger, and the seller's withdraw fails.
 - The contract, not the seller, owns the vault's keys: after the sale the vault answers to the token owner.
 - One key rotation moves the work to a new server; the old one stops by itself.
-- Paid obligations survive a cooperative move: nothing is lost, nothing is charged twice.
+- Paid obligations survive a cooperative move: nothing is lost, nothing is charged twice, and the hand-off carries only work the chain already charged, so a removed key cannot keep billing through its successor.
 - An agent can appraise and buy a token from on-chain data alone, here with the relaxed demo policy (printed by the agent). All traffic in this run comes from the project's own agents, alice and bob, so the payback figure describes that traffic, not demand.
 
 What it does not show: demand from strangers, mainnet economics, or a market of many buyers. A seller that does not cooperate is covered below, and so is a seller that inflates revenue.

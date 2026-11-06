@@ -110,7 +110,7 @@ async fn vault_hooks_are_outlive_only_and_stale_epochs_are_ignored() -> Result<(
         "default_daily_cap": "1000000",
     });
     // Only the parent account may initialize.
-    fails(env.alice.call(v.id(), "new").args_json(&init).transact().await?, "only the parent outlive account");
+    fails(env.alice.call(v.id(), "new").args_json(&init).transact().await?, "only the parent Outlive account");
     done(fake_outlive.call(v.id(), "new").args_json(&init).transact().await?);
 
     let set_owner = |owner: &near_workspaces::AccountId, epoch: u64| {

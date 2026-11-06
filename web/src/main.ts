@@ -921,7 +921,7 @@ function customersBlock(r: Row, s: HistoryState): HTMLElement | null {
     h(
       "p",
       { class: "note fine" },
-      "Our demo traffic agents are outlivelab-alice, outlivelab-bob and accounts funded by a tokenl*-seller account. Traffic in the recorded demos comes from these agents. " +
+      "Our demo traffic agents are outlive-alice, outlive-bob and accounts funded by outlive-seller*, outlive-hostile and outlive-wash. Traffic in the recorded demos comes from these agents. " +
         "Customers whose credit an owner paid in are marked here; the buyer agent also reads each customer's own funding history and counts only independent revenue.",
     ),
   );

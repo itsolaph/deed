@@ -6,7 +6,7 @@
 //   - per-customer paid revenue from the vault's own `vault_charge` events (items with status
 //     "charged"), so every amount is tied to the account it was charged to;
 //   - excluded: revenue charged to the current owner, every previous owner (from the ownership
-//     epochs), the listing seller, the vault and the deed accounts;
+//     epochs), the listing seller, the vault and the outlive accounts;
 //   - excluded: customers whose credit was funded by one of those accounts: a `vault_deposit`
 //     whose sender is an excluded account (`deposit_for`), any transaction signed by an excluded
 //     account that touches the customer account (NEAR or tUSDC transfers, account creation), a
@@ -80,7 +80,7 @@ export interface CustomerAppraisal {
 
 export interface AppraisalInput {
   vault: string;
-  deed: string;
+  outlive: string;
   /** Current vault owner. */
   owner: string;
   /** Further accounts to treat like owners (the listing seller). */
@@ -100,7 +100,7 @@ export interface AppraisalInput {
 
 export interface Appraisal {
   policy: AppraisalPolicy;
-  /** Owners now and before, the listing seller, the vault and the deed. */
+  /** Owners now and before, the listing seller, the vault and the outlive. */
   excludedAccounts: string[];
   customers: CustomerAppraisal[];
   /** Per independent payer, largest first. */
@@ -112,7 +112,7 @@ export interface Appraisal {
   checks: Check[];
 }
 
-/** Every account that held the deed, from the ownership events (mint, owner changes, sales). */
+/** Every account that held the outlive, from the ownership events (mint, owner changes, sales). */
 export function ownersFromEvents(events: HistoryEvent[]): string[] {
   const out = new Set<string>();
   for (const e of events) {
@@ -151,7 +151,7 @@ const isSubAccountOf = (account: string, parent: string) => account.endsWith(`.$
 /** Pure: classifies every paying customer, sums independent revenue and runs the policy checks. */
 export function appraise(input: AppraisalInput, policy: AppraisalPolicy): Appraisal {
   const events = sortEvents(input.events);
-  const excludedSet = new Set<string>([input.owner, ...ownersFromEvents(events), ...(input.alsoExcluded ?? []), input.vault, input.deed]);
+  const excludedSet = new Set<string>([input.owner, ...ownersFromEvents(events), ...(input.alsoExcluded ?? []), input.vault, input.outlive]);
   excludedSet.delete("");
   const excludedAccounts = [...excludedSet].sort();
   const fromMs = input.nowMs - STATS_WINDOW_DAYS * DAY_MS;
@@ -175,10 +175,10 @@ export function appraise(input: AppraisalInput, policy: AppraisalPolicy): Apprai
     const parent = excludedAccounts.find((x) => isSubAccountOf(customer, x));
     const ownerDeposit = own.find((d) => d.sender !== customer && excludedSet.has(d.sender));
     const funding = input.funding.get(customer);
-    const ownerFunder = funding?.funders.find((f) => excludedSet.has(f.account) && f.account !== input.vault && f.account !== input.deed);
+    const ownerFunder = funding?.funders.find((f) => excludedSet.has(f.account) && f.account !== input.vault && f.account !== input.outlive);
     if (excludedSet.has(customer)) {
       cls = "owner";
-      reason = customer === input.vault || customer === input.deed ? "the vault or deed account itself" : "an owner (now or before) paying its own business";
+      reason = customer === input.vault || customer === input.outlive ? "the vault or outlive account itself" : "an owner (now or before) paying its own business";
     } else if (parent) {
       cls = "owner-funded";
       reason = `sub-account of ${parent}`;
@@ -320,9 +320,9 @@ export async function readFunding(index: TxIndex, customer: string, token: strin
 
 /** Accounts the demo itself runs as customers (for labels only, never for the appraisal). */
 export function isProjectDemoAccount(account: string, depositSenders: string[] = []): boolean {
-  const seller = /^deedl[a-z0-9]*-seller\.testnet$/;
-  if (/^deedlab-(alice|bob)\.testnet$/.test(account)) return true;
+  const seller = /^outlivel[a-z0-9]*-seller\.testnet$/;
+  if (/^outlivelab-(alice|bob)\.testnet$/.test(account)) return true;
   if (seller.test(account)) return true;
-  if (/\.deedl[a-z0-9]*-seller\.testnet$/.test(account)) return true;
+  if (/\.outlivel[a-z0-9]*-seller\.testnet$/.test(account)) return true;
   return depositSenders.some((s) => s !== account && seller.test(s));
 }

@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 // Wash-revenue rejection on testnet: a seller pays its own vault through two fresh accounts it
-// funded itself, lists the deed, and the buyer agent (even with the relaxed demo policy) skips
+// funded itself, lists the token, and the buyer agent (even with the relaxed demo policy) skips
 // it because revenue from owner-funded customers is excluded.
 //
-//   1. the seller mints a new deed and registers worker A (local, 127.0.0.1)
+//   1. the seller mints a new token and registers worker A (local, 127.0.0.1)
 //   2. the seller creates two fresh top-level accounts and funds them:
 //      - customer 1 gets tUSDC by ft_transfer from the seller and deposits it itself
 //      - customer 2 gets its credit deposited by the seller (ft_transfer_call, deposit_for)
 //   3. both send paid deliveries through the worker; the worker charges them
-//   4. the seller lists the deed
+//   4. the seller lists the token
 //   5. the buyer agent runs with --policy demo --dry-run and must answer SKIP with
 //      "revenue from owner-funded customers excluded"
-//   6. the listing is cancelled again so the wash deed is not shown as for sale
+//   6. the listing is cancelled again so the wash token is not shown as for sale
 //
 // Environment: WASH_SELLER (a fresh faucet account with about 4 NEAR; default DEMO_SELLER),
 // DEMO_BUYER, WASH_SLUG (default wash-<MMDDHHMM>), WASH_PORT (7605), WASH_ECHO_PORT (7613),
@@ -30,9 +30,9 @@ const SLUG = process.env.WASH_SLUG || `wash-${stamp()}`;
 const dep = loadDeployments();
 const SELLER = process.env.WASH_SELLER || process.env.DEMO_SELLER || dep.accounts.seller;
 const BUYER = process.env.DEMO_BUYER || dep.accounts.buyer;
-const DEED = dep.accounts.deed;
+const OUTLIVE = dep.accounts.outlive;
 const TUSDC = dep.accounts.tusdc;
-const VAULT = `${SLUG}.${DEED}`;
+const VAULT = `${SLUG}.${OUTLIVE}`;
 const ENDPOINT = `http://127.0.0.1:${PORT}`;
 const KEY_A = path.join(credentialsDir(), "testnet", "workers", `${VAULT}.worker-a.json`);
 const CALLS_EACH = 8;
@@ -40,17 +40,17 @@ const T = (n) => (BigInt(Math.round(n * 1e6))).toString(); // tUSDC, 6 decimals
 
 const run = createRun("wash-reject", SLUG);
 const { say, banner, step, agent, start, record } = run;
-Object.assign(record, { kind: "wash-reject", vault: VAULT, deed: DEED, seller: SELLER, buyer: BUYER });
+Object.assign(record, { kind: "wash-reject", vault: VAULT, outlive: OUTLIVE, seller: SELLER, buyer: BUYER });
 
 async function main() {
-  banner(`Wash-revenue rejection on testnet: deed ${DEED}, new business ${SLUG}, seller ${SELLER}`);
+  banner(`Wash-revenue rejection on testnet: outlive ${OUTLIVE}, new business ${SLUG}, seller ${SELLER}`);
   portsFree([PORT, ECHO_PORT]);
   buildPackages();
   const sdk = await import("../sdk/dist/src/index.js");
   const rpc = new sdk.Rpc(process.env.NEAR_RPC_URLS ? process.env.NEAR_RPC_URLS.split(",") : sdk.TESTNET_RPC_URLS);
   const seller = account(SELLER);
 
-  banner("1. the seller mints the deed and registers worker A");
+  banner("1. the seller mints the token and registers worker A");
   const mint = await agent("agents/dist/src/owner.js", ["mint", "--as", SELLER, "--slug", SLUG, "--title", "Webhook Relay (wash test)", "--price", "0.01", "--endpoint", ENDPOINT, "--image-hash", "sha256:wash-test", "--daily-cap", "50"], "01-mint", 0);
   step(`seller mints ${SLUG}`, { tx: mint.tx, success: mint.success });
   if (!mint.success) throw new Error("mint failed");
@@ -88,7 +88,7 @@ async function main() {
 
   banner(`3. both customers send ${CALLS_EACH} paid deliveries; worker A charges them`);
   for (const name of names) {
-    const client = new sdk.DeedClient({ vault: VAULT, accountId: name, signer: sdk.signerFromSecretKey(keys[name]), rpc });
+    const client = new sdk.OutliveClient({ vault: VAULT, accountId: name, signer: sdk.signerFromSecretKey(keys[name]), rpc });
     for (let n = 1; n <= CALLS_EACH; n++) {
       await client.deliver({ url: `http://127.0.0.1:${ECHO_PORT}/hook?from=${name}&n=${n}`, method: "POST", headers: {}, body: JSON.stringify({ n }), idempotency_key: `${SLUG}-${name}-${n}` });
     }
@@ -107,7 +107,7 @@ async function main() {
   step(`worker A charged all ${want} deliveries`, { tx: charges[0] ?? null, success: Number(info.charged_items) >= want, note: `${info.charged_items} charges, revenue ${sdk.formatUnits(info.revenue, 6)} tUSDC` });
   record.charge_txs = charges;
 
-  banner("4. the seller lists the deed");
+  banner("4. the seller lists the token");
   const list = await agent("agents/dist/src/owner.js", ["list", "--as", SELLER, "--token-id", SLUG, "--price", "1"], "04-list");
   step(`seller lists ${SLUG} for 1 tUSDC`, { tx: list.tx, success: list.success && list.listing?.active === true });
   say("waiting 30 s so the transaction index has the newest charges");
@@ -124,7 +124,7 @@ async function main() {
   step("both wash customers are classified owner-funded", { success: customers.length === 2 && customers.every((c) => c.class === "owner-funded"), note: customers.map((c) => `${c.customer}: ${c.reason}`).join("; ") });
   record.buyer = { decision: buy.decision, policy: buy.policy, why: ev?.why ?? null, customers, independent_revenue_30d: ev?.independent_revenue_30d ?? null, excluded: ev?.excluded ?? null, checks: ev?.checks ?? [] };
 
-  banner("6. the seller cancels the listing (the wash deed should not show as for sale)");
+  banner("6. the seller cancels the listing (the wash outlive should not show as for sale)");
   const cancel = await agent("agents/dist/src/owner.js", ["cancel", "--as", SELLER, "--token-id", SLUG], "06-cancel");
   step(`seller cancels the listing of ${SLUG}`, { tx: cancel.tx, success: cancel.success });
   record.links = { vault: addressLink(VAULT), customers: names.map(addressLink) };

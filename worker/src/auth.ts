@@ -7,7 +7,7 @@
 //   NEP-413 asks for full-access keys: a function-call key that some app holds must not be
 //   able to spend the account's relay credit.
 
-import { AUTH_WINDOW_MS, authMessage, parseAuthHeaders, sha256Hex, toBase64, verifyPayload } from "@deed/sdk";
+import { AUTH_WINDOW_MS, authMessage, parseAuthHeaders, sha256Hex, toBase64, verifyPayload } from "@outlive/sdk";
 import type { VaultChain } from "./vault-chain.js";
 
 export const KEY_CACHE_MS = 60_000;

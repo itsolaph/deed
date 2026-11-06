@@ -1,13 +1,13 @@
-// Outlive web app: every deed on the deed contract with live numbers from the contract views,
+// Outlive web app: every token on the Outlive contract with live numbers from the contract views,
 // its dynamic NFT certificate, and the actions for buyers, owners and customers.
 
 import "./style.css";
 import { Rpc, TESTNET_RPC_URLS } from "../../sdk/src/chain.js";
 import { PAYBACK_LABEL, formatUnits, fromUnits, payback, toUnits, type PaybackResult } from "../../sdk/src/payback.js";
 import { isProjectDemoAccount, ownersFromEvents } from "../../sdk/src/appraisal.js";
-import { DeedViews, VaultViews, type CustomerView, type DeedView, type NftToken, type VaultInfo, type VaultStatsView } from "../../sdk/src/views.js";
+import { OutliveViews, VaultViews, type CustomerView, type OutliveView, type NftToken, type VaultInfo, type VaultStatsView } from "../../sdk/src/views.js";
 import { reconcile, type Epoch } from "../../sdk/src/history.js";
-import { DEED_CONTRACT, EXPLORER, NEAR_PRICE_USD, REFRESH_MS, TX_INDEX } from "./config";
+import { OUTLIVE_CONTRACT, EXPLORER, NEAR_PRICE_USD, REFRESH_MS, TX_INDEX } from "./config";
 import { canReadAgain, historyState, onHistory, wantHistory, type HistoryState } from "./earnings";
 import { isHolder } from "./gate";
 import { connect, currentAccount, disconnect, initWallet, onAccount, send, type Call } from "./wallet";
@@ -18,12 +18,12 @@ const rpc = new Rpc(TESTNET_RPC_URLS);
 const rpcAlt = new Rpc([...TESTNET_RPC_URLS].reverse());
 let rpcPicks = 0;
 const pickRpc = (): Rpc => (rpcPicks++ % 2 === 0 ? rpc : rpcAlt);
-const deedViews = new DeedViews(rpc, DEED_CONTRACT);
+const outliveViews = new OutliveViews(rpc, OUTLIVE_CONTRACT);
 const ONE_YOCTO = 1n;
 const NEAR = 10n ** 24n;
 
 interface Row {
-  deed: DeedView;
+  outlive: OutliveView;
   info: VaultInfo;
   stats: VaultStatsView;
   token: NftToken | null;
@@ -32,9 +32,9 @@ interface Row {
 
 let token = { contract: "", symbol: "tUSDC", decimals: 6 };
 let rows: Row[] = [];
-/** The deeds of the latest read (newest first, at most DETAIL_LIMIT): drives the tab counts. */
-let deedList: DeedView[] = [];
-let totalDeeds = 0;
+/** The tokens of the latest read (newest first, at most DETAIL_LIMIT): drives the tab counts. */
+let outliveList: OutliveView[] = [];
+let totalOutlives = 0;
 
 // ---------------------------------------------------------------- tiny DOM helpers
 
@@ -52,8 +52,8 @@ const amount = (v: string | bigint, digits = 4) => formatUnits(v, token.decimals
 const near = (v: string | bigint, digits = 4) => formatUnits(v, 24, digits);
 const short = (s: string | null, n = 10) => (s ? (s.length > n * 2 + 1 ? `${s.slice(0, n)}…${s.slice(-6)}` : s) : "none");
 const link = (path: string, text: string) => h("a", { href: `${EXPLORER}/${path}`, target: "_blank", rel: "noopener noreferrer" }, text);
-/** The deed ID people read on the board: the vault sub-account prefix, e.g. relay-1102fin2. */
-const deedId = (d: DeedView) => d.vault_id.split(".")[0] || d.token_id;
+/** The outlive ID people read on the board: the vault sub-account prefix, e.g. relay-1102fin2. */
+const outliveId = (d: OutliveView) => d.vault_id.split(".")[0] || d.token_id;
 const byCalls = (a: Row, b: Row) => b.stats.calls_30d - a.stats.calls_30d || b.stats.calls_total - a.stats.calls_total;
 
 function status(text: string, kind: "info" | "ok" | "error" | "quiet" = "info", txHash?: string | null): void {
@@ -75,7 +75,7 @@ async function act(label: string, receiver: string, calls: Call[]): Promise<void
 
 // ---------------------------------------------------------------- data
 
-/** How many deeds get full detail (vault views) per load. Every extra deed costs RPC calls
+/** How many tokens get full detail (vault views) per load. Every extra outlive costs RPC calls
  *  against rate-limited public endpoints. */
 const DETAIL_LIMIT = 12;
 
@@ -95,17 +95,17 @@ async function withBackoff<T>(fn: () => Promise<T>, tries = 4): Promise<T> {
   throw last;
 }
 
-async function fetchRow(deed: DeedView, me: string | null): Promise<Row> {
-  const vault = new VaultViews(pickRpc(), deed.vault_id);
+async function fetchRow(outlive: OutliveView, me: string | null): Promise<Row> {
+  const vault = new VaultViews(pickRpc(), outlive.vault_id);
   // Sequential on purpose: two providers at ~0.5 req/s each cannot absorb bursts.
   const info = await vault.info();
   await sleep(500);
   const stats = await vault.stats();
   const mine = me ? (await sleep(500), await vault.customer(me)) : null;
-  return { deed, info, stats, token: certCache.get(deed.token_id) ?? null, me: mine };
+  return { outlive, info, stats, token: certCache.get(outlive.token_id) ?? null, me: mine };
 }
 
-/** What the page saw at each read of a deed. Paid calls are only known per day on chain, but a
+/** What the page saw at each read of a outlive. Paid calls are only known per day on chain, but a
  *  rise in calls between two reads proves a paid call landed after the earlier read. */
 interface Seen {
   calls30: number;
@@ -119,7 +119,7 @@ const seen = new Map<string, Seen>();
 const flashKeys = new Set<string>();
 
 function observe(r: Row): void {
-  const key = r.deed.token_id;
+  const key = r.outlive.token_id;
   const prev = seen.get(key);
   let callAfter = prev?.callAfter ?? null;
   if (prev && r.stats.calls_total > prev.callsTotal) callAfter = prev.readAt;
@@ -128,7 +128,7 @@ function observe(r: Row): void {
 }
 
 /** Certificates survive refreshes: a token's metadata is fetched once per page life, and only
- *  for the deeds someone looks at (the featured one and opened rows). */
+ *  for the tokens someone looks at (the featured one and opened rows). */
 const certCache = new Map<string, NftToken>();
 const certWanted: string[] = [];
 let certBusy = false;
@@ -147,9 +147,9 @@ async function pumpCerts(): Promise<void> {
       const key = certWanted.shift()!;
       if (certCache.has(key)) continue;
       try {
-        const t = await withBackoff(() => deedViews.token(key), 3);
+        const t = await withBackoff(() => outliveViews.token(key), 3);
         if (t) certCache.set(key, t);
-        for (const r of rows) if (r.deed.token_id === key) r.token = t;
+        for (const r of rows) if (r.outlive.token_id === key) r.token = t;
         render();
       } catch {
         // keep the placeholder
@@ -161,8 +161,8 @@ async function pumpCerts(): Promise<void> {
   }
 }
 
-/** The deed's owner as nft_token reports it. The deed list can lag a transfer, so the holder
- *  console never trusts `deed.owner_id`; it reads this view when a detail is opened. */
+/** The outlive's owner as nft_token reports it. The outlive list can lag a transfer, so the holder
+ *  console never trusts `outlive.owner_id`; it reads this view when a detail is opened. */
 interface OwnerRead {
   status: "loading" | "ok" | "error";
   owner: string | null;
@@ -191,7 +191,7 @@ async function pumpOwners(): Promise<void> {
     while (ownerWanted.length > 0) {
       const key = ownerWanted.shift()!;
       try {
-        const t = await withBackoff(() => rpc.view<NftToken | null>(DEED_CONTRACT, "nft_token", { token_id: key }), 3);
+        const t = await withBackoff(() => rpc.view<NftToken | null>(OUTLIVE_CONTRACT, "nft_token", { token_id: key }), 3);
         ownerReads.set(key, { status: "ok", owner: t?.owner_id ?? null, error: null, readAt: Date.now() });
       } catch (e) {
         ownerReads.set(key, { status: "error", owner: null, error: e instanceof Error ? e.message : String(e), readAt: Date.now() });
@@ -205,7 +205,7 @@ async function pumpOwners(): Promise<void> {
   }
 }
 
-/** Public testnet RPC is rate-limited: deeds are read one at a time. The first load paints
+/** Public testnet RPC is rate-limited: tokens are read one at a time. The first load paints
  *  rows as they arrive; later loads update rows in place, so the board never blanks. */
 async function load(): Promise<void> {
   const live = document.getElementById("live");
@@ -218,49 +218,49 @@ async function load(): Promise<void> {
 }
 
 async function loadInner(): Promise<void> {
-  const config = await withBackoff(() => deedViews.config());
+  const config = await withBackoff(() => outliveViews.config());
   if (token.contract !== config.payment_token) {
     const meta = await withBackoff(() => rpc.view<{ symbol: string; decimals: number }>(config.payment_token, "ft_metadata"));
     token = { contract: config.payment_token, symbol: meta.symbol, decimals: meta.decimals };
   }
-  const all = await withBackoff(() => deedViews.deeds(0, 100));
+  const all = await withBackoff(() => outliveViews.tokens(0, 100));
   const wanted = [...all].sort((a, b) => Number(b.minted_at_ms) - Number(a.minted_at_ms)).slice(0, DETAIL_LIMIT);
-  totalDeeds = all.length;
-  deedList = wanted;
-  // Listing, owner and epoch come with the deed list: show them before the vault reads land.
+  totalOutlives = all.length;
+  outliveList = wanted;
+  // Listing, owner and epoch come with the token list: show them before the vault reads land.
   const fresh = new Map(wanted.map((d) => [d.token_id, d]));
-  rows = rows.filter((r) => fresh.has(r.deed.token_id));
-  for (const r of rows) r.deed = fresh.get(r.deed.token_id)!;
+  rows = rows.filter((r) => fresh.has(r.outlive.token_id));
+  for (const r of rows) r.outlive = fresh.get(r.outlive.token_id)!;
   const me = currentAccount();
   render();
   renderKpis();
   const upsert = (row: Row): void => {
     observe(row);
-    const i = rows.findIndex((r) => r.deed.token_id === row.deed.token_id);
+    const i = rows.findIndex((r) => r.outlive.token_id === row.outlive.token_id);
     if (i >= 0) rows[i] = row;
     else rows.push(row);
     rows.sort(byCalls);
     render();
     renderKpis();
   };
-  const failed: DeedView[] = [];
-  for (const deed of wanted) {
+  const failed: OutliveView[] = [];
+  for (const outlive of wanted) {
     try {
-      upsert(await fetchRow(deed, me));
+      upsert(await fetchRow(outlive, me));
     } catch {
-      failed.push(deed);
+      failed.push(outlive);
     }
     await sleep(400);
   }
-  for (const deed of failed) {
+  for (const outlive of failed) {
     try {
-      upsert(await withBackoff(() => fetchRow(deed, me)));
+      upsert(await withBackoff(() => fetchRow(outlive, me)));
     } catch {
       // truly unreadable: an earlier read (if any) stays on the board
     }
   }
   const top = featured();
-  if (top) wantCert(top.row.deed.token_id);
+  if (top) wantCert(top.row.outlive.token_id);
 }
 
 let loading = false;
@@ -303,9 +303,9 @@ const fmtAmt = (digits: number) => (n: number) => n.toLocaleString(undefined, { 
 const fmtNum = (n: number) => fmtAmt(4)(n);
 
 function paybackOf(r: Row): PaybackResult | null {
-  if (!r.deed.listing) return null;
+  if (!r.outlive.listing) return null;
   return payback({
-    price: BigInt(r.deed.listing.price),
+    price: BigInt(r.outlive.listing.price),
     cash: BigInt(r.info.revenue),
     revenue30d: BigInt(r.stats.revenue_30d),
     gasSpent30dYocto: BigInt(r.stats.gas_spent_30d),
@@ -327,9 +327,9 @@ function paybackText(p: PaybackResult | null): string {
   return p.paybackDays === null ? "no payback at current revenue" : `${p.paybackDays.toFixed(1)} days`;
 }
 
-/** The same rule with this deed's numbers, so anyone can redo the division. */
+/** The same rule with this outlive's numbers, so anyone can redo the division. */
 function paybackMath(r: Row, p: PaybackResult): string {
-  const l = r.deed.listing!;
+  const l = r.outlive.listing!;
   const price = toUnits(BigInt(l.price), token.decimals);
   const cash = toUnits(BigInt(r.info.revenue), token.decimals);
   const days = p.windowDays;
@@ -353,7 +353,7 @@ const ACTIVE_MS = 10 * 60_000;
 
 /** Worker status from data already read: the page's own reads, else the vault's day buckets. */
 function workerText(r: Row, now = Date.now()): string {
-  const s = seen.get(r.deed.token_id);
+  const s = seen.get(r.outlive.token_id);
   if (s?.callAfter) {
     const since = now - s.callAfter;
     const text = `last paid call under ${ago(since)} ago`;
@@ -368,18 +368,18 @@ function workerText(r: Row, now = Date.now()): string {
 }
 
 function workerActive(r: Row): boolean {
-  const s = seen.get(r.deed.token_id);
+  const s = seen.get(r.outlive.token_id);
   return !!s?.callAfter && Date.now() - s.callAfter < ACTIVE_MS;
 }
 
 /** Relative times tick in place between reads, so "under 40 s" never goes stale. */
 function workerLine(r: Row): HTMLElement {
-  return h("p", { class: workerActive(r) ? "worker on" : "worker", "data-worker": r.deed.token_id }, workerText(r));
+  return h("p", { class: workerActive(r) ? "worker on" : "worker", "data-worker": r.outlive.token_id }, workerText(r));
 }
 
 function tickWorkers(): void {
   for (const el of document.querySelectorAll<HTMLElement>("[data-worker]")) {
-    const r = rows.find((x) => x.deed.token_id === el.dataset.worker);
+    const r = rows.find((x) => x.outlive.token_id === el.dataset.worker);
     if (!r) continue;
     const text = workerText(r);
     if (el.textContent !== text) el.textContent = text;
@@ -460,22 +460,22 @@ function button(text: string, onClick: () => void, cls = ""): HTMLButtonElement 
 
 /** Disconnected, the buy button opens the wallet; connected, it sends the purchase. */
 function buy(r: Row): void {
-  const l = r.deed.listing;
+  const l = r.outlive.listing;
   if (!l) return;
   if (!currentAccount()) {
     void connect().catch((e) => status(String(e), "error"));
     return;
   }
-  const msg = JSON.stringify({ buy: { token_id: r.deed.token_id, max_price: l.price, listing_id: l.listing_id } });
-  void act("Buy", token.contract, [{ method: "ft_transfer_call", args: { receiver_id: DEED_CONTRACT, amount: l.price, msg }, gasTgas: 250, depositYocto: ONE_YOCTO }]);
+  const msg = JSON.stringify({ buy: { token_id: r.outlive.token_id, max_price: l.price, listing_id: l.listing_id } });
+  void act("Buy", token.contract, [{ method: "ft_transfer_call", args: { receiver_id: OUTLIVE_CONTRACT, amount: l.price, msg }, gasTgas: 250, depositYocto: ONE_YOCTO }]);
 }
 
 /** The one primary action of the page, in the featured block and in every sale panel. */
 function buyButton(r: Row, me: string | null): HTMLElement | null {
-  const l = r.deed.listing;
+  const l = r.outlive.listing;
   if (!l) return null;
   if (me && me === l.seller) return null;
-  const b = button(`Buy this deed, ${amount(l.price)} ${token.symbol}`, () => buy(r), "primary buy");
+  const b = button(`Buy this outlive, ${amount(l.price)} ${token.symbol}`, () => buy(r), "primary buy");
   if (!l.active) {
     b.disabled = true;
     b.textContent = "Listing activating";
@@ -484,34 +484,34 @@ function buyButton(r: Row, me: string | null): HTMLElement | null {
 }
 
 function salePanel(r: Row, me: string | null, p: PaybackResult | null): HTMLElement | null {
-  const l = r.deed.listing;
+  const l = r.outlive.listing;
   if (!l || !p) return null;
   const box = h(
     "section",
     { class: "sale", "aria-label": "Sale" },
     h("p", { class: "sale-head" }, `For sale, ${amount(l.price)} ${token.symbol}`, h("span", { class: "sale-by" }, ` Listing #${l.listing_id} by ${l.seller}${l.active ? "" : ", activating"}.`)),
-    h("p", { class: "note" }, `Withdrawable proceeds (${amount(r.info.revenue)} ${token.symbol}) come with the deed. Customer credit (${amount(r.info.liabilities)} ${token.symbol}) is a liability: it stays owed to customers and the owner can never withdraw it.`),
+    h("p", { class: "note" }, `Withdrawable proceeds (${amount(r.info.revenue)} ${token.symbol}) come with the outlive. Customer credit (${amount(r.info.liabilities)} ${token.symbol}) is a liability: it stays owed to customers and the owner can never withdraw it.`),
     h("p", { class: "note math", title: paybackRule() }, `${PAYBACK_LABEL}: ${paybackMath(r, p)}`),
     h("p", { class: "note fine" }, "This is a transferable service instance: the vault, its keys and its customer ledger. Servers, domains and code are off chain and do not move with the token."),
   );
   const buyBtn = buyButton(r, me);
-  if (buyBtn) box.append(buyBtn, h("p", { class: "note fine" }, `The purchase is pinned to listing #${l.listing_id}, so a cancelled and re-listed deed is refused and refunded.`));
+  if (buyBtn) box.append(buyBtn, h("p", { class: "note fine" }, `The purchase is pinned to listing #${l.listing_id}, so a cancelled and re-listed token is refused and refunded.`));
   else if (me && me === l.seller) {
-    box.append(button("Cancel listing", () => void act("Cancel listing", DEED_CONTRACT, [{ method: "cancel_listing", args: { token_id: r.deed.token_id }, gasTgas: 100, depositYocto: ONE_YOCTO }])));
+    box.append(button("Cancel listing", () => void act("Cancel listing", OUTLIVE_CONTRACT, [{ method: "cancel_listing", args: { token_id: r.outlive.token_id }, gasTgas: 100, depositYocto: ONE_YOCTO }])));
   }
   return box;
 }
 
 /** Holder-only actions. Rendered inside the holder console, never for anyone else. */
 function ownerActions(r: Row): HTMLElement {
-  const v = r.deed.vault_id;
+  const v = r.outlive.vault_id;
   const locked = r.info.locked;
   const panel = h("div", { class: "panel-body" });
-  if (locked) panel.append(h("p", { class: "note" }, "The vault is locked while the deed is listed: no withdraw, rotation, config or price change."));
-  if (!r.deed.listing) {
+  if (locked) panel.append(h("p", { class: "note" }, "The vault is locked while the token is listed: no withdraw, rotation, config or price change."));
+  if (!r.outlive.listing) {
     panel.append(form([{ name: "price", placeholder: `price in ${token.symbol}` }], "List for sale", (f) => {
       const price = fromUnits(f.price ?? "", token.decimals).toString();
-      void act("List", DEED_CONTRACT, [{ method: "list", args: { token_id: r.deed.token_id, price }, gasTgas: 100, depositYocto: ONE_YOCTO }]);
+      void act("List", OUTLIVE_CONTRACT, [{ method: "list", args: { token_id: r.outlive.token_id, price }, gasTgas: 100, depositYocto: ONE_YOCTO }]);
     }));
   }
   panel.append(
@@ -547,7 +547,7 @@ function ownerActions(r: Row): HTMLElement {
 }
 
 function customerPanel(r: Row, me: string): { summary: string; body: HTMLElement } {
-  const v = r.deed.vault_id;
+  const v = r.outlive.vault_id;
   const c = r.me;
   const panel = h("div", { class: "panel-body" });
   if (c) {
@@ -592,12 +592,12 @@ function customerPanel(r: Row, me: string): { summary: string; body: HTMLElement
 }
 
 /**
- * The deed detail's operator console. The owner comes from nft_token, not from the cached deed
+ * The token detail's operator console. The owner comes from nft_token, not from the cached outlive
  * row, and the actions live only in the holder branch: a locked console contains no form or
  * button that can call a vault owner method.
  */
 function consoleSection(r: Row, me: string | null, customer: { summary: string; body: HTMLElement } | null): HTMLElement {
-  const key = r.deed.token_id;
+  const key = r.outlive.token_id;
   const read = ownerReads.get(key) ?? null;
   const owner = read?.status === "ok" ? read.owner : null;
   const box = h("section", { class: "console", "data-console": key, "aria-label": "Console" });
@@ -629,7 +629,7 @@ function consoleSection(r: Row, me: string | null, customer: { summary: string; 
       h(
         "p",
         { class: "note" },
-        owner ? `Connect as ${owner} to withdraw revenue, rotate the worker or manage customer credit and refunds.` : "Connect a testnet wallet that holds this deed to use the console.",
+        owner ? `Connect as ${owner} to withdraw revenue, rotate the worker or manage customer credit and refunds.` : "Connect a testnet wallet that holds this outlive to use the console.",
       ),
     ),
   );
@@ -707,7 +707,7 @@ function epochRow(ep: Epoch, r: Row, me: string | null): HTMLTableRowElement {
   let sold: Child[];
   if (ep.ended?.by === "sale") sold = [`${amount(ep.ended.price)}`, h("span", { class: "sub" }, `to ${ep.ended.buyer}`)];
   else if (ep.ended?.by === "transfer") sold = [h("span", { class: "muted" }, "no sale"), h("span", { class: "sub" }, `transferred to ${ep.ended.to}`)];
-  else if (r.deed.listing) sold = [h("span", { class: "muted" }, `listed at ${amount(r.deed.listing.price)}`)];
+  else if (r.outlive.listing) sold = [h("span", { class: "muted" }, `listed at ${amount(r.outlive.listing.price)}`)];
   else sold = [h("span", { class: "muted" }, "still held")];
 
   const proof: Child[] = [];
@@ -721,7 +721,7 @@ function epochRow(ep: Epoch, r: Row, me: string | null): HTMLTableRowElement {
   else if (ep.ended?.by === "transfer") proof.push(txLink(ep.ended.tx, "transfer"));
 
   const payoutNote = ep.payouts.length > 0 && ep.payouts.some((p) => p.receiver !== ep.holder) ? h("span", { class: "sub" }, `to ${[...new Set(ep.payouts.map((p) => p.receiver))].join(", ")}`) : null;
-  const left = !current && BigInt(ep.cashOut) > 0n ? h("span", { class: "sub" }, `${amount(ep.cashOut)} left in the vault, went with the deed`) : null;
+  const left = !current && BigInt(ep.cashOut) > 0n ? h("span", { class: "sub" }, `${amount(ep.cashOut)} left in the vault, went with the token`) : null;
   return h(
     "tr",
     { class: current ? "ep now" : "ep" },
@@ -731,7 +731,7 @@ function epochRow(ep: Epoch, r: Row, me: string | null): HTMLTableRowElement {
       "holder",
       ep.holder ? Object.assign(link(`address/${ep.holder}`, ep.holder), { title: ep.holder }) : h("span", { class: "muted" }, "not read"),
       me && me === ep.holder ? h("span", { class: "you" }, " you") : null,
-      h("span", { class: "sub" }, ep.openedBy === "unknown" ? "how it was acquired was not read" : `${OPENED[ep.openedBy]} the deed`),
+      h("span", { class: "sub" }, ep.openedBy === "unknown" ? "how it was acquired was not read" : `${OPENED[ep.openedBy]} the token`),
     ),
     cell("l-held", "held", ...[held].flat()),
     cell("l-num", "paid calls", fmtInt(ep.calls)),
@@ -744,13 +744,13 @@ function epochRow(ep: Epoch, r: Row, me: string | null): HTMLTableRowElement {
 
 /** The ledger plus the check against the contract's own counters. */
 function fillHistory(box: HTMLElement, r: Row): void {
-  const vault = r.deed.vault_id;
+  const vault = r.outlive.vault_id;
   const s: HistoryState | null = historyState(vault);
   const me = currentAccount();
   const head = h(
     "div",
     { class: "hist-head" },
-    h("h3", { class: "hist-title", id: `hist-${r.deed.token_id}` }, "Earnings history"),
+    h("h3", { class: "hist-title", id: `hist-${r.outlive.token_id}` }, "Earnings history"),
     h("p", { class: "hist-lede" }, `Each holder, what the service earned while they held it, what they paid out, and what they sold it for. Newest first, amounts in ${token.symbol}.`),
   );
   // A click inside the minimum gap repaints from the cache without a request.
@@ -778,7 +778,7 @@ function fillHistory(box: HTMLElement, r: Row): void {
     const first = hist.epochs[hist.epochs.length - 1];
     const table = h(
       "table",
-      { class: "ledger", "aria-labelledby": `hist-${r.deed.token_id}` },
+      { class: "ledger", "aria-labelledby": `hist-${r.outlive.token_id}` },
       h(
         "thead",
         {},
@@ -844,7 +844,7 @@ function fillHistory(box: HTMLElement, r: Row): void {
       h(
         "p",
         { class: "note fine hist-src" },
-        `From the vault's NEP-297 events (vault_charge, vault_deposit, vault_withdraw, vault_owner) and the deed's deed_sold, read through ${new URL(TX_INDEX).host}: ${s.listed} transactions, read at ${clock(s.readAt)}. Revenue is exact per epoch: a charge belongs to whoever held the deed when it executed. Proof links open on NearBlocks. `,
+        `From the vault's NEP-297 events (vault_charge, vault_deposit, vault_withdraw, vault_owner) and the token's outlive_sold, read through ${new URL(TX_INDEX).host}: ${s.listed} transactions, read at ${clock(s.readAt)}. Revenue is exact per epoch: a charge belongs to whoever held the token when it executed. Proof links open on NearBlocks. `,
         notes.join(" "),
       ),
     );
@@ -921,14 +921,14 @@ function customersBlock(r: Row, s: HistoryState): HTMLElement | null {
     h(
       "p",
       { class: "note fine" },
-      "Our demo traffic agents are deedlab-alice, deedlab-bob and accounts funded by a deedl*-seller account. Traffic in the recorded demos comes from these agents. " +
+      "Our demo traffic agents are outlivelab-alice, outlivelab-bob and accounts funded by a tokenl*-seller account. Traffic in the recorded demos comes from these agents. " +
         "Customers whose credit an owner paid in are marked here; the buyer agent also reads each customer's own funding history and counts only independent revenue.",
     ),
   );
 }
 
 function historySection(r: Row): HTMLElement {
-  const box = h("section", { class: "history", "data-history": r.deed.vault_id, "aria-label": "Earnings history" });
+  const box = h("section", { class: "history", "data-history": r.outlive.vault_id, "aria-label": "Earnings history" });
   fillHistory(box, r);
   return box;
 }
@@ -936,35 +936,35 @@ function historySection(r: Row): HTMLElement {
 /** A finished read repaints only the history sections of that vault: rows are not rebuilt. */
 onHistory((vault) => {
   for (const box of document.querySelectorAll<HTMLElement>(`[data-history="${CSS.escape(vault)}"]`)) {
-    const r = rows.find((x) => x.deed.vault_id === vault);
+    const r = rows.find((x) => x.outlive.vault_id === vault);
     if (r) fillHistory(box, r);
   }
 });
 
-/** Opens a deed's row on the board (switching tab if needed) and brings its history into view. */
+/** Opens a token's row on the board (switching tab if needed) and brings its history into view. */
 function openHistory(key: string): void {
-  const r = rows.find((x) => x.deed.token_id === key);
+  const r = rows.find((x) => x.outlive.token_id === key);
   if (!r) return;
-  if (activeTab() === "sale" && !r.deed.listing) setTab("all");
-  const art = document.querySelector<HTMLElement>(`#deeds [data-token="${CSS.escape(key)}"]`);
+  if (activeTab() === "sale" && !r.outlive.listing) setTab("all");
+  const art = document.querySelector<HTMLElement>(`#tokens [data-token="${CSS.escape(key)}"]`);
   const btn = art?.querySelector<HTMLButtonElement>(":scope > button.row");
   if (!art || !btn) return;
   if (!openKeys.has(key)) btn.click();
-  else wantHistory(r.deed.vault_id);
+  else wantHistory(r.outlive.vault_id);
   art.querySelector<HTMLElement>(".history")?.scrollIntoView({ block: "start", behavior: reduceMotion() ? "auto" : "smooth" });
 }
 
 function certImage(r: Row, cls: string): HTMLElement {
   const media = r.token?.metadata?.media;
   return media
-    ? h("img", { class: cls, src: media, alt: `Certificate of ${deedId(r.deed)}, ${r.deed.title}`, width: "640", height: "400" })
+    ? h("img", { class: cls, src: media, alt: `Certificate of ${outliveId(r.outlive)}, ${r.outlive.title}`, width: "640", height: "400" })
     : h("div", { class: `${cls} cert-ph`, role: "img", "aria-label": "Certificate loading" }, h("span", {}, "Certificate loading"));
 }
 
 // ---------------------------------------------------------------- the board
 
 type Tab = "sale" | "all";
-const TAB_KEY = "deed.board.tab";
+const TAB_KEY = "outlive.board.tab";
 
 function readTab(): Tab | null {
   if (location.hash === "#for-sale") return "sale";
@@ -980,7 +980,7 @@ function readTab(): Tab | null {
 let chosenTab: Tab | null = readTab();
 
 function counts(): { sale: number; all: number } {
-  const list = deedList.length > 0 ? deedList : rows.map((r) => r.deed);
+  const list = outliveList.length > 0 ? outliveList : rows.map((r) => r.outlive);
   return { sale: list.filter((d) => d.listing).length, all: list.length };
 }
 
@@ -1015,7 +1015,7 @@ function renderTabs(): void {
       "data-tab": key,
       id: `tab-${key}`,
       "aria-selected": String(selected),
-      "aria-controls": "deeds",
+      "aria-controls": "tokens",
       tabindex: selected ? "0" : "-1",
     }, label, h("span", { class: "n" }, `(${n})`));
     if (key === "sale" && n === 0) b.disabled = true;
@@ -1035,7 +1035,7 @@ function renderTabs(): void {
   const hadFocus = box.contains(document.activeElement);
   box.dataset.sig = sig;
   box.replaceChildren(make("sale", "For sale ", c.sale), make("all", "All ", c.all));
-  $("deeds").setAttribute("aria-labelledby", `tab-${tab}`);
+  $("tokens").setAttribute("aria-labelledby", `tab-${tab}`);
   if (hadFocus) box.querySelector<HTMLElement>(`[data-tab="${tab}"]`)?.focus();
 }
 
@@ -1043,17 +1043,17 @@ function renderTabs(): void {
 const openKeys = new Set<string>();
 
 function rowSig(r: Row, me: string | null): string {
-  const s = seen.get(r.deed.token_id);
-  const o = ownerReads.get(r.deed.token_id);
-  return JSON.stringify([r.deed, r.info, r.stats, r.me, me, token.symbol, !!r.token?.metadata?.media, s?.callAfter ?? null, o?.status ?? null, o?.owner ?? null]);
+  const s = seen.get(r.outlive.token_id);
+  const o = ownerReads.get(r.outlive.token_id);
+  return JSON.stringify([r.outlive, r.info, r.stats, r.me, me, token.symbol, !!r.token?.metadata?.media, s?.callAfter ?? null, o?.status ?? null, o?.owner ?? null]);
 }
 
 function entry(r: Row, rank: number, me: string | null): HTMLElement {
-  const { deed, info, stats } = r;
-  const key = deed.token_id;
-  const id = deedId(deed);
+  const { outlive, info, stats } = r;
+  const key = outlive.token_id;
+  const id = outliveId(outlive);
   const p = paybackOf(r);
-  const l = deed.listing;
+  const l = outlive.listing;
   const unit = () => h("span", { class: "unit" }, token.symbol);
   const cell = (cls: string, label: string, ...value: Child[]) => h("span", { class: `c ${cls}` }, h("span", { class: "lbl" }, label), h("span", { class: "val" }, ...value));
   const chip = l
@@ -1069,10 +1069,10 @@ function entry(r: Row, rank: number, me: string | null): HTMLElement {
       id: `row-${key}`,
       "aria-expanded": String(openKeys.has(key)),
       "aria-controls": `detail-${key}`,
-      "aria-label": `${id}, ${deed.title}. ${stats.calls_30d} paid calls in 30 days. ${l ? `For sale at ${amount(l.price)} ${token.symbol}, ${PAYBACK_LABEL} ${paybackText(p)}` : "Not listed"}. Show details.`,
+      "aria-label": `${id}, ${outlive.title}. ${stats.calls_30d} paid calls in 30 days. ${l ? `For sale at ${amount(l.price)} ${token.symbol}, ${PAYBACK_LABEL} ${paybackText(p)}` : "Not listed"}. Show details.`,
     },
     h("span", { class: "c c-rank" }, String(rank + 1).padStart(2, "0")),
-    h("span", { class: "c c-id" }, h("span", { class: "id" }, id), h("span", { class: "sub" }, deed.title)),
+    h("span", { class: "c c-id" }, h("span", { class: "id" }, id), h("span", { class: "sub" }, outlive.title)),
     cell("c-calls", "calls, 30d", fmtInt(stats.calls_30d)),
     cell("c-rev", "revenue, 30d", amount(stats.revenue_30d, 2), " ", unit()),
     l ? cell("c-price", "price", amount(l.price), " ", unit()) : cell("c-price muted", "price", "not listed"),
@@ -1092,16 +1092,16 @@ function entry(r: Row, rank: number, me: string | null): HTMLElement {
     { class: "figs" },
     figure("owner", link(`address/${info.owner_id}`, short(info.owner_id))),
     figure("price per call", h("span", { class: "num" }, `${amount(info.price_per_call, 6)} ${token.symbol}`, info.pending_price ? `, ${amount(info.pending_price, 6)} from ${new Date(Number(info.price_effective_at_ms)).toLocaleString()}` : "")),
-    figure("withdrawable proceeds", h("span", { class: "num" }, `${amount(info.revenue)} ${token.symbol}`), "Earned revenue the owner may withdraw; goes to the buyer with the deed"),
+    figure("withdrawable proceeds", h("span", { class: "num" }, `${amount(info.revenue)} ${token.symbol}`), "Earned revenue the owner may withdraw; goes to the buyer with the token"),
     figure("customer credit, owed", h("span", { class: "num" }, `${amount(info.liabilities)} ${token.symbol}`), "A liability: prepaid by customers, refundable to them, never withdrawable by the owner"),
     figure("gas spent, 30 days", h("span", { class: "num" }, `${near(stats.gas_spent_30d, 5)} NEAR`), "Estimated from the vault's NEAR balance at each charge"),
     figure("customers with credit", h("span", { class: "num" }, String(info.customers)), "Ledger entries in the vault now; who they are is listed under Customers below"),
     figure("calls, all time", h("span", { class: "num" }, fmtInt(stats.calls_total))),
     figure("revenue, all time", h("span", { class: "num" }, `${amount(stats.revenue_total)} ${token.symbol}`)),
-    figure("owner epoch", h("span", { class: "num" }, String(info.owner_epoch)), "1 at mint, +1 each time the deed changes hands (sale or transfer)"),
+    figure("owner epoch", h("span", { class: "num" }, String(info.owner_epoch)), "1 at mint, +1 each time the token changes hands (sale or transfer)"),
     figure("worker key", h("span", { class: "num", title: info.worker_key ?? "" }, short(info.worker_key))),
-    figure("minted", h("span", { class: "num" }, new Date(Number(deed.minted_at_ms)).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }))),
-    figure("vault", link(`address/${deed.vault_id}`, short(deed.vault_id, 8))),
+    figure("minted", h("span", { class: "num" }, new Date(Number(outlive.minted_at_ms)).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }))),
+    figure("vault", link(`address/${outlive.vault_id}`, short(outlive.vault_id, 8))),
   );
   const ownerRead = ownerReads.get(key);
   const holder = !!ownerRead && ownerRead.status === "ok" && isHolder(ownerRead.owner, me);
@@ -1144,7 +1144,7 @@ function entry(r: Row, rank: number, me: string | null): HTMLElement {
     if (open) {
       wantOwner(key, true);
       wantCert(key);
-      wantHistory(deed.vault_id);
+      wantHistory(outlive.vault_id);
       if (!reduceMotion()) {
         detail.classList.add("opening");
         detail.addEventListener("animationend", () => detail.classList.remove("opening"), { once: true });
@@ -1162,20 +1162,20 @@ function entry(r: Row, rank: number, me: string | null): HTMLElement {
 function render(animate = true): void {
   renderHero();
   renderTabs();
-  const list = $("deeds");
+  const list = $("tokens");
   const me = currentAccount();
   const tab = activeTab();
-  const visible = tab === "sale" ? rows.filter((r) => r.deed.listing) : rows;
+  const visible = tab === "sale" ? rows.filter((r) => r.outlive.listing) : rows;
   // Open consoles re-read nft_token when their cached owner is stale (they are the only place
   // holder actions exist); a transfer therefore cannot leave the old owner's buttons on screen.
-  for (const r of visible) if (openKeys.has(r.deed.token_id)) wantOwner(r.deed.token_id);
+  for (const r of visible) if (openKeys.has(r.outlive.token_id)) wantOwner(r.outlive.token_id);
   const expected = tab === "sale" ? counts().sale : counts().all;
   renderNote();
   if (visible.length === 0) {
     if (expected > 0 || rows.length === 0) {
       if (!list.querySelector(".skel")) list.replaceChildren(skeleton(Math.min(5, Math.max(1, expected || 5))));
     } else {
-      list.replaceChildren(h("p", { class: "empty" }, "No deeds yet. Mint one with the seller agent, then reload."));
+      list.replaceChildren(h("p", { class: "empty" }, "No tokens yet. Mint one with the seller agent, then reload."));
     }
     flashKeys.clear();
     return;
@@ -1186,7 +1186,7 @@ function render(animate = true): void {
   });
   const firstPaint = before.size === 0;
   const fresh = visible.map((r, i) => {
-    const key = r.deed.token_id;
+    const key = r.outlive.token_id;
     const sig = rowSig(r, me);
     const old = before.get(key);
     const typing = old && old.el.contains(document.activeElement) && document.activeElement?.tagName === "INPUT";
@@ -1237,19 +1237,19 @@ function render(animate = true): void {
 
 function renderNote(): void {
   const note = $("board-note");
-  const text = totalDeeds > deedList.length ? `Showing the ${deedList.length} newest of ${totalDeeds} deeds.` : "";
+  const text = totalOutlives > outliveList.length ? `Showing the ${outliveList.length} newest of ${totalOutlives} tokens.` : "";
   if (note.textContent !== text) note.textContent = text;
 }
 
 // ---------------------------------------------------------------- hero
 
 function featured(): { row: Row; forSale: boolean } | null {
-  const sale = rows.find((r) => r.deed.listing);
+  const sale = rows.find((r) => r.outlive.listing);
   if (sale) return { row: sale, forSale: true };
   return rows[0] ? { row: rows[0], forSale: false } : null;
 }
 
-/** The featured listing: the top deed for sale by paid calls (else the most active deed),
+/** The featured listing: the top outlive for sale by paid calls (else the most active outlive),
  *  its certificate, the three numbers a buyer weighs, and the page's one primary action. */
 function renderHero(): void {
   const box = document.getElementById("featured");
@@ -1261,9 +1261,9 @@ function renderHero(): void {
   const sig = `${rowSig(r, me)}|${forSale}`;
   if (box.dataset.sig === sig) return;
   box.dataset.sig = sig;
-  const l = r.deed.listing;
+  const l = r.outlive.listing;
   const p = paybackOf(r);
-  const id = deedId(r.deed);
+  const id = outliveId(r.outlive);
   const figs = h("dl", { class: "feat-figs" });
   if (l && p) {
     figs.append(
@@ -1279,25 +1279,25 @@ function renderHero(): void {
     );
   }
   const action = forSale ? buyButton(r, me) : null;
-  const hist = h("a", { class: "feat-hist", href: `#detail-${r.deed.token_id}` }, "See what it earned under each holder");
+  const hist = h("a", { class: "feat-hist", href: `#detail-${r.outlive.token_id}` }, "See what it earned under each holder");
   hist.addEventListener("click", (e) => {
     e.preventDefault();
-    openHistory(r.deed.token_id);
+    openHistory(r.outlive.token_id);
   });
   const parts: (HTMLElement | null)[] = [
-    h("h2", { class: "feat-h" }, forSale ? "Featured listing" : "Most active deed"),
+    h("h2", { class: "feat-h" }, forSale ? "Featured listing" : "Most active outlive"),
     certImage(r, "feat-cert"),
-    h("p", { class: "feat-id" }, h("strong", {}, id), ` ${r.deed.title}`),
+    h("p", { class: "feat-id" }, h("strong", {}, id), ` ${r.outlive.title}`),
     figs,
     action,
     hist,
     forSale && me && l && me === l.seller ? h("p", { class: "note" }, "This is your listing. Cancel it from the board.") : null,
-    forSale ? h("p", { class: "note fine" }, `Ranked first of ${counts().sale} for sale by paid calls in 30 days.`) : h("p", { class: "note fine" }, "Nothing is for sale right now. This is the deed with the most paid calls in 30 days."),
+    forSale ? h("p", { class: "note fine" }, `Ranked first of ${counts().sale} for sale by paid calls in 30 days.`) : h("p", { class: "note fine" }, "Nothing is for sale right now. This is the token with the most paid calls in 30 days."),
   ];
   box.replaceChildren(...parts.filter((x): x is HTMLElement => x !== null));
 }
 
-/** Live totals across the deeds on the board. Figures roll up once, then tick when the chain moves them. */
+/** Live totals across the tokens on the board. Figures roll up once, then tick when the chain moves them. */
 let kpiSeen = false;
 const kpiLast: Record<string, number> = {};
 function renderKpis(): void {
@@ -1306,7 +1306,7 @@ function renderKpis(): void {
   const rev30 = rows.reduce((n, r) => n + BigInt(r.stats.revenue_30d), 0n);
   const cash = rows.reduce((n, r) => n + BigInt(r.info.revenue), 0n);
   const items: [string, number, (n: number) => string, boolean][] = [
-    ["deeds live", rows.length, fmtInt, false],
+    ["tokens live", rows.length, fmtInt, false],
     ["paid calls, 30d", calls30, fmtInt, false],
     ["revenue, 30d", toUnits(rev30, token.decimals), fmtAmt(2), true],
     ["proceeds in vaults", toUnits(cash, token.decimals), fmtAmt(2), true],
@@ -1339,8 +1339,8 @@ function renderWallet(account: string | null): void {
 }
 
 async function main(): Promise<void> {
-  $("deed-link").replaceChildren(link(`address/${DEED_CONTRACT}`, DEED_CONTRACT));
-  $("deeds").replaceChildren(skeleton(5)); // the board's shape lands before the first read returns
+  $("outlive-link").replaceChildren(link(`address/${OUTLIVE_CONTRACT}`, OUTLIVE_CONTRACT));
+  $("tokens").replaceChildren(skeleton(5)); // the board's shape lands before the first read returns
   renderWallet(null);
   onAccount((a) => {
     renderWallet(a);

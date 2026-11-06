@@ -5,10 +5,10 @@
 import { canonicalJson, fromBase64, toBase64, utf8 } from "./encoding.js";
 import { Signer, verifySignature } from "./keys.js";
 
-export const RECEIPT_DOMAIN = "deed-obligation:v1\n";
-export const PROOF_DOMAIN = "deed-delivery-proof:v1\n";
-export const OUTBOUND_DOMAIN = "deed-relay-request:v1\n";
-export const HANDOFF_DOMAIN = "deed-handoff:v1\n";
+export const RECEIPT_DOMAIN = "outlive-obligation:v1\n";
+export const PROOF_DOMAIN = "outlive-delivery-proof:v1\n";
+export const OUTBOUND_DOMAIN = "outlive-relay-request:v1\n";
+export const HANDOFF_DOMAIN = "outlive-handoff:v1\n";
 
 /** What the worker promises when it accepts a paid delivery. */
 export interface ObligationReceipt {
@@ -81,12 +81,12 @@ export function verifyProof(doc: Signed<DeliveryProof>): boolean {
 }
 
 export const OUTBOUND_HEADERS = {
-  vault: "x-deed-relay-vault",
-  deliveryId: "x-deed-delivery-id",
-  attempt: "x-deed-attempt",
-  timestamp: "x-deed-relay-timestamp",
-  key: "x-deed-relay-key",
-  signature: "x-deed-relay-signature",
+  vault: "x-outlive-relay-vault",
+  deliveryId: "x-outlive-delivery-id",
+  attempt: "x-outlive-attempt",
+  timestamp: "x-outlive-relay-timestamp",
+  key: "x-outlive-relay-key",
+  signature: "x-outlive-relay-signature",
 } as const;
 
 export function outboundMessage(fields: {

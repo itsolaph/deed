@@ -6,7 +6,7 @@ money into it.
 
 ## Scope
 
-The three contracts in `contracts/` (`deed`, `vault`, `tusdc`), reviewed in October 2026
+The three contracts in `contracts/` (`outlive`, `vault`, `tusdc`), reviewed in October 2026
 before the hackathon submission. The worker, SDK, agents and web app were not part of that
 review; their threat model and known limits are in [DESIGN.md](DESIGN.md#threat-model-off-chain-parts).
 The worker's outbound requests are guarded against server-side request forgery and covered by
@@ -31,15 +31,15 @@ before the fix.
 | Medium | A cap decrease applied at once, so a customer could set the cap to zero before the next charge batch and never pay for calls already served, then take a refund. | A cap decrease waits for the refund delay. A raise still applies at once. |
 | Medium | A buyer's only protection was `max_price`. A seller could cancel, withdraw the vault's cash and re-list at the same price while a purchase was on its way. Also, `lock` and `unlock` only carried the owner epoch, so a late unlock from an earlier listing could in theory unlock a vault with an active listing if receipts arrived out of order. | Every listing gets an increasing `listing_id`, which is also the vault lock id. Buyers can pin it in the buy message. The vault only accepts a newer lock id and only unlocks for the id that locked it. A still-activating listing can now be cancelled, so a lost callback cannot leave a token stuck. |
 | Low | `sync_vault` during a pending `nft_transfer_call` pushed the not-yet-final receiver. | Refused while a transfer call is pending. |
-| Low | A token could be transferred to the deed contract or to its own vault, which can never use the owner powers. | Refused. |
+| Low | A token could be transferred to the Outlive contract or to its own vault, which can never use the owner powers. | Refused. |
 | Low | Stats pushes that arrived out of order could overwrite newer figures. | Older pushes are ignored. |
 
 ## Main remaining risks
 
-- **The deed account key.** On testnet the deed account keeps a full-access key so the code
-  can be redeployed. Whoever holds it can replace the deed code, push a fake owner to every
+- **The contract account key.** On testnet the token account keeps a full-access key so the code
+  can be redeployed. Whoever holds it can replace the token code, push a fake owner to every
   vault, withdraw revenue and register a worker key that charges customers within their caps.
-  Vaults cannot be upgraded, but they trust their parent deed. For mainnet the deed account's
+  Vaults cannot be upgraded, but they trust their parent outlive. For mainnet the token account's
   full-access keys must be removed, or upgrades must go through a DAO with a delay.
 - **The owner runs the worker.** The worker key can charge customers within their balance and
   daily cap without serving them. Signed receipts make this visible; caps and the refund delay
@@ -47,7 +47,7 @@ before the fix.
 - **Revenue figures can be inflated.** An owner can pay their own business to make the 30-day
   calls and revenue look better before a sale. The vault's totals include such revenue. The
   buyer agent counts only revenue it can attribute to independent customers: owners now and
-  before, the listing seller, the vault, the deed and customers funded by any of them (one hop:
+  before, the listing seller, the vault, the token and customers funded by any of them (one hop:
   `deposit_for`, transfers, account creation, sub-accounts) are excluded, and its default policy
   wants 3 independent payers, none above 60%, and 72 hours of history
   ([DESIGN.md](DESIGN.md#buyer-agent)). `scripts/wash-reject.mjs` shows a rejection on testnet.
@@ -72,8 +72,8 @@ before the fix.
 - **`nft_transfer_call`.** Until `nft_resolve_transfer` pushes the final owner, the sender keeps
   the owner powers on the vault. Receiver contracts should not rely on the vault's cash
   during `nft_on_transfer`.
-- **Mint refunds.** If the vault creation batch fails, the deed refunds the full deposit right
-  away from its own balance, before the batch's NEAR comes back to it. A deed account without
+- **Mint refunds.** If the vault creation batch fails, the token refunds the full deposit right
+  away from its own balance, before the batch's NEAR comes back to it. A contract account without
   spare NEAR could fail that refund. Validation runs before the batch, and no test could make
   the batch fail.
 - **tUSDC** is a testnet faucet token with no value. Never deploy it on mainnet.

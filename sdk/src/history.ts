@@ -1,4 +1,4 @@
-// Earnings history of a vault, per ownership epoch, from the NEP-297 events the vault and deed
+// Earnings history of a vault, per ownership epoch, from the NEP-297 events the vault and outlive
 // contracts already emit. Browser-safe. No contract state is read here: the events are the record.
 //
 // Source: FastNEAR's transaction index (tx.test.fastnear.com): `POST /v0/account` lists every
@@ -6,13 +6,13 @@
 // receipt and its logs. NearBlocks has the same data in principle, but its testnet indexer can lag
 // by weeks, and its account endpoints return no logs.
 //
-// Events used (contracts/vault/src, contracts/deed/src):
+// Events used (contracts/vault/src, contracts/outlive/src):
 //   vault_init      {owner_id, owner_epoch: 1}                   opens epoch 1 (the mint)
 //   vault_owner     {previous, owner_id, epoch}                  opens a new epoch (sale or transfer)
 //   vault_charge    {price, earned, items[{customer, units, cost, status}]} paid calls and revenue
 //   vault_deposit   {customer, sender, amount}                   customer credit and who paid it in
 //   vault_withdraw  {receiver_id, amount, owner_epoch}           a payout, tagged with its epoch
-//   deed_sold       {token_id, seller, buyer, price, epoch}      the sale that opened `epoch`
+//   outlive_sold       {token_id, seller, buyer, price, epoch}      the sale that opened `epoch`
 // Logs of failed receipts are ignored: NEAR keeps them, but their state changes were rolled back.
 
 export const TESTNET_TX_API = "https://tx.test.fastnear.com";
@@ -101,28 +101,28 @@ const str = (v: unknown): string => (typeof v === "string" ? v : typeof v === "n
 const num = (v: unknown): number => (typeof v === "number" ? v : typeof v === "string" && v !== "" ? Number(v) : NaN);
 const nsToMs = (ns: number | string): number => Number(BigInt(String(ns)) / 1_000_000n);
 
-/** The deed account is the parent of the vault account: `<token>.<deed>`. */
-export function vaultParts(vault: string): { tokenId: string; deed: string } {
+/** The outlive account is the parent of the vault account: `<token>.<outlive>`. */
+export function vaultParts(vault: string): { tokenId: string; outlive: string } {
   const dot = vault.indexOf(".");
-  return { tokenId: vault.slice(0, dot), deed: vault.slice(dot + 1) };
+  return { tokenId: vault.slice(0, dot), outlive: vault.slice(dot + 1) };
 }
 
 /** Extracts the events that make up a vault's earnings history from indexed transactions:
- *  vault events executed by the vault itself, and `deed_sold` for this vault's token executed by
- *  its deed. Unknown or malformed events are skipped. The result is in chain order. */
+ *  vault events executed by the vault itself, and `outlive_sold` for this vault's token executed by
+ *  its outlive. Unknown or malformed events are skipped. The result is in chain order. */
 export function eventsFromTransactions(txs: IndexedTransaction[], vault: string): HistoryEvent[] {
-  const { tokenId, deed } = vaultParts(vault);
+  const { tokenId, outlive } = vaultParts(vault);
   const out: HistoryEvent[] = [];
   const seen = new Set<string>();
   for (const tx of txs) {
     for (const r of tx.receipts) {
       const o = r.execution_outcome;
       const executor = o.outcome.executor_id || r.receipt.receiver_id;
-      if (executor !== vault && executor !== deed) continue;
+      if (executor !== vault && executor !== outlive) continue;
       if (!isSuccess(o.outcome.status)) continue;
       o.outcome.logs.forEach((log, logIndex) => {
         const e = parseEventLog(log);
-        if (!e || e.standard !== "deed") return;
+        if (!e || e.standard !== "outlive") return;
         const d = (e.data[0] ?? {}) as Record<string, unknown>;
         const key = `${o.id}:${logIndex}`;
         if (seen.has(key)) return;
@@ -141,7 +141,7 @@ export function eventsFromTransactions(txs: IndexedTransaction[], vault: string)
           } else if (e.event === "vault_deposit") {
             ev = { ...base, kind: "deposit", customer: str(d.customer), sender: str(d.sender), amount: str(d.amount) || "0" };
           }
-        } else if (e.event === "deed_sold" && d.token_id === tokenId) {
+        } else if (e.event === "outlive_sold" && d.token_id === tokenId) {
           ev = { ...base, kind: "sold", seller: str(d.seller), buyer: str(d.buyer), price: str(d.price), epoch: num(d.epoch) };
         }
         if (ev) {
@@ -174,7 +174,7 @@ export interface Epoch {
   epoch: number;
   /** The holder for this epoch; null when the event that opened it was not read. */
   holder: string | null;
-  /** How the holder got the deed: mint, sale, transfer, or unknown if the opening was not read. */
+  /** How the holder got the outlive: mint, sale, transfer, or unknown if the opening was not read. */
   openedBy: "mint" | "sale" | "transfer" | "unknown";
   /** The transaction that opened the epoch (the mint, sale or transfer), if read. */
   opened: TxRef | null;

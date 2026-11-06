@@ -19,8 +19,8 @@ async fn only_the_worker_key_can_charge() -> Result<()> {
     }
     let sk = env.set_worker(&env.seller, &vault).await?;
 
-    // Customer, owner, and the deed account itself are all refused.
-    for caller in [&env.alice, &env.seller, env.deed.as_account()] {
+    // Customer, owner, and the outlive account itself are all refused.
+    for caller in [&env.alice, &env.seller, env.outlive.as_account()] {
         fails(caller.call(&vault, "charge").args_json(&args).transact().await?, "sent by the vault account");
     }
 

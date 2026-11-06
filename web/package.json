@@ -1,8 +1,8 @@
 {
-  "name": "@deed/web",
+  "name": "@outlive/web",
   "version": "0.1.0",
   "private": true,
-  "description": "Static Outlive web app for testnet: deeds with live numbers, certificate, buy, owner and customer panels",
+  "description": "Static Outlive web app for testnet: outlive tokens with live numbers, certificate, buy, owner and customer panels",
   "license": "MIT",
   "type": "module",
   "scripts": {

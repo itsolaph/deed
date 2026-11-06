@@ -1,4 +1,4 @@
-// Payback math for a listed deed. Used by the buyer agent and the web app. Pure functions.
+// Payback math for a listed outlive. Used by the buyer agent and the web app. Pure functions.
 //
 // "Payback on chain-visible costs": net per day is revenue per day minus the vault's on-chain
 // gas per day. Hosting, bandwidth and operator time are off chain and NOT included, so the
@@ -15,7 +15,7 @@ const YOCTO_PER_NEAR = 10n ** 24n;
 export interface PaybackInput {
   /** Listing price in the payment token's smallest unit. */
   price: bigint;
-  /** Withdrawable revenue in the vault, which goes to the buyer with the deed. */
+  /** Withdrawable revenue in the vault, which goes to the buyer with the outlive. */
   cash: bigint;
   revenue30d: bigint;
   /** yoctoNEAR the vault spent on gas in the last 30 days. */

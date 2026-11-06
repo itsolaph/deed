@@ -698,26 +698,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "deed"
-version = "0.1.0"
-dependencies = [
- "near-contract-standards",
- "near-sdk",
-]
-
-[[package]]
-name = "deed-tests"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64 0.22.1",
- "near-sandbox",
- "near-workspaces",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "defmt"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2658,6 +2638,26 @@ dependencies = [
  "num-traits",
  "rand 0.8.8",
  "serde",
+]
+
+[[package]]
+name = "outlive"
+version = "0.1.0"
+dependencies = [
+ "near-contract-standards",
+ "near-sdk",
+]
+
+[[package]]
+name = "outlive-tests"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64 0.22.1",
+ "near-sandbox",
+ "near-workspaces",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]

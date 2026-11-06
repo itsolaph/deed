@@ -16,8 +16,8 @@ import {
 } from "../src/index.js";
 
 // Recorded from FastNEAR's testnet index (scripts/record-history-fixture.mjs): the demo vault
-// relay-1102ripe, minted by deedl8-seller, sold for 3 tUSDC to deedlab-buyer (epoch 2).
-const VAULT = "relay-1102ripe.deed2.deedlab.testnet";
+// relay-1102ripe, minted by outlivel8-seller, sold for 3 tUSDC to outlivelab-buyer (epoch 2).
+const VAULT = "relay-1102ripe.outlive.testnet";
 const fixture = JSON.parse(readFileSync(new URL(`../../test/fixtures/${VAULT}.json`, import.meta.url), "utf8")) as {
   vault: string;
   account: { account_txs: IndexedAccountTx[]; txs_count: number };
@@ -25,8 +25,8 @@ const fixture = JSON.parse(readFileSync(new URL(`../../test/fixtures/${VAULT}.js
 };
 const SALE_TX = "HaMeB1JePtBkSPYPsV9W2oLj86jvnJjNG3VYHaVEsZVR";
 const MINT_TX = "HJtBcxvVvdPRLamQK1tYEqBsWjMcK8FFTvzMjnm6xGfU";
-const SELLER = "deedl8-seller.testnet";
-const BUYER = "deedlab-buyer.testnet";
+const SELLER = "outlivel8-seller.testnet";
+const BUYER = "outlivelab-buyer.testnet";
 
 test("history: the recorded demo vault splits into two epochs at the sale", () => {
   const h = buildEarningsHistory(eventsFromTransactions(fixture.transactions, VAULT), VAULT);
@@ -78,7 +78,7 @@ test("history: transaction order in the input does not matter", () => {
 });
 
 test("history: logs of failed receipts and of other tokens are ignored", () => {
-  const evt = (event: string, data: unknown) => `EVENT_JSON:${JSON.stringify({ standard: "deed", version: "1.0.0", event, data: [data] })}`;
+  const evt = (event: string, data: unknown) => `EVENT_JSON:${JSON.stringify({ standard: "outlive", version: "1.0.0", event, data: [data] })}`;
   const receipt = (executor: string, logs: string[], status: Record<string, unknown>, index: number) => ({
     receipt: { receipt_id: `r${index}`, receiver_id: executor, predecessor_id: executor },
     execution_outcome: { block_height: 100 + index, block_timestamp: `${(1_700_000_000_000 + index) * 1_000_000}`, index: 0, id: `o${index}`, outcome: { logs, executor_id: executor, status } },
@@ -87,7 +87,7 @@ test("history: logs of failed receipts and of other tokens are ignored", () => {
     transaction: { hash: "T1", signer_id: "x.testnet", receiver_id: VAULT },
     receipts: [
       receipt(VAULT, [evt("vault_withdraw", { receiver_id: SELLER, amount: "5", owner_epoch: 1 })], { Failure: "panicked" }, 1),
-      receipt("deed2.deedlab.testnet", [evt("deed_sold", { token_id: "relay-other", seller: SELLER, buyer: BUYER, price: "9", epoch: 2 })], { SuccessValue: "" }, 2),
+      receipt("outlive.testnet", [evt("outlive_sold", { token_id: "relay-other", seller: SELLER, buyer: BUYER, price: "9", epoch: 2 })], { SuccessValue: "" }, 2),
       receipt("evil.testnet", [evt("vault_charge", { earned: "999", items: [{ units: 9, cost: "999" }] })], { SuccessValue: "" }, 3),
       receipt(VAULT, ["not an event", "EVENT_JSON:{broken", evt("vault_charge", { earned: "20", items: [{ units: 1, cost: "10" }, { units: 1, cost: "10" }, { units: 1, cost: "0", status: "cap" }] })], { SuccessValue: "" }, 4),
     ],
@@ -95,7 +95,7 @@ test("history: logs of failed receipts and of other tokens are ignored", () => {
   const ev = eventsFromTransactions([tx], VAULT);
   assert.deepEqual(ev.map((e) => e.kind), ["charge"]);
   assert.equal((ev[0] as Extract<HistoryEvent, { kind: "charge" }>).calls, 2, "refused items are not paid calls");
-  assert.equal(parseEventLog("EVENT_JSON:{\"standard\":\"deed\"}"), null);
+  assert.equal(parseEventLog("EVENT_JSON:{\"standard\":\"outlive\"}"), null);
   assert.equal(parseEventLog("hello"), null);
 });
 

@@ -5,7 +5,7 @@ dist/
 *.tsbuildinfo
 
 # Local run output: worker journals and demo logs
-.deed-worker/
+.outlive-worker/
 demo-logs/
 examples/.receipts/
 

@@ -7,7 +7,7 @@
 import fs from "node:fs";
 import http from "node:http";
 import { parseArgs } from "node:util";
-import { sha256Hex, verifyOutbound } from "@deed/sdk";
+import { sha256Hex, verifyOutbound } from "@outlive/sdk";
 import { clock, isMain, runMain } from "./common.js";
 
 export interface EchoOptions {
@@ -43,7 +43,7 @@ export function startEchoTarget(opts: EchoOptions): Promise<{ server: http.Serve
       const sig = verifyOutbound(req.headers, { method: req.method ?? "", path: req.url ?? "", bodySha256: sha256Hex(body) });
       stats.hits += 1;
       if (!sig.ok) stats.badSignature += 1;
-      const attempt = Number(req.headers["x-deed-attempt"] ?? 1);
+      const attempt = Number(req.headers["x-outlive-attempt"] ?? 1);
       const chance = attempt <= 1 ? opts.failRate : 0;
       const outage = opts.outageFile !== undefined && fs.existsSync(opts.outageFile);
       const fail = outage || random() < chance;

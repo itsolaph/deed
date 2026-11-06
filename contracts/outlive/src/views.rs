@@ -3,7 +3,7 @@
 use near_sdk::json_types::{U128, U64};
 use near_sdk::{bs58, env, near, AccountId, NearToken};
 
-use crate::{Deed, DeedExt, Listing, TokenRecord, VaultStats, VAULT_WASM};
+use crate::{Outlive, OutliveExt, Listing, TokenRecord, VaultStats, VAULT_WASM};
 
 #[near(serializers = [json])]
 pub struct ListingView {
@@ -18,7 +18,7 @@ pub struct ListingView {
 }
 
 #[near(serializers = [json])]
-pub struct DeedView {
+pub struct OutliveView {
     pub token_id: String,
     pub title: String,
     pub owner_id: AccountId,
@@ -40,7 +40,7 @@ pub struct VaultCodeHash {
 }
 
 #[near(serializers = [json])]
-pub struct DeedConfig {
+pub struct OutliveConfig {
     pub admin_id: AccountId,
     pub payment_token: AccountId,
     pub payment_symbol: String,
@@ -61,8 +61,8 @@ fn listing_view(token_id: &str, l: &Listing) -> ListingView {
     }
 }
 
-fn deed_view(token_id: &str, r: &TokenRecord) -> DeedView {
-    DeedView {
+fn outlive_view(token_id: &str, r: &TokenRecord) -> OutliveView {
+    OutliveView {
         token_id: token_id.to_string(),
         title: r.title.clone(),
         owner_id: r.owner_id.clone(),
@@ -77,9 +77,9 @@ fn deed_view(token_id: &str, r: &TokenRecord) -> DeedView {
 }
 
 #[near]
-impl Deed {
+impl Outlive {
     /// sha256 of the vault code that every new vault runs. Compare with the code hash of any
-    /// `<slug>.<deed account>` on an explorer.
+    /// `<slug>.<outlive account>` on an explorer.
     pub fn vault_code_hash(&self) -> VaultCodeHash {
         let hash = env::sha256(VAULT_WASM);
         VaultCodeHash {
@@ -89,8 +89,8 @@ impl Deed {
         }
     }
 
-    pub fn get_config(&self) -> DeedConfig {
-        DeedConfig {
+    pub fn get_config(&self) -> OutliveConfig {
+        OutliveConfig {
             admin_id: self.admin_id.clone(),
             payment_token: self.payment_token.clone(),
             payment_symbol: self.payment_symbol.clone(),
@@ -100,16 +100,16 @@ impl Deed {
         }
     }
 
-    pub fn get_deed(&self, token_id: String) -> Option<DeedView> {
-        self.tokens.get(&token_id).map(|r| deed_view(&token_id, r))
+    pub fn get_token(&self, token_id: String) -> Option<OutliveView> {
+        self.tokens.get(&token_id).map(|r| outlive_view(&token_id, r))
     }
 
-    pub fn get_deeds(&self, from_index: Option<u32>, limit: Option<u32>) -> Vec<DeedView> {
+    pub fn get_tokens(&self, from_index: Option<u32>, limit: Option<u32>) -> Vec<OutliveView> {
         self.tokens
             .iter()
             .skip(from_index.unwrap_or(0) as usize)
             .take(limit.unwrap_or(50).min(100) as usize)
-            .map(|(id, r)| deed_view(id, r))
+            .map(|(id, r)| outlive_view(id, r))
             .collect()
     }
 

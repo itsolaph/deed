@@ -7,8 +7,8 @@ accepted job, a signed proof of every delivery attempt, and a refund of unspent 
 Everything here is testnet. The payment token, tUSDC, is a test token without value that anyone
 can mint.
 
-The hosted relay is the deed `relay-live` on `deed2.deedlab.testnet`; its vault is
-`relay-live.deed2.deedlab.testnet`. The worker URL is not written here because it changes (it
+The hosted relay is the token `relay-live` on `outlive.testnet`; its vault is
+`relay-live.outlive.testnet`. The worker URL is not written here because it changes (it
 runs behind a temporary tunnel): every step reads it from the vault's on-chain config, the same
 way the SDK does.
 
@@ -28,7 +28,7 @@ way the SDK does.
 ## 1. Read the endpoint from chain
 
 ```
-near contract call-function as-read-only relay-live.deed2.deedlab.testnet get_info json-args {} network-config testnet now
+near contract call-function as-read-only relay-live.outlive.testnet get_info json-args {} network-config testnet now
 ```
 
 `endpoint` is the worker URL, `price_per_call` the price in tUSDC units (6 decimals, so `10000`
@@ -44,14 +44,14 @@ node examples/customer.mjs --account <you>.testnet
 Expected output (the endpoint differs):
 
 ```
-vault relay-live.deed2.deedlab.testnet: endpoint on chain https://<tunnel>.trycloudflare.com, price 0.01 tUSDC per call, first deposit at least 1 tUSDC
+vault relay-live.outlive.testnet: endpoint on chain https://<tunnel>.trycloudflare.com, price 0.01 tUSDC per call, first deposit at least 1 tUSDC
 402 payment required (unknown_customer). The worker says how to pay:
 {
-  "contract": "tusdc.deedlab.testnet",
+  "contract": "tusdc.outlive.testnet",
   "method": "ft_transfer_call",
-  "args": { "receiver_id": "relay-live.deed2.deedlab.testnet", "amount": "1000000", "msg": "" },
+  "args": { "receiver_id": "relay-live.outlive.testnet", "amount": "1000000", "msg": "" },
   ...
-  "near_cli": "near contract call-function as-transaction tusdc.deedlab.testnet ft_transfer_call ..."
+  "near_cli": "near contract call-function as-transaction tusdc.outlive.testnet ft_transfer_call ..."
 }
 ```
 
@@ -66,11 +66,11 @@ node examples/customer.mjs --account <you>.testnet --fund 2
 
 This does four things, each a transaction with a link:
 
-1. `storage_deposit` on `tusdc.deedlab.testnet` (0.00125 NEAR) so your account can hold tUSDC.
+1. `storage_deposit` on `tusdc.outlive.testnet` (0.00125 NEAR) so your account can hold tUSDC.
 2. `mint` 2 tUSDC from the token's public test faucet. The example refuses more than 5; one
    call costs 0.01, so 2 tUSDC is 200 calls. Please do not mint large amounts.
 3. `ft_transfer_call` of 2 tUSDC to the vault: your prepaid credit. It belongs to you, the
-   deed owner can never withdraw it, and the worker can only charge it per call within your
+   outlive owner can never withdraw it, and the worker can only charge it per call within your
    daily cap.
 4. A webhook job: the worker POSTs a small JSON body to `--target` (default
    `https://httpbin.org/post`; use any public URL that accepts POST, private addresses are
@@ -79,7 +79,7 @@ This does four things, each a transaction with a link:
 Expected output:
 
 ```
-storage_deposit on tusdc.deedlab.testnet: ok https://testnet.nearblocks.io/txns/...
+storage_deposit on tusdc.outlive.testnet: ok https://testnet.nearblocks.io/txns/...
 mint 2 tUSDC (public test faucet): ok https://testnet.nearblocks.io/txns/...
 ft_transfer_call 2 tUSDC to the vault as prepaid credit: ok https://testnet.nearblocks.io/txns/...
 202 accepted d_8ac5...: receipt seq 22, price 0.01 tUSDC, signed by worker key ed25519:7NXg... (checked against the vault's worker keys)
@@ -95,7 +95,7 @@ the vault, visible on NearBlocks).
 
 Receipts are kept in `examples/.receipts/<you>.testnet.json` until delivered. If the worker
 disappears, the SDK reads the endpoint again from the vault and presents them to the new
-worker (`DeedClient.resubmit`); a job already charged is then delivered without a second charge.
+worker (`OutliveClient.resubmit`); a job already charged is then delivered without a second charge.
 
 ## 4. Optional: take your money back
 
@@ -118,11 +118,11 @@ node examples/customer.mjs --account <you>.testnet --claim
 The example is the SDK with defaults filled in. The core is:
 
 ```js
-import { DeedClient, Rpc, signerFromSecretKey } from "../sdk/dist/src/index.js";
+import { OutliveClient, Rpc, signerFromSecretKey } from "../sdk/dist/src/index.js";
 import { NodeSigner, createNodeTransactor, fileStore } from "../sdk/dist/src/node.js";
 
-const client = new DeedClient({
-  vault: "relay-live.deed2.deedlab.testnet",
+const client = new OutliveClient({
+  vault: "relay-live.outlive.testnet",
   accountId: "you.testnet",
   signer: signerFromSecretKey(secretKey),                 // NEP-413 request signing
   rpc: new Rpc(),
@@ -139,5 +139,5 @@ await client.track();                                     // polls, verifies pro
 - The hosted worker is the project's own process on one machine behind a temporary tunnel. It
   can be down. It is trusted off-chain software: it could accept a job and not deliver it; the
   receipt and the missing proof would show that, and your daily cap and refund limit the loss.
-- Traffic you see on the board from `deedlab-alice`, `deedlab-bob` and `deedl*-seller` accounts
+- Traffic you see on the board from `outlivelab-alice`, `outlivelab-bob` and `outlivel*-seller` accounts
   is the project's own demo traffic. The web app marks those customers.

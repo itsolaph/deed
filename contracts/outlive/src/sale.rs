@@ -9,7 +9,7 @@ use near_sdk::{assert_one_yocto, env, near, require, AccountId, NearToken, Promi
 
 use crate::ownership::ext_vault;
 use crate::{
-    events, promise_succeeded, Deed, DeedExt, Listing, GAS_CALLBACK_SMALL, GAS_FT_TRANSFER, GAS_LOCK,
+    events, promise_succeeded, Outlive, OutliveExt, Listing, GAS_CALLBACK_SMALL, GAS_FT_TRANSFER, GAS_LOCK,
     GAS_ON_LOCKED, GAS_ON_PAID,
 };
 
@@ -31,7 +31,7 @@ struct BuyMsg {
     buy: BuyArgs,
 }
 
-impl Deed {
+impl Outlive {
     /// Checks a purchase and returns (seller, price). Nothing is changed on error.
     fn check_buy(&self, buyer: &AccountId, amount: u128, args: &BuyArgs) -> Result<(AccountId, u128), &'static str> {
         let r = self.tokens.get(&args.token_id).ok_or("token not found")?;
@@ -49,7 +49,7 @@ impl Deed {
             return Err("a transfer call is pending");
         }
         if &l.seller == buyer {
-            return Err("seller cannot buy their own deed");
+            return Err("seller cannot buy their own outlive");
         }
         if l.price > args.max_price.0 {
             return Err("price is above max_price");
@@ -64,7 +64,7 @@ impl Deed {
         ext_ft_core::ext(self.payment_token.clone())
             .with_attached_deposit(NearToken::from_yoctonear(1))
             .with_static_gas(GAS_FT_TRANSFER)
-            .ft_transfer(seller.clone(), U128(amount), Some(format!("deed sale {token_id}")))
+            .ft_transfer(seller.clone(), U128(amount), Some(format!("outlive sale {token_id}")))
             .then(
                 Self::ext(env::current_account_id())
                     .with_static_gas(GAS_ON_PAID)
@@ -74,7 +74,7 @@ impl Deed {
 }
 
 #[near]
-impl Deed {
+impl Outlive {
     /// Owner only. The listing becomes active once the vault confirmed the lock.
     #[payable]
     pub fn list(&mut self, token_id: String, price: U128) -> Promise {
@@ -99,7 +99,7 @@ impl Deed {
             listed_at: env::block_timestamp(),
         });
         events::emit(
-            "deed_listed",
+            "outlive_listed",
             json!({ "token_id": token_id, "listing_id": id, "seller": seller, "price": price, "epoch": epoch }),
         );
 
@@ -119,14 +119,14 @@ impl Deed {
             listing.active = true;
             let price = U128(listing.price);
             events::emit(
-                "deed_listing_active",
+                "outlive_listing_active",
                 json!({ "token_id": token_id, "listing_id": listing_id, "price": price, "epoch": epoch }),
             );
             return true;
         }
         if pending {
             record.listing = None;
-            events::emit("deed_listing_failed", json!({ "token_id": token_id, "listing_id": listing_id }));
+            events::emit("outlive_listing_failed", json!({ "token_id": token_id, "listing_id": listing_id }));
         } else if ok {
             // Locked, but this listing was cancelled meanwhile: release its lock. The vault
             // ignores this if a newer listing locked it since.
@@ -147,7 +147,7 @@ impl Deed {
         require!(listing.seller == caller, "only the seller may cancel");
         let vault = record.vault_id.clone();
         events::emit(
-            "deed_listing_cancelled",
+            "outlive_listing_cancelled",
             json!({ "token_id": token_id, "listing_id": listing.id, "epoch": listing.epoch }),
         );
         ext_vault::ext(vault).with_static_gas(GAS_LOCK).unlock(listing.epoch, listing.id)
@@ -168,12 +168,12 @@ impl Deed {
     pub fn on_seller_paid(&mut self, seller: AccountId, amount: U128, token_id: String) -> bool {
         let ok = promise_succeeded();
         if ok {
-            events::emit("deed_seller_paid", json!({ "token_id": token_id, "seller": seller, "amount": amount }));
+            events::emit("outlive_seller_paid", json!({ "token_id": token_id, "seller": seller, "amount": amount }));
         } else {
             let owed = self.proceeds.get(&seller).copied().unwrap_or(0);
             self.proceeds.insert(seller.clone(), owed.checked_add(amount.0).expect("proceeds overflow"));
             self.proceeds_total = self.proceeds_total.checked_add(amount.0).expect("proceeds overflow");
-            events::emit("deed_proceeds_held", json!({ "token_id": token_id, "seller": seller, "amount": amount }));
+            events::emit("outlive_proceeds_held", json!({ "token_id": token_id, "seller": seller, "amount": amount }));
         }
         ok
     }
@@ -188,7 +188,7 @@ impl Deed {
         ext_ft_core::ext(self.payment_token.clone())
             .with_attached_deposit(NearToken::from_yoctonear(1))
             .with_static_gas(GAS_FT_TRANSFER)
-            .ft_transfer(account.clone(), U128(amount), Some("deed sale proceeds".to_string()))
+            .ft_transfer(account.clone(), U128(amount), Some("outlive sale proceeds".to_string()))
             .then(
                 Self::ext(env::current_account_id())
                     .with_static_gas(GAS_CALLBACK_SMALL)
@@ -201,7 +201,7 @@ impl Deed {
         self.proceeds_in_flight -= amount.0;
         let ok = promise_succeeded();
         if ok {
-            events::emit("deed_proceeds_claimed", json!({ "account_id": account_id, "amount": amount }));
+            events::emit("outlive_proceeds_claimed", json!({ "account_id": account_id, "amount": amount }));
         } else {
             let owed = self.proceeds.get(&account_id).copied().unwrap_or(0);
             self.proceeds.insert(account_id, owed.checked_add(amount.0).expect("proceeds overflow"));
@@ -212,12 +212,12 @@ impl Deed {
 }
 
 #[near]
-impl FungibleTokenReceiver for Deed {
-    /// Buys a listed deed. Every refusal returns the whole amount to the sender.
+impl FungibleTokenReceiver for Outlive {
+    /// Buys a listed outlive. Every refusal returns the whole amount to the sender.
     fn ft_on_transfer(&mut self, sender_id: AccountId, amount: U128, msg: String) -> PromiseOrValue<U128> {
         let refuse = |reason: &str| {
             events::emit(
-                "deed_buy_refused",
+                "outlive_buy_refused",
                 json!({ "buyer": sender_id, "amount": amount, "reason": reason }),
             );
             PromiseOrValue::Value(amount)
@@ -235,11 +235,11 @@ impl FungibleTokenReceiver for Deed {
 
         let token_id = buy.token_id;
         self.token_mut(&token_id).listing = None;
-        self.move_token(&token_id, &seller, &sender_id, Some("deed sale"));
+        self.move_token(&token_id, &seller, &sender_id, Some("outlive sale"));
         self.finalize_owner(&token_id).detach();
         let epoch = self.token(&token_id).owner_epoch;
         events::emit(
-            "deed_sold",
+            "outlive_sold",
             json!({
                 "token_id": token_id,
                 "seller": seller,

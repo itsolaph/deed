@@ -1,7 +1,7 @@
-//! Deed: an NEP-171 registry where each token owns a running paid API.
+//! Outlive: an NEP-171 registry where each token owns a running paid API.
 //!
-//! Minting a token creates the business vault on the sub-account `<slug>.<deed account>`.
-//! The holder of the token is the vault owner: after every final ownership change the deed
+//! Minting a token creates the business vault on the sub-account `<slug>.<outlive account>`.
+//! The holder of the token is the vault owner: after every final ownership change the outlive
 //! pushes the new owner and an increasing epoch to the vault. The built-in sale is the only
 //! sale path (no NEP-178 approvals), and listing locks the vault until the sale or cancel.
 
@@ -20,7 +20,7 @@ pub mod slug;
 pub mod svg;
 mod views;
 
-pub use views::{DeedView, ListingView, VaultCodeHash};
+pub use views::{OutliveView, ListingView, VaultCodeHash};
 
 /// Optimized vault build, embedded at compile time. `scripts/build.sh` builds the vault first.
 pub const VAULT_WASM: &[u8] = include_bytes!("../../target/near/vault/vault.wasm");
@@ -29,7 +29,7 @@ pub const VAULT_WASM: &[u8] = include_bytes!("../../target/near/vault/vault.wasm
 pub const VAULT_STATE_RESERVE: NearToken = NearToken::from_millinear(50);
 /// Starting NEAR for the vault's own gas (charges are paid from the vault balance).
 pub const VAULT_GAS_TANK: NearToken = NearToken::from_millinear(500);
-/// Deed-side storage for one token record and its stats.
+/// Outlive-side storage for one token record and its stats.
 pub const TOKEN_STORAGE_RESERVE: NearToken = NearToken::from_millinear(10);
 /// NEP-145 registration of the vault on the payment token.
 pub const FT_STORAGE_DEPOSIT: NearToken = NearToken::from_micronear(1_250);
@@ -104,7 +104,7 @@ pub struct TokenRecord {
 
 #[near(contract_state)]
 #[derive(PanicOnDefault)]
-pub struct Deed {
+pub struct Outlive {
     /// Has no on-chain powers in this version. Kept as the published operator contact.
     admin_id: AccountId,
     payment_token: AccountId,
@@ -124,8 +124,8 @@ pub(crate) fn promise_succeeded() -> bool {
 }
 
 #[near]
-impl Deed {
-    /// Private, so only the deed account itself can initialize (deploy and init in one batch).
+impl Outlive {
+    /// Private, so only the outlive account itself can initialize (deploy and init in one batch).
     #[init]
     #[private]
     pub fn new(admin_id: AccountId, payment_token: AccountId, payment_symbol: Option<String>) -> Self {
@@ -148,7 +148,7 @@ impl Deed {
     }
 }
 
-impl Deed {
+impl Outlive {
     pub(crate) fn token(&self, token_id: &str) -> &TokenRecord {
         self.tokens.get(token_id).unwrap_or_else(|| env::panic_str("token not found"))
     }

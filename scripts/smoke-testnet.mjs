@@ -4,7 +4,7 @@
 // Every transaction is checked against its expected outcome and recorded with its
 // nearblocks link in deployments/testnet.json (section "smoke").
 //
-// Env: SMOKE_SLUG (default relay), DEED_ACCOUNT, TUSDC_ACCOUNT, and the account names below.
+// Env: SMOKE_SLUG (default relay), OUTLIVE_ACCOUNT, TUSDC_ACCOUNT, and the account names below.
 
 import crypto from "node:crypto";
 import { Account } from "near-api-js";
@@ -15,13 +15,13 @@ import {
 import { loadDeployments, saveDeployments } from "./lib/deployments.mjs";
 
 const SLUG = process.env.SMOKE_SLUG || "relay";
-const DEED = process.env.DEED_ACCOUNT || "deed2.deedlab.testnet";
-const TUSDC = process.env.TUSDC_ACCOUNT || "tusdc.deedlab.testnet";
-const SELLER = process.env.SELLER_ACCOUNT || "deedlab-seller.testnet";
-const BUYER = process.env.BUYER_ACCOUNT || "deedlab-buyer.testnet";
-const ALICE = process.env.ALICE_ACCOUNT || "deedlab-alice.testnet";
-const BOB = process.env.BOB_ACCOUNT || "deedlab-bob.testnet";
-const VAULT = `${SLUG}.${DEED}`;
+const OUTLIVE = process.env.OUTLIVE_ACCOUNT || "outlive.testnet";
+const TUSDC = process.env.TUSDC_ACCOUNT || "tusdc.outlive.testnet";
+const SELLER = process.env.SELLER_ACCOUNT || "outlivelab-seller.testnet";
+const BUYER = process.env.BUYER_ACCOUNT || "outlivelab-buyer.testnet";
+const ALICE = process.env.ALICE_ACCOUNT || "outlivelab-alice.testnet";
+const BOB = process.env.BOB_ACCOUNT || "outlivelab-bob.testnet";
+const VAULT = `${SLUG}.${OUTLIVE}`;
 
 const U = 1_000_000n; // one tUSDC
 const PRICE_PER_CALL = 10_000n; // 0.01 tUSDC
@@ -129,19 +129,19 @@ async function assertInvariant(label) {
 }
 
 async function main() {
-  if (await view(DEED, "get_deed", { token_id: SLUG })) {
-    throw new Error(`deed "${SLUG}" already exists; set SMOKE_SLUG to a new slug for another run`);
+  if (await view(OUTLIVE, "get_token", { token_id: SLUG })) {
+    throw new Error(`outlive "${SLUG}" already exists; set SMOKE_SLUG to a new slug for another run`);
   }
   if (hasKey(VAULT)) throw new Error(`a key file for ${VAULT} already exists in the keychain`);
 
-  // 1. Seller mints the deed. The vault sub-account is created by the deed contract.
-  const cost = BigInt(await view(DEED, "mint_cost"));
-  const minted = await step(`${SELLER} mints deed "${SLUG}"`, SELLER, "success", () =>
-    call(account(SELLER), DEED, "mint", {
+  // 1. Seller mints the outlive. The vault sub-account is created by the Outlive contract.
+  const cost = BigInt(await view(OUTLIVE, "mint_cost"));
+  const minted = await step(`${SELLER} mints outlive "${SLUG}"`, SELLER, "success", () =>
+    call(account(SELLER), OUTLIVE, "mint", {
       slug: SLUG,
       title: "Durable Webhook Relay",
       price_per_call: PRICE_PER_CALL.toString(),
-      endpoint: "https://relay.deed.example/v1",
+      endpoint: "https://relay.outlive.example/v1",
       image_hash: "",
       default_daily_cap: DAILY_CAP.toString(),
     }, { gas: BIG_GAS, deposit: cost }));
@@ -178,11 +178,11 @@ async function main() {
   await step(`${SELLER} withdraws ${show(earned)}`, SELLER, "success", () => withdraw(SELLER, earned));
   await step(`${ALICE} tries to withdraw (must fail)`, ALICE, "failure", () => withdraw(ALICE, 1n));
 
-  // 6. More traffic, then the seller lists the deed. The vault is now locked.
+  // 6. More traffic, then the seller lists the outlive. The vault is now locked.
   const batch2 = await chargeItems([[ALICE, 10]]);
   await step("worker key A charges (10 calls)", VAULT, "success", () => charge(workerA.toString(), batch2));
-  const listed = await step(`${SELLER} lists the deed for ${show(SALE_PRICE)}`, SELLER, "success", () =>
-    call(account(SELLER), DEED, "list", { token_id: SLUG, price: SALE_PRICE.toString() },
+  const listed = await step(`${SELLER} lists the token for ${show(SALE_PRICE)}`, SELLER, "success", () =>
+    call(account(SELLER), OUTLIVE, "list", { token_id: SLUG, price: SALE_PRICE.toString() },
       { gas: BIG_GAS, deposit: ONE_YOCTO }));
   if (listed.value !== true) throw new Error("listing did not become active");
   await step(`${SELLER} tries to withdraw while listed (must fail)`, SELLER, "failure", () =>
@@ -191,18 +191,18 @@ async function main() {
   // 7. The buyer pins the listing it evaluated. If the seller cancels and re-lists (for example
   // to withdraw the cash first), a purchase pinned to the old listing is refused and refunded.
   await faucet(BUYER, 100n * U);
-  const listingId = (await view(DEED, "get_deed", { token_id: SLUG })).listing.listing_id;
+  const listingId = (await view(OUTLIVE, "get_token", { token_id: SLUG })).listing.listing_id;
   await step(`${SELLER} cancels the listing`, SELLER, "success", () =>
-    call(account(SELLER), DEED, "cancel_listing", { token_id: SLUG }, { gas: BIG_GAS, deposit: ONE_YOCTO }));
+    call(account(SELLER), OUTLIVE, "cancel_listing", { token_id: SLUG }, { gas: BIG_GAS, deposit: ONE_YOCTO }));
   const relisted = await step(`${SELLER} lists again for ${show(SALE_PRICE)}`, SELLER, "success", () =>
-    call(account(SELLER), DEED, "list", { token_id: SLUG, price: SALE_PRICE.toString() },
+    call(account(SELLER), OUTLIVE, "list", { token_id: SLUG, price: SALE_PRICE.toString() },
       { gas: BIG_GAS, deposit: ONE_YOCTO }));
   if (relisted.value !== true) throw new Error("second listing did not become active");
   const buyMsg = (id) => JSON.stringify({ buy: { token_id: SLUG, max_price: SALE_PRICE.toString(), listing_id: id } });
   const staleStart = await ftBalance(BUYER);
   const stale = await step(`${BUYER} buys pinned to the cancelled listing (refused, refunded)`, BUYER, "success", () =>
     call(account(BUYER), TUSDC, "ft_transfer_call",
-      { receiver_id: DEED, amount: SALE_PRICE.toString(), msg: buyMsg(listingId) },
+      { receiver_id: OUTLIVE, amount: SALE_PRICE.toString(), msg: buyMsg(listingId) },
       { gas: BIG_GAS, deposit: ONE_YOCTO }));
   if (stale.value !== "0" || (await ftBalance(BUYER)) !== staleStart) {
     throw new Error("a buy pinned to a cancelled listing must use nothing");
@@ -210,17 +210,17 @@ async function main() {
   console.log("     nothing used, buyer balance unchanged");
 
   // 8. Buyer buys the current listing with tUSDC through ft_transfer_call, sending 1 tUSDC too much.
-  const currentId = (await view(DEED, "get_deed", { token_id: SLUG })).listing.listing_id;
+  const currentId = (await view(OUTLIVE, "get_token", { token_id: SLUG })).listing.listing_id;
   const buyerBefore = await ftBalance(BUYER);
   const sellerBefore = await ftBalance(SELLER);
   const msg = buyMsg(currentId);
-  await step(`${BUYER} buys the deed (listing ${currentId})`, BUYER, "success", () =>
+  await step(`${BUYER} buys the token (listing ${currentId})`, BUYER, "success", () =>
     call(account(BUYER), TUSDC, "ft_transfer_call",
-      { receiver_id: DEED, amount: (SALE_PRICE + U).toString(), msg }, { gas: BIG_GAS, deposit: ONE_YOCTO }));
+      { receiver_id: OUTLIVE, amount: (SALE_PRICE + U).toString(), msg }, { gas: BIG_GAS, deposit: ONE_YOCTO }));
   const paid = buyerBefore - (await ftBalance(BUYER));
   const received = (await ftBalance(SELLER)) - sellerBefore;
   const info = await view(VAULT, "get_info");
-  const token = await view(DEED, "nft_token", { token_id: SLUG });
+  const token = await view(OUTLIVE, "nft_token", { token_id: SLUG });
   console.log(`     buyer paid ${show(paid)}, seller received ${show(received)}`);
   console.log(`     token owner ${token.owner_id}, vault owner ${info.owner_id} (epoch ${info.owner_epoch}, locked ${info.locked})`);
   if (paid !== SALE_PRICE || received !== SALE_PRICE || token.owner_id !== BUYER || info.owner_id !== BUYER || info.locked) {

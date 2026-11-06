@@ -1,7 +1,7 @@
-//! Deed vault. One vault per business, deployed by the deed contract on `<slug>.<deed account>`.
+//! Outlive vault. One vault per business, deployed by the outlive contract on `<slug>.<outlive account>`.
 //!
 //! The vault holds the business treasury (payment-token balance), the price list, the customer
-//! ledger and the worker authorization. Its owner is whoever holds the deed token; the deed
+//! ledger and the worker authorization. Its owner is whoever holds the outlive token; the outlive
 //! pushes every ownership change here with an increasing epoch.
 //!
 //! The vault account never holds a full-access key. Its only key is the current worker's
@@ -68,11 +68,11 @@ pub struct WorkerKeyRecord {
 #[near(contract_state)]
 #[derive(PanicOnDefault)]
 pub struct Vault {
-    deed_id: AccountId,
+    outlive_id: AccountId,
     token_id: String,
     owner_id: AccountId,
     owner_epoch: u64,
-    /// Set while the deed is listed for sale. Blocks withdraw, set_worker, set_config, set_price.
+    /// Set while the outlive is listed for sale. Blocks withdraw, set_worker, set_config, set_price.
     locked: bool,
     /// Listing id of the newest lock. Lock ids only grow, so a lock or unlock that arrives
     /// late (receipts between two accounts are not formally ordered) is ignored.
@@ -119,7 +119,7 @@ pub(crate) fn validate_config(endpoint: &str, image_hash: &str) {
 
 #[near]
 impl Vault {
-    /// Only the parent account (the deed) may initialize, inside the creation batch.
+    /// Only the parent account (the outlive) may initialize, inside the creation batch.
     #[init]
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -134,10 +134,10 @@ impl Vault {
         stats_interval_sec: Option<u64>,
     ) -> Self {
         let current = env::current_account_id();
-        let deed_id = env::predecessor_account_id();
+        let outlive_id = env::predecessor_account_id();
         require!(
-            parent_of(current.as_str()) == Some(deed_id.as_str()),
-            "only the parent deed account may initialize the vault"
+            parent_of(current.as_str()) == Some(outlive_id.as_str()),
+            "only the parent outlive account may initialize the vault"
         );
         require!(!token_id.is_empty() && token_id.len() <= MAX_TOKEN_ID_LEN, "bad token_id");
         require!(price_per_call.0 > 0, "price must be positive");
@@ -150,7 +150,7 @@ impl Vault {
         events::emit(
             "vault_init",
             near_sdk::serde_json::json!({
-                "deed_id": deed_id,
+                "outlive_id": outlive_id,
                 "token_id": token_id,
                 "owner_id": owner_id,
                 "owner_epoch": 1,
@@ -161,7 +161,7 @@ impl Vault {
         );
 
         Self {
-            deed_id,
+            outlive_id,
             token_id,
             owner_id,
             owner_epoch: 1,
@@ -196,15 +196,15 @@ impl Vault {
     }
 
     pub(crate) fn assert_owner(&self) {
-        require!(env::predecessor_account_id() == self.owner_id, "only the deed owner");
+        require!(env::predecessor_account_id() == self.owner_id, "only the outlive owner");
     }
 
     pub(crate) fn assert_unlocked(&self) {
-        require!(!self.locked, "vault is locked while the deed is listed");
+        require!(!self.locked, "vault is locked while the outlive is listed");
     }
 
-    pub(crate) fn assert_deed(&self) {
-        require!(env::predecessor_account_id() == self.deed_id, "only the deed contract");
+    pub(crate) fn assert_outlive(&self) {
+        require!(env::predecessor_account_id() == self.outlive_id, "only the outlive contract");
     }
 
     /// Approximate gas accounting: any drop of the account balance since the last measurement

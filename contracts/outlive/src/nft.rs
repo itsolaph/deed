@@ -14,7 +14,7 @@ use near_sdk::serde_json;
 use near_sdk::{assert_one_yocto, env, near, require, AccountId, PromiseOrValue};
 
 use crate::svg::{self, Certificate, TOKEN_DECIMALS};
-use crate::{Deed, DeedExt, TokenRecord, GAS_RESOLVE_TRANSFER};
+use crate::{Outlive, OutliveExt, TokenRecord, GAS_RESOLVE_TRANSFER};
 
 const DEFAULT_PAGE: u64 = 50;
 const MAX_PAGE: u64 = 100;
@@ -22,7 +22,7 @@ const MAX_PAGE: u64 = 100;
 /// White plate, ink frame, one orange square on a hard ink offset (the certificate's stamp).
 const CONTRACT_ICON: &str = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZmZmIi8+PHJlY3QgeD0iNSIgeT0iNSIgd2lkdGg9IjU0IiBoZWlnaHQ9IjU0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxMzEzMTMiIHN0cm9rZS13aWR0aD0iNCIvPjxyZWN0IHg9IjIxIiB5PSIyMSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjMTMxMzEzIi8+PHJlY3QgeD0iMTgiIHk9IjE4IiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIGZpbGw9IiNmZjRiMDAiLz48L3N2Zz4=";
 
-impl Deed {
+impl Outlive {
     pub(crate) fn render_metadata(&self, token_id: &str, r: &TokenRecord) -> TokenMetadata {
         let stats = r.stats.clone().unwrap_or_default();
         let price = if r.stats.is_some() { stats.price_per_call.0 } else { r.price_at_mint };
@@ -42,7 +42,7 @@ impl Deed {
         };
         let amount = |v: u128| format!("{} {}", svg::format_amount(v, TOKEN_DECIMALS), self.payment_symbol);
         let description = format!(
-            "Deed to the transferable service instance \"{}\" (a paid API's vault, not a legal business). Its vault {} holds \
+            "Outlive to the transferable service instance \"{}\" (a paid API's vault, not a legal business). Its vault {} holds \
              the treasury, price list, customer ledger and worker key. Price per call {}. Last 30 days: {} calls, {} revenue. Withdrawable proceeds {}.",
             r.title,
             r.vault_id,
@@ -104,14 +104,14 @@ impl Deed {
         // Neither account could ever use the vault's owner powers, so the business would be lost.
         require!(
             receiver != &r.vault_id && receiver != &env::current_account_id(),
-            "the deed contract and the token's vault cannot receive the token"
+            "the outlive contract and the token's vault cannot receive the token"
         );
         require!(r.listing.is_none(), "token is listed; cancel the listing first");
     }
 }
 
 #[near]
-impl Deed {
+impl Outlive {
     #[payable]
     pub fn nft_transfer(
         &mut self,
@@ -194,8 +194,8 @@ impl Deed {
     pub fn nft_metadata(&self) -> NFTContractMetadata {
         NFTContractMetadata {
             spec: NFT_METADATA_SPEC.to_string(),
-            name: "Deed".to_string(),
-            symbol: "DEED".to_string(),
+            name: "Outlive".to_string(),
+            symbol: "OUTLIVE".to_string(),
             icon: Some(CONTRACT_ICON.to_string()),
             base_uri: None,
             reference: None,

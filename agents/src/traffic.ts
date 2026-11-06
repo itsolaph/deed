@@ -4,17 +4,17 @@
 // confirmed, follows the vault to a new worker on 410 or a dead endpoint, and on SIGTERM
 // waits for its pending deliveries before printing a summary.
 //
-//   node agents/dist/src/traffic.js --vault relay.deed2.deedlab.testnet \
-//     --customers deedlab-alice.testnet,deedlab-bob.testnet --target http://127.0.0.1:7611/hook
+//   node agents/dist/src/traffic.js --vault relay.outlive.testnet \
+//     --customers outlivelab-alice.testnet,outlivelab-bob.testnet --target http://127.0.0.1:7611/hook
 
 import { parseArgs } from "node:util";
-import { DeedClient, PaymentRequiredError, fromUnits, randomBytes, toHex } from "@deed/sdk";
-import { createNodeTransactor } from "@deed/sdk/node";
+import { OutliveClient, PaymentRequiredError, fromUnits, randomBytes, toHex } from "@outlive/sdk";
+import { createNodeTransactor } from "@outlive/sdk/node";
 import { clock, isMain, messageSigner, rpc, runMain, txLink, txSigner, withRpcRetry, writeJson } from "./common.js";
 
 interface CustomerRun {
   name: string;
-  client: DeedClient;
+  client: OutliveClient;
   sent: number;
   accepted: number;
   refused402: number;
@@ -31,7 +31,7 @@ const SUMMARY_INTERVAL_MS = 15_000;
 const DRAIN_TIMEOUT_MS = 240_000;
 
 function short(account: string): string {
-  return account.replace(/^deedlab-/, "").replace(/\.testnet$/, "");
+  return account.replace(/^outlivelab-/, "").replace(/\.testnet$/, "");
 }
 
 async function main(): Promise<void> {
@@ -57,7 +57,7 @@ async function main(): Promise<void> {
 
   const runs: CustomerRun[] = values.customers.split(",").map((account) => {
     const name = short(account);
-    const client = new DeedClient({
+    const client = new OutliveClient({
       vault,
       accountId: account,
       signer: messageSigner(account),
@@ -75,7 +75,7 @@ async function main(): Promise<void> {
     const n = ++run.sent;
     const body = JSON.stringify({ from: run.name, n, sent_at: new Date().toISOString() });
     try {
-      const res = await run.client.deliver({ url: `${values.target}?from=${run.name}&n=${n}`, method: "POST", headers: { "x-demo": "deed" }, body, idempotency_key: `${run.name}-${runId}-${n}` });
+      const res = await run.client.deliver({ url: `${values.target}?from=${run.name}&n=${n}`, method: "POST", headers: { "x-demo": "outlive" }, body, idempotency_key: `${run.name}-${runId}-${n}` });
       run.accepted += 1;
       const key = res.receipt.payload.worker_public_key.slice(8, 14);
       run.byWorker.set(key, (run.byWorker.get(key) ?? 0) + 1);

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { generateSecretKey, payback, sha256Hex, signOutbound, signerFromSecretKey, type DeedView, type ListingView, type VaultInfo } from "@deed/sdk";
+import { generateSecretKey, payback, sha256Hex, signOutbound, signerFromSecretKey, type OutliveView, type ListingView, type VaultInfo } from "@outlive/sdk";
 
 import { decide, resolvePolicy, staticChecks } from "../src/buyer.js";
 import { startEchoTarget } from "../src/echo-target.js";
@@ -14,9 +14,9 @@ const TOKENS: OneClickToken[] = [
 ];
 
 const listing: ListingView = { token_id: "relay", listing_id: 3, seller: "seller.testnet", price: "5000000", active: true, epoch: 1, listed_at_ms: String(Date.now()) };
-const deed = { token_id: "relay", title: "Relay", owner_id: "seller.testnet", owner_epoch: 1, vault_id: "relay.deed.testnet", price_at_mint: "10000", minted_at_ms: "0", stats: null, listing, transfer_call_pending: false } satisfies DeedView;
+const outlive = { token_id: "relay", title: "Relay", owner_id: "seller.testnet", owner_epoch: 1, vault_id: "relay.outlive.testnet", price_at_mint: "10000", minted_at_ms: "0", stats: null, listing, transfer_call_pending: false } satisfies OutliveView;
 const info: VaultInfo = {
-  deed_id: "deed.testnet",
+  outlive_id: "outlive.testnet",
   token_id: "relay",
   owner_id: "seller.testnet",
   owner_epoch: 1,
@@ -47,18 +47,18 @@ test("buyer: buys only when every check passes and payback is under the bar", ()
   const good = payback({ price: 5_000_000n, cash: 1_000_000n, revenue30d: 2_000_000n, gasSpent30dYocto: 0n, vaultCreatedAtMs: now - 3_600_000, nowMs: now, nearPrice: 4, tokenDecimals: 6 });
   assert.equal(good.windowDays, 1);
   assert.equal(good.paybackDays, 2);
-  const checks = staticChecks(listing, deed, info, now);
+  const checks = staticChecks(listing, outlive, info, now);
   assert.ok(checks.every((c) => c.ok), JSON.stringify(checks.filter((c) => !c.ok)));
   assert.equal(decide(good, checks, 30).decision, "buy");
   assert.equal(decide(good, checks, 1).decision, "skip");
 
-  const priceUp = staticChecks(listing, deed, { ...info, pending_price: "20000", price_effective_at_ms: String(now + 1000) }, now);
+  const priceUp = staticChecks(listing, outlive, { ...info, pending_price: "20000", price_effective_at_ms: String(now + 1000) }, now);
   assert.match(decide(good, priceUp, 30).why, /no pending price increase/);
-  const unlocked = staticChecks(listing, deed, { ...info, locked: false }, now);
+  const unlocked = staticChecks(listing, outlive, { ...info, locked: false }, now);
   assert.match(decide(good, unlocked, 30).why, /vault locked/);
-  const relisted = staticChecks(listing, deed, { ...info, lock_id: 4 }, now);
+  const relisted = staticChecks(listing, outlive, { ...info, lock_id: 4 }, now);
   assert.equal(decide(good, relisted, 30).decision, "skip");
-  const noImage = staticChecks(listing, deed, { ...info, image_hash: "" }, now);
+  const noImage = staticChecks(listing, outlive, { ...info, image_hash: "" }, now);
   assert.equal(decide(good, noImage, 30).decision, "skip");
   const losing = payback({ price: 5_000_000n, cash: 0n, revenue30d: 0n, gasSpent30dYocto: 10n ** 24n, vaultCreatedAtMs: 0, nowMs: now, nearPrice: 4, tokenDecimals: 6 });
   assert.match(decide(losing, checks, 30).why, /never pays back/);
@@ -69,7 +69,7 @@ test("buyer: a failed appraisal gate skips with its reason, and policies print t
   const now = Date.now();
   const good = payback({ price: 5_000_000n, cash: 0n, revenue30d: 5_000_000n, gasSpent30dYocto: 0n, vaultCreatedAtMs: now - 3_600_000, nowMs: now, nearPrice: 4, tokenDecimals: 6 });
   const gate = { name: "independent paying customers", ok: false, detail: "0 independent of 2 paying customers, need 2; revenue from owner-funded customers excluded" };
-  const d = decide(good, [...staticChecks(listing, deed, info, now), gate], 30);
+  const d = decide(good, [...staticChecks(listing, outlive, info, now), gate], 30);
   assert.equal(d.decision, "skip");
   assert.match(d.why, /independent paying customers \(0 independent of 2 .*revenue from owner-funded customers excluded\)/);
 
@@ -111,8 +111,8 @@ test("1Click: asset lookup, NEAR price and dry quote requests", async () => {
 });
 
 test("withdraw-xchain prints the exact vault call", () => {
-  const cmd = withdrawCommand({ vault: "relay.deed.testnet", owner: "buyer.testnet", amount: 1_500_000n, receiver: "deposit.near", network: "testnet" });
-  assert.match(cmd, /relay\.deed\.testnet withdraw json-args '\{"amount":"1500000","receiver_id":"deposit\.near","memo":"1Click payout"\}'/);
+  const cmd = withdrawCommand({ vault: "relay.outlive.testnet", owner: "buyer.testnet", amount: 1_500_000n, receiver: "deposit.near", network: "testnet" });
+  assert.match(cmd, /relay\.outlive\.testnet withdraw json-args '\{"amount":"1500000","receiver_id":"deposit\.near","memo":"1Click payout"\}'/);
   assert.match(cmd, /attached-deposit '1 yoctoNEAR' sign-as buyer\.testnet/);
 });
 

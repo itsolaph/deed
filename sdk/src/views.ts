@@ -1,9 +1,9 @@
-// Typed views of the deed and vault contracts (see docs/CONTRACTS.md). Browser-safe.
+// Typed views of the outlive and vault contracts (see docs/CONTRACTS.md). Browser-safe.
 
 import { Rpc } from "./chain.js";
 
 export interface VaultInfo {
-  deed_id: string;
+  outlive_id: string;
   token_id: string;
   owner_id: string;
   owner_epoch: number;
@@ -91,7 +91,7 @@ export interface ListingView {
   listed_at_ms: string;
 }
 
-/** Stats the vault pushes to the deed (shown in the NFT metadata). */
+/** Stats the vault pushes to the outlive (shown in the NFT metadata). */
 export interface PushedStats {
   calls_30d: number;
   revenue_30d: string;
@@ -104,7 +104,7 @@ export interface PushedStats {
   updated_at_ms: number;
 }
 
-export interface DeedView {
+export interface OutliveView {
   token_id: string;
   title: string;
   owner_id: string;
@@ -117,7 +117,7 @@ export interface DeedView {
   transfer_call_pending: boolean;
 }
 
-export interface DeedConfig {
+export interface OutliveConfig {
   admin_id: string;
   payment_token: string;
   payment_symbol: string;
@@ -161,38 +161,38 @@ export class VaultViews {
   }
 }
 
-export class DeedViews {
+export class OutliveViews {
   constructor(
     readonly rpc: Rpc,
-    readonly deed: string,
+    readonly outlive: string,
   ) {}
 
-  deedOf(tokenId: string): Promise<DeedView | null> {
-    return this.rpc.view<DeedView | null>(this.deed, "get_deed", { token_id: tokenId });
+  outliveOf(tokenId: string): Promise<OutliveView | null> {
+    return this.rpc.view<OutliveView | null>(this.outlive, "get_token", { token_id: tokenId });
   }
 
-  deeds(fromIndex = 0, limit = 50): Promise<DeedView[]> {
-    return this.rpc.view<DeedView[]>(this.deed, "get_deeds", { from_index: fromIndex, limit });
+  tokens(fromIndex = 0, limit = 50): Promise<OutliveView[]> {
+    return this.rpc.view<OutliveView[]>(this.outlive, "get_tokens", { from_index: fromIndex, limit });
   }
 
   listings(fromIndex = 0, limit = 50): Promise<ListingView[]> {
-    return this.rpc.view<ListingView[]>(this.deed, "get_listings", { from_index: fromIndex, limit });
+    return this.rpc.view<ListingView[]>(this.outlive, "get_listings", { from_index: fromIndex, limit });
   }
 
-  config(): Promise<DeedConfig> {
-    return this.rpc.view<DeedConfig>(this.deed, "get_config");
+  config(): Promise<OutliveConfig> {
+    return this.rpc.view<OutliveConfig>(this.outlive, "get_config");
   }
 
   token(tokenId: string): Promise<NftToken | null> {
-    return this.rpc.view<NftToken | null>(this.deed, "nft_token", { token_id: tokenId });
+    return this.rpc.view<NftToken | null>(this.outlive, "nft_token", { token_id: tokenId });
   }
 
   mintCost(): Promise<string> {
-    return this.rpc.view<string>(this.deed, "mint_cost");
+    return this.rpc.view<string>(this.outlive, "mint_cost");
   }
 }
 
-/** Account id of the vault for `tokenId` under `deed`. */
-export function vaultAccountFor(deed: string, tokenId: string): string {
-  return `${tokenId}.${deed}`;
+/** Account id of the vault for `tokenId` under `outlive`. */
+export function vaultAccountFor(outlive: string, tokenId: string): string {
+  return `${tokenId}.${outlive}`;
 }

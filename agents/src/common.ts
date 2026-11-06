@@ -4,15 +4,15 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { Rpc, TESTNET_EXPLORER, rpcUrlsFor, signerFromSecretKey, withRpcRetry, type Signer } from "@deed/sdk";
-import { NodeSigner, keychainFile, readKeyFile, type TxOutcome } from "@deed/sdk/node";
+import { Rpc, TESTNET_EXPLORER, rpcUrlsFor, signerFromSecretKey, withRpcRetry, type Signer } from "@outlive/sdk";
+import { NodeSigner, keychainFile, readKeyFile, type TxOutcome } from "@outlive/sdk/node";
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 export const DEPLOYMENTS_FILE = path.join(ROOT, "deployments", "testnet.json");
 export const NETWORK = process.env.NEAR_NETWORK || "testnet";
 
 export interface Deployments {
-  accounts: { deed: string; tusdc: string; seller: string; buyer: string; alice: string; bob: string; [k: string]: string };
+  accounts: { outlive: string; tusdc: string; seller: string; buyer: string; alice: string; bob: string; [k: string]: string };
   [key: string]: unknown;
 }
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// deed-worker --vault <account> --network testnet --port <p>
+// outlive-worker --vault <account> --network testnet --port <p>
 //
 // Reads everything from chain and refuses to start unless its key file holds the vault's
 // registered worker key. The only local state is the queue journal in --data-dir.
@@ -7,19 +7,19 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { Rpc, formatUnits, rpcUrlsFor, signerFromSecretKey } from "@deed/sdk";
-import { displayPath, keychainFile, readKeyFile } from "@deed/sdk/node";
+import { Rpc, formatUnits, rpcUrlsFor, signerFromSecretKey } from "@outlive/sdk";
+import { displayPath, keychainFile, readKeyFile } from "@outlive/sdk/node";
 import { Authenticator } from "./auth.js";
 import { createServer } from "./server.js";
 import { RpcVaultChain } from "./vault-chain.js";
 import { Worker } from "./worker.js";
 
-const USAGE = `usage: deed-worker --vault <account> --network testnet --port <p> [options]
+const USAGE = `usage: outlive-worker --vault <account> --network testnet --port <p> [options]
 
   --key-file <path>       worker key (default: ~/.near-credentials/<network>/<vault>.json)
   --host <ip>             bind address (default 127.0.0.1)
   --public-url <url>      URL customers use for this worker (default http://<host>:<port>)
-  --data-dir <dir>        queue journal directory (default .deed-worker/<vault>)
+  --data-dir <dir>        queue journal directory (default .outlive-worker/<vault>)
   --allow-target <ip:port> allow ONE local target, for demos only (default: none)
   --wait-for-key <sec>    wait up to this long for the key to be registered on chain
   --charge-gas <tgas>     prepaid gas per charge transaction (default 30)
@@ -77,7 +77,7 @@ async function main(): Promise<void> {
 
   const rpc = new Rpc(process.env.NEAR_RPC_URLS ? process.env.NEAR_RPC_URLS.split(",") : rpcUrlsFor(network));
   const chain = new RpcVaultChain(vault, rpc, key.private_key, Number(values["charge-gas"]));
-  const dataDir = values["data-dir"] ?? path.join(".deed-worker", vault);
+  const dataDir = values["data-dir"] ?? path.join(".outlive-worker", vault);
   const worker = new Worker({
     vault,
     network,
@@ -143,6 +143,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((e) => {
-  process.stderr.write(`deed-worker: ${e instanceof Error ? e.message : String(e)}\n`);
+  process.stderr.write(`outlive-worker: ${e instanceof Error ? e.message : String(e)}\n`);
   process.exit(1);
 });

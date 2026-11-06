@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { generateSecretKey, sha256Hex, signerFromSecretKey, signRequest } from "@deed/sdk";
+import { generateSecretKey, sha256Hex, signerFromSecretKey, signRequest } from "@outlive/sdk";
 
 import { Authenticator } from "../src/auth.js";
 import { Charger, type PendingCharge } from "../src/charger.js";
@@ -94,7 +94,7 @@ test("request validation", () => {
   assert.deepEqual(ok.headers, { "x-thing": "1" });
   assert.match(String(validateRequest({ ...base, url: "file:///etc/passwd" })), /http/);
   assert.match(String(validateRequest({ ...base, headers: { Host: "x" } })), /may not be set/);
-  assert.match(String(validateRequest({ ...base, headers: { "X-Deed-Relay-Key": "x" } })), /may not be set/);
+  assert.match(String(validateRequest({ ...base, headers: { "X-Outlive-Relay-Key": "x" } })), /may not be set/);
   assert.match(String(validateRequest({ ...base, headers: { "X-A": "a\r\nb: c" } })), /bad value/);
   assert.match(String(validateRequest({ ...base, body: "x".repeat(64 * 1024 + 1) })), /64 KB/);
   assert.match(String(validateRequest({ ...base, idempotency_key: "" })), /idempotency_key/);

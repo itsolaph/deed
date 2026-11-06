@@ -15,11 +15,11 @@ step "build contracts"
 bash scripts/build.sh
 
 step "contract unit tests"
-(cd contracts && cargo test -p vault -p deed -p tusdc)
+(cd contracts && cargo test -p vault -p outlive -p tusdc)
 
 if [[ "${SKIP_SANDBOX:-0}" != "1" ]]; then
   step "sandbox integration tests (ports 7640-7699)"
-  (cd contracts && cargo test -p deed-tests --test integration -- --test-threads 4)
+  (cd contracts && cargo test -p outlive-tests --test integration -- --test-threads 4)
 fi
 
 step "node script syntax"

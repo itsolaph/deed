@@ -1,4 +1,4 @@
-//! The deed certificate: an SVG built on the fly from the latest vault stats. Pure logic.
+//! The outlive certificate: an SVG built on the fly from the latest vault stats. Pure logic.
 
 use near_sdk::base64::{engine::general_purpose::STANDARD, Engine};
 
@@ -110,9 +110,9 @@ fn title_font_size(title: &str) -> usize {
     }
 }
 
-/// Layout, 640 x 400: a 3px ink frame; a header band with the ink "D" mark, the deed line and
+/// Layout, 640 x 400: a 3px ink frame; a header band with the ink "D" mark, the outlive line and
 /// the owner epoch tag; a heavy title and the vault; six figure rows on hairlines; the one
-/// orange element, a square DEED stamp on a hard ink offset; token and date along the foot.
+/// orange element, a square OUTLIVE stamp on a hard ink offset; token and date along the foot.
 pub fn render(c: &Certificate) -> String {
     let amount = |v: u128| format!("{} {}", format_amount(v, TOKEN_DECIMALS), escape_xml(c.symbol));
     let rows: [(&str, String); 6] = [
@@ -154,7 +154,7 @@ pub fn render(c: &Certificate) -> String {
          <rect x=\"11.5\" y=\"11.5\" width=\"617\" height=\"377\" fill=\"none\" stroke=\"{INK}\" stroke-width=\"3\"/>\
          <rect x=\"36\" y=\"32\" width=\"24\" height=\"24\" fill=\"{INK}\"/>\
          <text x=\"48\" y=\"50\" text-anchor=\"middle\" style=\"font-size:15px;font-weight:900;fill:{PLATE}\">D</text>\
-         <text x=\"72\" y=\"50\" style=\"font-size:16px;font-weight:700\">Deed to a transferable service instance</text>"
+         <text x=\"72\" y=\"50\" style=\"font-size:16px;font-weight:700\">Outlive to a transferable service instance</text>"
     ));
     svg.push_str(&format!(
         "<rect x=\"{x}\" y=\"31.75\" width=\"{tag_w}\" height=\"24.5\" fill=\"none\" stroke=\"{INK}\" stroke-width=\"1.5\"/>\
@@ -175,7 +175,7 @@ pub fn render(c: &Certificate) -> String {
     svg.push_str(&format!(
         "<rect x=\"490\" y=\"190\" width=\"110\" height=\"110\" fill=\"{INK}\"/>\
          <rect x=\"485\" y=\"185\" width=\"110\" height=\"110\" fill=\"{SIGNAL}\"/>\
-         <text x=\"540\" y=\"251\" text-anchor=\"middle\" style=\"font-size:29px;font-weight:900;letter-spacing:-0.02em;fill:{PLATE}\">DEED</text>\
+         <text x=\"540\" y=\"251\" text-anchor=\"middle\" style=\"font-size:29px;font-weight:900;letter-spacing:-0.02em;fill:{PLATE}\">OUTLIVE</text>\
          <path d=\"M36 344.5H604\" stroke=\"{INK}\"/>\
          <text x=\"36\" y=\"368\" class=\"s\">token {token}</text>\
          <text x=\"604\" y=\"368\" class=\"s\" text-anchor=\"end\">{updated}</text></svg>",
@@ -196,8 +196,8 @@ mod tests {
         Certificate {
             title: "Relay <&> \"Co\"",
             token_id: "relay",
-            vault_id: "relay.deed.deedlab.testnet",
-            owner_id: "deedlab-seller.testnet",
+            vault_id: "relay.outlive.outlive.testnet",
+            owner_id: "outlivelab-seller.testnet",
             owner_epoch: 3,
             symbol: "tUSDC",
             price_per_call: 2_000,
@@ -246,8 +246,8 @@ mod tests {
         assert!(svg.contains("24.69 tUSDC"));
         assert!(svg.contains("1.50 tUSDC"));
         assert!(svg.contains("10.00 tUSDC"));
-        assert!(svg.contains("deedlab-seller.testnet"));
-        assert!(svg.contains("vault relay.deed.deedlab.testnet"));
+        assert!(svg.contains("outlivelab-seller.testnet"));
+        assert!(svg.contains("vault relay.outlive.outlive.testnet"));
         assert!(svg.contains("token relay"));
         assert!(svg.contains("2026-10-30 05:00 UTC"));
         assert!(svg.contains("owner epoch 3"));
@@ -311,7 +311,7 @@ mod tests {
         assert!(s.contains("..."));
     }
 
-    /// `cargo test -p deed print_sample_certificate -- --ignored --nocapture` prints a sample.
+    /// `cargo test -p outlive print_sample_certificate -- --ignored --nocapture` prints a sample.
     #[test]
     #[ignore]
     fn print_sample_certificate() {

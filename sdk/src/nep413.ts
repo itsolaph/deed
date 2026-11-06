@@ -9,7 +9,7 @@ export const NEP413_TAG = 2 ** 31 + 413;
 export const NONCE_BYTES = 32;
 /** Requests whose timestamp is further than this from the worker's clock are refused. */
 export const AUTH_WINDOW_MS = 5 * 60 * 1000;
-export const AUTH_MESSAGE_PREFIX = "deed-relay-auth:v1";
+export const AUTH_MESSAGE_PREFIX = "outlive-relay-auth:v1";
 
 export interface Nep413Payload {
   message: string;
@@ -55,11 +55,11 @@ export function authMessage(method: string, path: string, bodySha256: string, ti
 }
 
 export const AUTH_HEADERS = {
-  account: "x-deed-account",
-  publicKey: "x-deed-public-key",
-  signature: "x-deed-signature",
-  nonce: "x-deed-nonce",
-  timestamp: "x-deed-timestamp",
+  account: "x-outlive-account",
+  publicKey: "x-outlive-public-key",
+  signature: "x-outlive-signature",
+  nonce: "x-outlive-nonce",
+  timestamp: "x-outlive-timestamp",
 } as const;
 
 /** Headers that authenticate one request to the worker of `vault` (the NEP-413 recipient). */

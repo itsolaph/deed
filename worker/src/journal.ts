@@ -3,7 +3,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import type { DeliveryProof, DeliveryRequest, DeliveryState, ObligationReceipt, Signed } from "@deed/sdk";
+import type { DeliveryProof, DeliveryRequest, DeliveryState, ObligationReceipt, Signed } from "@outlive/sdk";
 
 export type JournalRecord =
   | { t: "accepted"; id: string; request: DeliveryRequest; receipt: Signed<ObligationReceipt>; charge: boolean }

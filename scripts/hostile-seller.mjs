@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// Hostile seller on testnet: the seller sells the deed and then kills its worker with SIGKILL
+// Hostile seller on testnet: the seller sells the token and then kills its worker with SIGKILL
 // before any hand-off, while customers have jobs in flight (some charged on chain, some not).
 // What must hold, and is checked here:
 //   - the buyer's worker B serves new calls once the endpoint on chain rotates;
-//   - a customer whose process restarted resubmits its saved receipts (DeedClient + fileStore)
+//   - a customer whose process restarted resubmits its saved receipts (OutliveClient + fileStore)
 //     to the endpoint on chain; B delivers the ones A charged without charging again and charges
 //     the ones A never charged exactly once;
 //   - a customer that asks for its money back instead gets its unspent credit (including the
@@ -37,9 +37,9 @@ const SELLER = process.env.HOSTILE_SELLER || process.env.DEMO_SELLER || dep.acco
 const BUYER = process.env.DEMO_BUYER || dep.accounts.buyer;
 const ALICE = process.env.DEMO_ALICE || dep.accounts.alice;
 const BOB = process.env.DEMO_BOB || dep.accounts.bob;
-const DEED = dep.accounts.deed;
+const OUTLIVE = dep.accounts.outlive;
 const TUSDC = dep.accounts.tusdc;
-const VAULT = `${SLUG}.${DEED}`;
+const VAULT = `${SLUG}.${OUTLIVE}`;
 const ENDPOINT_A = `http://127.0.0.1:${PORT_A}`;
 const ENDPOINT_B = `http://127.0.0.1:${PORT_B}`;
 const WORKERS = path.join(credentialsDir(), "testnet", "workers");
@@ -55,10 +55,10 @@ const TOP_UP = 1_500_000n; // 1.5 tUSDC
 const run = createRun("hostile-seller", SLUG);
 const { say, banner, step, agent, start, stop, record } = run;
 const OUTAGE = path.join(run.logs, "target-outage");
-Object.assign(record, { kind: "hostile-seller", vault: VAULT, deed: DEED, accounts: { seller: SELLER, buyer: BUYER, customers: [ALICE, BOB] } });
+Object.assign(record, { kind: "hostile-seller", vault: VAULT, outlive: OUTLIVE, accounts: { seller: SELLER, buyer: BUYER, customers: [ALICE, BOB] } });
 
 async function main() {
-  banner(`Hostile seller on testnet: deed ${DEED}, new business ${SLUG}, seller ${SELLER}`);
+  banner(`Hostile seller on testnet: outlive ${OUTLIVE}, new business ${SLUG}, seller ${SELLER}`);
   portsFree([PORT_A, PORT_B, ECHO_PORT]);
   buildPackages();
   const sdk = await import("../sdk/dist/src/index.js");
@@ -70,7 +70,7 @@ async function main() {
   const short = (a) => a.replace(/\.testnet$/, "");
 
   // ---------------------------------------------------------------- 1. the business
-  banner("1. the seller mints the deed and runs worker A");
+  banner("1. the seller mints the token and runs worker A");
   const mint = await agent("agents/dist/src/owner.js", ["mint", "--as", SELLER, "--slug", SLUG, "--title", "Webhook Relay (hostile seller test)", "--price", "0.01", "--endpoint", ENDPOINT_A, "--image-hash", "sha256:hostile-test", "--daily-cap", "50"], "01-mint", 0);
   step(`seller mints ${SLUG}`, { tx: mint.tx, success: mint.success });
   if (!mint.success) throw new Error("mint failed");
@@ -93,7 +93,7 @@ async function main() {
     const signer = new sdkNode.NodeSigner(acc, key, urls);
     await common.ensureTusdc(rpc, TUSDC, acc, TOP_UP);
     const store = path.join(run.logs, `receipts-${short(acc)}.json`);
-    const make = () => new sdk.DeedClient({ vault: VAULT, accountId: acc, signer: sdk.signerFromSecretKey(key), rpc, transactor: sdkNode.createNodeTransactor(signer), store: sdkNode.fileStore(store) });
+    const make = () => new sdk.OutliveClient({ vault: VAULT, accountId: acc, signer: sdk.signerFromSecretKey(key), rpc, transactor: sdkNode.createNodeTransactor(signer), store: sdkNode.fileStore(store) });
     const client = make();
     const top = await retrySend(() => client.topUp(TOP_UP), say);
     step(`${short(acc)} deposits 1.5 tUSDC (ft_transfer_call)`, { tx: top.hash, success: top.success });
@@ -134,7 +134,7 @@ async function main() {
   step(`seller lists ${SLUG} for 2 tUSDC`, { tx: list.tx, success: list.success && list.listing?.active === true });
   await common.ensureTusdc(rpc, TUSDC, BUYER, 2_000_000n);
   const listing = list.listing;
-  const buy = await retrySend(() => call(account(BUYER), TUSDC, "ft_transfer_call", { receiver_id: DEED, amount: "2000000", msg: JSON.stringify({ buy: { token_id: SLUG, max_price: "2000000", listing_id: listing.listing_id } }) }, { gas: 250n * TGAS, deposit: ONE_YOCTO }), say);
+  const buy = await retrySend(() => call(account(BUYER), TUSDC, "ft_transfer_call", { receiver_id: OUTLIVE, amount: "2000000", msg: JSON.stringify({ buy: { token_id: SLUG, max_price: "2000000", listing_id: listing.listing_id } }) }, { gas: 250n * TGAS, deposit: ONE_YOCTO }), say);
   const infoAfterBuy = await vault.info();
   step(`buyer ${BUYER} buys ${SLUG}`, { tx: buy.hash, success: buy.success && infoAfterBuy.owner_id === BUYER });
 

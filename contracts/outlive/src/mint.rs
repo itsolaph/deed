@@ -9,7 +9,7 @@ use near_sdk::{env, near, require, AccountId, NearToken, Promise};
 
 use crate::slug::{validate_slug, validate_title};
 use crate::{
-    events, promise_succeeded, Deed, DeedExt, TokenRecord, FT_STORAGE_DEPOSIT, GAS_ON_VAULT_CREATED,
+    events, promise_succeeded, Outlive, OutliveExt, TokenRecord, FT_STORAGE_DEPOSIT, GAS_ON_VAULT_CREATED,
     GAS_STORAGE_DEPOSIT, GAS_VAULT_NEW, TOKEN_STORAGE_RESERVE, VAULT_GAS_TANK, VAULT_STATE_RESERVE,
     VAULT_WASM,
 };
@@ -18,7 +18,7 @@ use crate::{
 const MAX_ENDPOINT_LEN: usize = 256;
 const MAX_IMAGE_HASH_LEN: usize = 128;
 
-impl Deed {
+impl Outlive {
     /// NEAR sent to the new vault account: code storage, state and the starting gas tank.
     pub(crate) fn vault_funding() -> NearToken {
         env::storage_byte_cost()
@@ -29,7 +29,7 @@ impl Deed {
 }
 
 #[near]
-impl Deed {
+impl Outlive {
     /// Deposit that `mint` needs. Anything above it is refunded.
     pub fn mint_cost(&self) -> NearToken {
         Self::vault_funding()
@@ -104,10 +104,10 @@ impl Deed {
 
         if !promise_succeeded() {
             // The batch reverted as a whole: no account, no code, and its NEAR comes back to
-            // the deed. Return the full deposit to the minter.
+            // the outlive. Return the full deposit to the minter.
             Promise::new(minter.clone()).transfer(deposit).detach();
             events::emit(
-                "deed_mint_failed",
+                "outlive_mint_failed",
                 json!({ "token_id": slug, "minter": minter, "refunded": deposit }),
             );
             return false;
@@ -131,7 +131,7 @@ impl Deed {
         self.owner_tokens.entry(minter.clone()).or_default().push(slug.clone());
         NftMint { owner_id: &minter, token_ids: &[&slug], memo: None }.emit();
         events::emit(
-            "deed_vault_created",
+            "outlive_vault_created",
             json!({ "token_id": slug, "vault_id": vault_id, "owner_id": minter, "owner_epoch": 1 }),
         );
 

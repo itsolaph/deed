@@ -7,7 +7,7 @@
 // It loads a vault's worker key (the key the hosted API server holds) and tries every way that
 // key could move money out of the vault. NEAR rejects each attempt before or during execution.
 // Then a stranger calls withdraw on-chain (fails with a tx hash you can open), and an old worker
-// key from a deed that was sold tries to keep charging (the key no longer exists).
+// key from a token that was sold tries to keep charging (the key no longer exists).
 // Nothing here can succeed; if any attempt does succeed the script exits 1.
 //
 //   node scripts/theft-proof.mjs [--vault <id>] [--key-file <worker key json>]
@@ -31,10 +31,10 @@ const WORKERS = path.join(process.env.NEAR_CREDENTIALS_DIR || path.join(HOME, ".
 
 const { values } = parseArgs({
   options: {
-    vault: { type: "string", default: "relay-live.deed2.deedlab.testnet" },
+    vault: { type: "string", default: "relay-live.outlive.testnet" },
     "key-file": { type: "string" },
-    stranger: { type: "string", default: "deedlab-alice.testnet" },
-    "old-vault": { type: "string", default: "relay-1102ripe.deed2.deedlab.testnet" },
+    stranger: { type: "string", default: "outlivelab-alice.testnet" },
+    "old-vault": { type: "string", default: "relay-1102ripe.outlive.testnet" },
     "old-key-file": { type: "string" },
     slow: { type: "string", default: "1200" },
   },
@@ -84,7 +84,7 @@ async function attempt(title, how, fn) {
     const r = await fn();
     if (r && r.success === false) {
       blocked++;
-      const msg = JSON.stringify(r.failure ?? r.receiptFailures[0] ?? {}).match(/"(?:ExecutionError|Panic|FunctionCallError)?"?:?"?([^"]*only the deed owner[^"]*|Smart contract panicked[^"]*)"/)?.[1]
+      const msg = JSON.stringify(r.failure ?? r.receiptFailures[0] ?? {}).match(/"(?:ExecutionError|Panic|FunctionCallError)?"?:?"?([^"]*only the token owner[^"]*|Smart contract panicked[^"]*)"/)?.[1]
         ?? JSON.stringify(r.failure ?? r.receiptFailures[0]).slice(0, 140);
       await say(`   ${green("BLOCKED")} on-chain: ${msg}`);
       await say(dim(`   tx ${r.hash}  ${txLink(r.hash)}`));
@@ -157,7 +157,7 @@ async function main() {
     if (oldInfo.worker_key !== old.publicKey) {
       const o = new Account(OLD_VAULT, direct, old.key);
       await attempt(
-        "The previous owner's worker key, after the deed was sold",
+        "The previous owner's worker key, after the token was sold",
         `${OLD_VAULT} changed hands (epoch ${oldInfo.owner_epoch}); its old server tries to charge`,
         () => o.signAndSendTransaction({ receiverId: OLD_VAULT, actions: [actions.functionCall("charge", { items: [] }, 50n * TGAS, 0n)], waitUntil: "FINAL", throwOnFailure: false }),
       );

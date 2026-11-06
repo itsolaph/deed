@@ -1,26 +1,26 @@
 #!/usr/bin/env node
-// A paying customer of a Deed relay in one file. See docs/TRY-AS-CUSTOMER.md.
+// A paying customer of a Outlive relay in one file. See docs/TRY-AS-CUSTOMER.md.
 //
 //   node examples/customer.mjs --account you.testnet                 1. ask without credit: HTTP 402
 //   node examples/customer.mjs --account you.testnet --fund 2        2. mint 2 tUSDC, prepay, deliver
 //   node examples/customer.mjs --account you.testnet --refund        3. start the refund delay
 //   node examples/customer.mjs --account you.testnet --claim         4. after the delay: money back
 //
-// Options: --vault (default relay-live.deed2.deedlab.testnet), --target (a public URL that
+// Options: --vault (default relay-live.outlive.testnet), --target (a public URL that
 // accepts POST; default https://httpbin.org/post). The endpoint is read from the vault on chain.
 // Your key is read from the near-cli legacy keychain (~/.near-credentials/testnet/<account>.json)
 // and never printed. Run `npm ci && npm run build` once in the repository first.
 
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { DeedClient, PaymentRequiredError, Rpc, TESTNET_RPC_URLS, VaultViews, formatUnits, fromUnits, signerFromSecretKey, verifyProof } from "../sdk/dist/src/index.js";
+import { OutliveClient, PaymentRequiredError, Rpc, TESTNET_RPC_URLS, VaultViews, formatUnits, fromUnits, signerFromSecretKey, verifyProof } from "../sdk/dist/src/index.js";
 import { NodeSigner, createNodeTransactor, fileStore, keychainFile, readKeyFile } from "../sdk/dist/src/node.js";
 
 const MAX_MINT = 5; // tUSDC: plenty for hundreds of calls at 0.01; the token allows more, do not.
 const { values: o } = parseArgs({
   options: {
     account: { type: "string" },
-    vault: { type: "string", default: "relay-live.deed2.deedlab.testnet" },
+    vault: { type: "string", default: "relay-live.outlive.testnet" },
     target: { type: "string", default: "https://httpbin.org/post" },
     fund: { type: "string" },
     refund: { type: "boolean", default: false },
@@ -31,7 +31,7 @@ if (!o.account) throw new Error("usage: node examples/customer.mjs --account <yo
 const rpc = new Rpc(process.env.NEAR_RPC_URLS ? process.env.NEAR_RPC_URLS.split(",") : TESTNET_RPC_URLS);
 const key = readKeyFile(keychainFile(o.account)).private_key;
 const chainSigner = new NodeSigner(o.account, key, rpc.urls);
-const client = new DeedClient({
+const client = new OutliveClient({
   vault: o.vault,
   accountId: o.account,
   signer: signerFromSecretKey(key), // NEP-413: every request is signed with your full-access key
@@ -65,7 +65,7 @@ if (o.fund) {
   console.log(`ft_transfer_call ${fmt(amount)} to the vault as prepaid credit: ${top.success ? "ok" : `failed ${top.error}`} ${link(top.hash)}`);
 }
 
-const request = { url: o.target, method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ hello: "from a Deed customer", at: new Date().toISOString() }), idempotency_key: `try-${Date.now()}` };
+const request = { url: o.target, method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ hello: "from a Outlive customer", at: new Date().toISOString() }), idempotency_key: `try-${Date.now()}` };
 try {
   const { delivery_id, receipt } = await client.deliver(request);
   console.log(`202 accepted ${delivery_id}: receipt seq ${receipt.payload.seq}, price ${fmt(receipt.payload.price)}, signed by worker key ${receipt.payload.worker_public_key} (checked against the vault's worker keys)`);

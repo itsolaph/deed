@@ -4,27 +4,27 @@ Three contracts live in `contracts/`:
 
 | Contract | Testnet account | Role |
 |---|---|---|
-| `deed` | `deed2.deedlab.testnet` | NEP-171 registry. Mints one token per business, creates its vault, runs the built-in sale. |
-| `vault` | `<slug>.deed2.deedlab.testnet` | One per business. Treasury, price list, customer ledger, worker key. |
-| `tusdc` | `tusdc.deedlab.testnet` | Testnet-only test token (NEP-141). Has no value. |
+| `outlive` | `outlive.testnet` | NEP-171 registry. Mints one token per business, creates its vault, runs the built-in sale. |
+| `vault` | `<slug>.outlive.testnet` | One per business. Treasury, price list, customer ledger, worker key. |
+| `tusdc` | `tusdc.outlive.testnet` | Testnet-only test token (NEP-141). Has no value. |
 
-`deed.deedlab.testnet` runs the first version, before the self-review fixes in
+`outlive.outlive.testnet` runs the first version, before the self-review fixes in
 [`SECURITY.md`](SECURITY.md). Its records are kept under `superseded` in the deployments file.
-Use `deed2.deedlab.testnet`.
+Use `outlive.testnet`.
 
 All amounts are `u128` in the payment token's smallest unit (tUSDC and USDC have 6 decimals)
 and are passed as JSON strings. Arithmetic on balances is checked. Every state change that
-matters emits a NEP-297 event (`EVENT_JSON:` log) with standard `deed`, version `1.0.0`.
+matters emits a NEP-297 event (`EVENT_JSON:` log) with standard `outlive`, version `1.0.0`.
 Token moves also emit the standard NEP-171 `nft_mint` and `nft_transfer` events.
 
 Deployed code hashes and every testnet transaction are listed in
 [`deployments/testnet.json`](../deployments/testnet.json).
 
-## deed
+## outlive
 
 ### Init
 
-`new(admin_id, payment_token, payment_symbol?)`. Private: only the deed account itself can
+`new(admin_id, payment_token, payment_symbol?)`. Private: only the token account itself can
 call it (deploy and init go in one batch). `payment_token` is the NEP-141 used for listing
 prices and vault credit (tUSDC on testnet, native USDC on mainnet). `payment_symbol` is only
 used for display in the certificate.
@@ -34,23 +34,23 @@ used for display in the certificate.
 `mint(slug, title, price_per_call, endpoint, image_hash, default_daily_cap)`, payable.
 
 - `slug` is `[a-z0-9-]`, 2 to 32 characters, no leading, trailing or doubled hyphen, not taken
-  (also not by a mint in flight), and `<slug>.<deed account>` must fit in 64 characters.
+  (also not by a mint in flight), and `<slug>.<contract account>` must fit in 64 characters.
 - The attached deposit must be at least `mint_cost()`: vault code storage
   (1 NEAR per 100 KB, about 2.3 NEAR for the current vault), 0.05 NEAR vault state,
-  0.5 NEAR starting gas tank for the vault, 0.01 NEAR for the token record in the deed and
+  0.5 NEAR starting gas tank for the vault, 0.01 NEAR for the token record in the token and
   0.00125 NEAR for registering the vault on the payment token. On testnet this is 2.880 NEAR.
 - One batch on the new account: create account, transfer, deploy vault code, call vault
   `new`. No access key is added. The token (`token_id = slug`) is minted to the caller only in
   the callback after the batch succeeded. If the batch failed, the whole batch reverted and
   the callback returns the full deposit. On success the excess deposit is refunded and the
-  deed registers the vault on the payment token.
-- The vault wasm is embedded in the deed at build time (`scripts/build.sh` builds the vault
+  outlive registers the vault on the payment token.
+- The vault wasm is embedded in the token at build time (`scripts/build.sh` builds the vault
   first). `vault_code_hash()` returns its sha256 (hex and base58) so anyone can compare it
-  with the code hash of any `<slug>.deed2.deedlab.testnet` on an explorer.
+  with the code hash of any `<slug>.outlive.testnet` on an explorer.
 
 Scale note: NEP-591 global contracts (deploy once, reference by hash) are the way to run many
 vaults. Publishing a global contract burns about 10 NEAR per 100 KB once, so for a handful of
-deeds plain per-vault deployment is cheaper. This version deploys per vault.
+tokens plain per-vault deployment is cheaper. This version deploys per vault.
 
 ### NFT standards
 
@@ -65,12 +65,12 @@ deeds plain per-vault deployment is cheaper. This version deploys per vault.
 - No NEP-178 approvals. `nft_transfer` with an `approval_id` fails. The built-in sale is the
   only sale path, so a seller cannot list the token on an outside marketplace (where the
   vault would not be locked) and drain the vault right before that sale settles.
-- Transfers to the deed contract itself or to the token's own vault are refused. Neither
+- Transfers to the Outlive contract itself or to the token's own vault are refused. Neither
   account could ever use the owner powers, so the business would be lost.
 
 ### Ownership push
 
-After every final ownership change the deed increments the token's `owner_epoch` and calls
+After every final ownership change the token increments the token's `owner_epoch` and calls
 `vault.set_owner(new_owner, epoch)`:
 
 - mint: the vault starts with the minter at epoch 1 (set by `new`);
@@ -83,7 +83,7 @@ The vault ignores any epoch that is not newer than its own, so pushes that arriv
 cannot roll the owner back. `sync_vault(token_id)` (anyone, payable) re-pushes the current
 owner and epoch, for example after a push ran out of gas. It is refused while an
 `nft_transfer_call` is pending, because the receiver shown in the registry is not final yet.
-A failed push emits `deed_owner_push_failed`. Transfers are refused while the token is listed.
+A failed push emits `outlive_owner_push_failed`. Transfers are refused while the token is listed.
 
 ### Sale
 
@@ -97,19 +97,19 @@ A failed push emits `deed_owner_push_failed`. Transfers are refused while the to
   re-send the unlock for the newest listing if it was lost. Because the vault only accepts a
   lock with a newer id and only unlocks for the id that locked it, a lock or unlock receipt
   that arrives late cannot unlock a vault that a newer listing locked.
-- Buy: `ft_transfer_call` on the payment token to the deed with
+- Buy: `ft_transfer_call` on the payment token to the token with
   `msg = {"buy":{"token_id":"...","max_price":"...","listing_id":<n>}}`. `listing_id` is
   optional but recommended: a seller cannot withdraw while listed, but could cancel, withdraw
   the vault's cash and re-list at the same price while a purchase is on its way. The re-listing
-  gets a new id, so a purchase pinned to the listing the buyer evaluated is refused. The deed
+  gets a new id, so a purchase pinned to the listing the buyer evaluated is refused. The outlive
   checks that the call came from the payment token, that the listing is active, has the
   pinned id (if given) and matches the current owner and epoch, that the price is at most
   `max_price` and at most the amount sent, and that the buyer is not the seller. Then it
   removes the listing, moves the token, pushes the new owner (the vault unlocks on the newer
   epoch), pays the seller with `ft_transfer` and returns the unused amount to the buyer. Any
-  refusal returns the full amount and emits `deed_buy_refused`.
+  refusal returns the full amount and emits `outlive_buy_refused`.
 - If paying the seller fails (for example the seller is not registered on the token), the
-  amount is kept in the deed as claimable proceeds (`proceeds_of`, `claim_proceeds()`).
+  amount is kept in the token as claimable proceeds (`proceeds_of`, `claim_proceeds()`).
   A failed claim restores the proceeds.
 
 ### Stats
@@ -120,7 +120,7 @@ the stored one is ignored.
 
 ### Views
 
-`mint_cost`, `vault_code_hash`, `get_config`, `get_deed`, `get_deeds`, `get_listings`,
+`mint_cost`, `vault_code_hash`, `get_config`, `get_token`, `get_tokens`, `get_listings`,
 `proceeds_of`, plus the NEP-171/177/181 views.
 
 ### Admin powers
@@ -129,19 +129,19 @@ the stored one is ignored.
 it cannot move tokens, cannot withdraw anything, cannot change or lock a vault and cannot
 change the payment token. There is no admin method at all.
 
-What is not trustless: the deed account `deed2.deedlab.testnet` holds a full-access key, so
-whoever holds that key can redeploy the deed code on testnet. Redeployed code could push a
-fake owner to every vault (the vault trusts its parent deed), then withdraw revenue and
-register its own worker key to charge customers within their caps. On mainnet the deed account's
+What is not trustless: the token account `outlive.testnet` holds a full-access key, so
+whoever holds that key can redeploy the token code on testnet. Redeployed code could push a
+fake owner to every vault (the vault trusts its parent outlive), then withdraw revenue and
+register its own worker key to charge customers within their caps. On mainnet the token account's
 full-access keys should be removed after deployment, or upgrades should go through a DAO.
 Vaults themselves cannot be upgraded: they hold no full-access key and have no upgrade method.
 
-### Deed events
+### Outlive events
 
-`deed_vault_created`, `deed_mint_failed`, `deed_owner_pushed`, `deed_owner_push_failed`,
-`deed_listed`, `deed_listing_active`, `deed_listing_failed`, `deed_listing_cancelled`,
-`deed_sold`, `deed_buy_refused`, `deed_seller_paid`, `deed_proceeds_held`,
-`deed_proceeds_claimed`, `deed_stats`, plus NEP-171 `nft_mint` and `nft_transfer`.
+`outlive_vault_created`, `outlive_mint_failed`, `outlive_owner_pushed`, `outlive_owner_push_failed`,
+`outlive_listed`, `outlive_listing_active`, `outlive_listing_failed`, `outlive_listing_cancelled`,
+`outlive_sold`, `outlive_buy_refused`, `outlive_seller_paid`, `outlive_proceeds_held`,
+`outlive_proceeds_claimed`, `outlive_stats`, plus NEP-171 `nft_mint` and `nft_transfer`.
 
 ## vault
 
@@ -199,7 +199,7 @@ entry, so old receipts can never be charged again after a customer comes back.
 - `receipts_root` (hex sha256 over that batch's delivery receipts) goes into the
   `vault_charge` event only, not into storage.
 - Updates 30 daily stat buckets (calls, revenue, gas spent).
-- If the last stats push is older than the push interval, it calls `deed.on_stats` with
+- If the last stats push is older than the push interval, it calls `outlive.on_stats` with
   10 Tgas and no callback. A failed push never fails the charge.
 
 ### Owner methods
@@ -232,10 +232,10 @@ A cap raise applies at once. A cap decrease applies only after the refund delay
 worker's next charge batch and never pay for calls already served. `daily_cap` and
 `chargeable_today` in the view always show the cap in force now.
 
-### Deed hooks
+### Outlive hooks
 
 `lock(epoch, lock_id)`, `unlock(epoch, lock_id)` and `set_owner(new_owner, epoch)` accept
-calls only from the deed. `lock` needs the epoch to equal the vault's current epoch and a
+calls only from the outlive. `lock` needs the epoch to equal the vault's current epoch and a
 `lock_id` (the listing id) newer than any lock before. `unlock` only releases the lock for the
 `lock_id` that set it. `set_owner` with a newer epoch replaces the owner and clears the lock;
 older or equal epochs are ignored.
@@ -253,7 +253,7 @@ Hosting, bandwidth and operator time never appear on chain and are not in it.
 
 ### Views
 
-`get_info()` (owner, epoch, locked, lock id, token, deed, payment token, price, pending price, endpoint,
+`get_info()` (owner, epoch, locked, lock id, token, outlive, payment token, price, pending price, endpoint,
 image hash, worker key, revenue, liabilities, in flight, customers, refund delay and more),
 `get_customer(account_id)`, `get_stats()` (30-day calls, revenue, gas spent, daily buckets,
 lifetime totals), `get_push_stats()`, `get_worker_history()`.
@@ -271,7 +271,7 @@ lifetime totals), `get_push_stats()`, `get_worker_history()`.
 NEP-141 with NEP-145 storage management and NEP-148 metadata: name "Test USDC", symbol
 `tUSDC`, 6 decimals. `mint(amount)` lets anyone who registered with `storage_deposit` mint up
 to 1,000 tUSDC per call to themselves. It is a testnet faucet token with no value. Never
-deploy it on mainnet; on mainnet the deed uses native USDC
+deploy it on mainnet; on mainnet the token uses native USDC
 (`17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1`).
 
 ## Invariants
@@ -280,11 +280,11 @@ Checked by the integration tests after every flow and by the smoke run on testne
 
 1. Vault: payment-token balance == `liabilities + revenue + in_flight` (plus any tokens sent
    with a plain `ft_transfer`, which nobody can recover).
-2. Deed: payment-token balance == claimable proceeds + proceeds in flight.
+2. Outlive: payment-token balance == claimable proceeds + proceeds in flight.
 3. A seq is charged at most once per customer.
 4. `liabilities` only leaves the vault through `claim_refund` to the customer it belongs to.
 5. The vault account holds no key other than the current worker's function-call key.
-6. The deed token owner and the vault owner match once the latest push has landed, and the
+6. The outlive token owner and the vault owner match once the latest push has landed, and the
    vault epoch never decreases.
 
 ## Threat model
@@ -293,11 +293,11 @@ Checked by the integration tests after every flow and by the smoke run on testne
 |---|---|---|
 | Leaked worker key | Mis-charge customers within their balance and daily cap; burn its gas allowance (at most 5 NEAR, default 0.5). | Move money out (function-call keys cannot attach deposits and `charge` makes no transfers); call any other method; outlive a rotation. |
 | Seller during a listing | Keep running the business; cancel the listing (then the lock goes away) and re-list, which creates a new `listing_id`; burn the rest of the worker key's gas allowance from the vault's NEAR. | Withdraw, rotate the worker key, change config or price while listed; transfer the token; sell on an outside marketplace (no approvals); take cash out from under a buyer who pinned `listing_id`. |
-| Seller after the sale | Nothing on the vault methods. Their worker key keeps charging (revenue goes to the buyer) until the buyer rotates, and can burn its remaining gas allowance from the vault's NEAR. | Withdraw (`only the deed owner`), rotate, reconfigure. |
-| Deed admin (`admin_id`) | Nothing: no admin methods exist. | Move tokens, withdraw, change or lock vaults. |
-| Holder of the deed account's full-access key (testnet) | Redeploy the deed code, which could push fake owners to vaults. See "Admin powers". | Change vault code (vaults have no full-access key). |
+| Seller after the sale | Nothing on the vault methods. Their worker key keeps charging (revenue goes to the buyer) until the buyer rotates, and can burn its remaining gas allowance from the vault's NEAR. | Withdraw (`only the token owner`), rotate, reconfigure. |
+| Outlive admin (`admin_id`) | Nothing: no admin methods exist. | Move tokens, withdraw, change or lock vaults. |
+| Holder of the token account's full-access key (testnet) | Redeploy the token code, which could push fake owners to vaults. See "Admin powers". | Change vault code (vaults have no full-access key). |
 | Customer | Deposit, raise their own daily cap at once and lower it after the refund delay, request and claim a refund of their whole balance after the delay. | Withdraw revenue; charge; touch other customers' balances; block charges for calls already served (cap decreases and refunds both wait for the delay). |
-| Outside caller | Push stats, re-sync a vault owner, fund gas, buy a listed deed at its price, deposit credit for any account. | Call `set_owner`, `lock`, `unlock` (deed only), `on_stats` (that vault only), `charge`, owner methods, the vault `new`; cancel someone else's refund request with a deposit. |
+| Outside caller | Push stats, re-sync a vault owner, fund gas, buy a listed token at its price, deposit credit for any account. | Call `set_owner`, `lock`, `unlock` (outlive only), `on_stats` (that vault only), `charge`, owner methods, the vault `new`; cancel someone else's refund request with a deposit. |
 
 Known limits:
 

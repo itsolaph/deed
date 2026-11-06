@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The whole Deed story on testnet, with an explorer link at every step:
+// The whole Outlive story on testnet, with an explorer link at every step:
 //
 //   echo target and worker A (seller) up, traffic running, revenue ticking, seller lists,
 //   the buyer agent decides and buys, the seller's withdraw reverts, the buyer starts worker B
@@ -49,8 +49,8 @@ const A = {
   alice: process.env.DEMO_ALICE || dep.accounts.alice,
   bob: process.env.DEMO_BOB || dep.accounts.bob,
 };
-const DEED = A.deed;
-const VAULT = `${SLUG}.${DEED}`;
+const OUTLIVE = A.outlive;
+const VAULT = `${SLUG}.${OUTLIVE}`;
 const KEYS_DIR = path.join(process.env.NEAR_CREDENTIALS_DIR || path.join(process.env.HOME || "", ".near-credentials"), "testnet", "workers");
 const KEY_A = path.join(KEYS_DIR, `${VAULT}.worker-a.json`);
 const KEY_B = path.join(KEYS_DIR, `${VAULT}.worker-b.json`);
@@ -62,7 +62,7 @@ const record = {
   run: RUN,
   slug: SLUG,
   vault: VAULT,
-  deed: DEED,
+  outlive: OUTLIVE,
   accounts: { seller: A.seller, buyer: A.buyer, customers: [A.alice, A.bob] },
   started_at: new Date().toISOString(),
   steps: [],
@@ -190,7 +190,7 @@ function portsFree() {
 }
 
 async function main() {
-  banner(`Deed demo on testnet: deed ${DEED}, new business ${SLUG}`);
+  banner(`Outlive demo on testnet: outlive ${OUTLIVE}, new business ${SLUG}`);
   portsFree();
   say("building TypeScript packages");
   const build = spawnSync("npx", ["tsc", "-b", "sdk", "worker", "agents"], { cwd: ROOT, encoding: "utf8" });
@@ -198,8 +198,8 @@ async function main() {
   const imageHash = workerImageHash();
   record.image_hash = imageHash;
 
-  // 1. The seller mints the business: a deed NFT plus its vault sub-account.
-  banner("1. seller mints the deed; the deed contract creates the vault sub-account");
+  // 1. The seller mints the business: a token NFT plus its vault sub-account.
+  banner("1. seller mints the token; the Outlive contract creates the vault sub-account");
   const mint = await run("agents/dist/src/owner.js", ["mint", "--as", A.seller, "--slug", SLUG, "--title", "Webhook Relay", "--price", PRICE_PER_CALL, "--endpoint", ENDPOINT_A, "--image-hash", imageHash, "--daily-cap", "50"], "01-mint");
   step(`seller mints ${SLUG}`, { tx: mint.tx, success: mint.success });
   if (!mint.success) throw new Error("mint failed");
@@ -253,14 +253,14 @@ async function main() {
   await waitExit("traffic", 120_000);
 
   // 5. Dynamic NFT: push the stats so the certificate shows the numbers.
-  banner("5. stats pushed to the deed; the NFT certificate updates");
+  banner("5. stats pushed to the token; the NFT certificate updates");
   const push1 = await run("agents/dist/src/owner.js", ["push-stats", "--as", A.seller, "--vault", VAULT], "05-push-stats");
   step("push_stats updates the dynamic NFT metadata", { tx: push1.tx, success: push1.success });
-  const deedView = await view(DEED, "get_deed", { token_id: SLUG });
-  say(`deed stats now: ${deedView.stats?.calls_30d} calls, revenue ${fmt(deedView.stats?.revenue_30d ?? "0")} tUSDC`);
+  const outliveView = await view(OUTLIVE, "get_token", { token_id: SLUG });
+  say(`outlive stats now: ${outliveView.stats?.calls_30d} calls, revenue ${fmt(outliveView.stats?.revenue_30d ?? "0")} tUSDC`);
 
   // 6. The seller takes the cash out, then lists.
-  banner("6. seller withdraws revenue, then lists the deed (the vault locks)");
+  banner("6. seller withdraws revenue, then lists the token (the vault locks)");
   const w1 = await run("agents/dist/src/owner.js", ["withdraw", "--as", A.seller, "--vault", VAULT, "--amount", "all"], "06-seller-withdraw");
   step("seller withdraws revenue before listing", { tx: w1.tx, success: w1.success });
   const list = await run("agents/dist/src/owner.js", ["list", "--as", A.seller, "--token-id", SLUG, "--price", LIST_PRICE], "06-list");
@@ -280,7 +280,7 @@ async function main() {
   banner("8. the seller's withdraw now reverts");
   await sleep(8_000);
   const w2 = await run("agents/dist/src/owner.js", ["withdraw", "--as", A.seller, "--vault", VAULT, "--amount", "0.000001"], "08-seller-withdraw-fails");
-  step("seller withdraw after the sale reverts (only the deed owner)", { tx: w2.tx, success: w2.success, expect: "failure" });
+  step("seller withdraw after the sale reverts (only the token owner)", { tx: w2.tx, success: w2.success, expect: "failure" });
 
   // 9. Worker B: start it first, then rotate key and endpoint in one transaction.
   banner("9. buyer starts worker B and rotates key and endpoint in one transaction");

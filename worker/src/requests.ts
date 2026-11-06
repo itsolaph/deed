@@ -1,6 +1,6 @@
 // Validation of customer delivery requests.
 
-import { ALLOWED_METHODS, MAX_BODY_BYTES, MAX_HEADERS, type DeliveryRequest } from "@deed/sdk";
+import { ALLOWED_METHODS, MAX_BODY_BYTES, MAX_HEADERS, type DeliveryRequest } from "@outlive/sdk";
 
 export const MAX_URL_LENGTH = 2048;
 export const MAX_IDEMPOTENCY_KEY = 128;
@@ -44,7 +44,7 @@ export function validateRequest(input: unknown): DeliveryRequest | string {
       if (!HEADER_NAME.test(name)) return `bad header name ${name}`;
       if (typeof value !== "string" || value.length > 4096 || /[\r\n\0]/.test(value)) return `bad value for header ${name}`;
       const lower = name.toLowerCase();
-      if (FORBIDDEN_HEADERS.has(lower) || lower.startsWith("x-deed-")) return `header ${name} may not be set`;
+      if (FORBIDDEN_HEADERS.has(lower) || lower.startsWith("x-outlive-")) return `header ${name} may not be set`;
       headers[lower] = value;
     }
   }

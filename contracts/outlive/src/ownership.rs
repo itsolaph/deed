@@ -4,7 +4,7 @@ use near_sdk::serde_json::json;
 use near_sdk::{env, ext_contract, near, require, AccountId, NearToken, Promise};
 
 use crate::{
-    events, promise_succeeded, Deed, DeedExt, VaultStats, GAS_ON_OWNER_PUSHED, GAS_SET_OWNER,
+    events, promise_succeeded, Outlive, OutliveExt, VaultStats, GAS_ON_OWNER_PUSHED, GAS_SET_OWNER,
 };
 
 #[allow(dead_code)]
@@ -15,7 +15,7 @@ pub trait VaultHooks {
     fn unlock(&mut self, epoch: u64, lock_id: u64) -> bool;
 }
 
-impl Deed {
+impl Outlive {
     /// Ends an ownership change: bump the token's epoch and push owner and epoch to the vault.
     pub(crate) fn finalize_owner(&mut self, token_id: &str) -> Promise {
         let record = self.token_mut(token_id);
@@ -38,7 +38,7 @@ impl Deed {
 }
 
 #[near]
-impl Deed {
+impl Outlive {
     /// Anyone may re-push the current owner and epoch, for example after a push ran out of gas.
     /// An attached deposit is forwarded to the vault (for its storage).
     #[payable]
@@ -53,7 +53,7 @@ impl Deed {
     #[private]
     pub fn on_owner_pushed(&mut self, token_id: String, owner_id: AccountId, epoch: u64) -> bool {
         let ok = promise_succeeded();
-        let event = if ok { "deed_owner_pushed" } else { "deed_owner_push_failed" };
+        let event = if ok { "outlive_owner_pushed" } else { "outlive_owner_push_failed" };
         events::emit(event, json!({ "token_id": token_id, "owner_id": owner_id, "epoch": epoch }));
         ok
     }
@@ -67,6 +67,6 @@ impl Deed {
             return;
         }
         record.stats = Some(stats.clone());
-        events::emit("deed_stats", json!({ "token_id": token_id, "stats": stats }));
+        events::emit("outlive_stats", json!({ "token_id": token_id, "stats": stats }));
     }
 }

@@ -1,17 +1,17 @@
-// Earnings history per vault: read lazily (only when someone opens a deed), cached in memory and
+// Earnings history per vault: read lazily (only when someone opens a outlive), cached in memory and
 // localStorage, never on the 30 s refresh loop. The parsing lives in sdk/src/history.ts.
 
 import { buildEarningsHistory, readVaultHistory, TxIndex, type EarningsHistory, type HistoryEvent } from "../../sdk/src/history.js";
 import { TX_INDEX } from "./config";
 
-/** A read younger than this is shown as is: opening the deed again costs no request. */
+/** A read younger than this is shown as is: opening the outlive again costs no request. */
 const TTL_MS = 120_000;
 /** "Read again" waits at least this long after the previous read. */
 const MIN_GAP_MS = 10_000;
 /** Transaction batches per open (20 each): 1 list request + at most 3 batch requests. */
 const MAX_BATCHES = 3;
 // v2: charge events carry per-customer items, deposits are kept (older caches lack both).
-const STORE = (vault: string) => `deed.history.v2.${vault}`;
+const STORE = (vault: string) => `outlive.history.v2.${vault}`;
 
 interface Cached {
   events: HistoryEvent[];
@@ -93,7 +93,7 @@ export function onHistory(fn: (vault: string) => void): void {
   listeners.add(fn);
 }
 
-/** Opening a deed calls this. A fresh cache costs nothing; otherwise one list request plus the
+/** Opening a outlive calls this. A fresh cache costs nothing; otherwise one list request plus the
  *  unsettled transactions (usually none or one batch). `force` is the "Read again" button. */
 export function wantHistory(vault: string, force = false): void {
   if (inFlight.has(vault)) return;

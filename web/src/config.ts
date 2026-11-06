@@ -1,9 +1,9 @@
-// Testnet configuration. `?deed=<account>` in the URL selects another deed contract.
+// Testnet configuration. `?outlive=<account>` in the URL selects another Outlive contract.
 
 const params = new URLSearchParams(location.search);
 
 export const NETWORK = "testnet" as const;
-export const DEED_CONTRACT = params.get("deed") || "deed2.deedlab.testnet";
+export const OUTLIVE_CONTRACT = params.get("outlive") || "outlive.testnet";
 export const EXPLORER = "https://testnet.nearblocks.io";
 /** Transaction index for the earnings history (FastNEAR; NearBlocks' testnet indexer lags). */
 export const TX_INDEX = params.get("tx_index") || "https://tx.test.fastnear.com";

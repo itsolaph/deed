@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// buyer: an agent that reads deed listings and vault views, attributes the vault's revenue to
+// buyer: an agent that reads outlive listings and vault views, attributes the vault's revenue to
 // independent customers (owners, previous owners and owner-funded customers excluded, see
 // sdk/src/appraisal.ts), computes payback on chain-visible costs, runs its checks, and buys with
 // ft_transfer_call when every check passes and payback is under a threshold. It prints every
 // check with pass/fail and the reason.
 //
-//   node agents/dist/src/buyer.js --account deedlab-buyer.testnet --max-payback-days 30 \
+//   node agents/dist/src/buyer.js --account outlivelab-buyer.testnet --max-payback-days 30 \
 //     [--policy strict|demo] [--min-customers n] [--max-share 0..1] [--min-age-hours h] \
 //     [--token-id relay] [--fund-from eth:usdc --refund-to 0x...] [--dry-run]
 //
@@ -17,7 +17,7 @@ import { parseArgs } from "node:util";
 import {
   DAY_MS,
   DEMO_POLICY_NOTICE,
-  DeedViews,
+  OutliveViews,
   PAYBACK_COSTS_NOTE,
   PAYBACK_LABEL,
   STATS_WINDOW_DAYS,
@@ -38,14 +38,14 @@ import {
   type Appraisal,
   type AppraisalPolicy,
   type Check,
-  type DeedView,
+  type OutliveView,
   type FundingRecord,
   type HealthResponse,
   type ListingView,
   type PaybackResult,
   type VaultInfo,
-} from "@deed/sdk";
-import { keychainFile, readKeyFile } from "@deed/sdk/node";
+} from "@outlive/sdk";
+import { keychainFile, readKeyFile } from "@outlive/sdk/node";
 import { clock, ensureTusdc, isMain, loadDeployments, rpc, runMain, tokenBalance, tokenMeta, txLink, txSigner, withRpcRetry, writeJson } from "./common.js";
 import { DRY_QUOTE_LABEL, NEAR_USDC_ASSET, dryQuote, fetchTokens, findAsset, fundingQuoteRequest, nearPriceFrom } from "./oneclick.js";
 
@@ -59,7 +59,7 @@ const MAX_HISTORY_BATCHES = 25;
 
 export interface Evaluation {
   listing: ListingView;
-  deed: DeedView;
+  outlive: OutliveView;
   info: VaultInfo;
   calls30d: number;
   revenue30d: bigint;
@@ -102,11 +102,11 @@ export function resolvePolicy(
 }
 
 /** Checks that do not need the network beyond what was already read. */
-export function staticChecks(listing: ListingView, deed: DeedView, info: VaultInfo, nowMs: number): Check[] {
+export function staticChecks(listing: ListingView, outlive: OutliveView, info: VaultInfo, nowMs: number): Check[] {
   const pendingIncrease = info.pending_price !== null && BigInt(info.pending_price) > BigInt(info.price_per_call);
   return [
     { name: "listing active", ok: listing.active, detail: listing.active ? `listing #${listing.listing_id}` : "still activating" },
-    { name: "seller owns the deed", ok: listing.seller === deed.owner_id && info.owner_id === deed.owner_id, detail: `deed owner ${deed.owner_id}, vault owner ${info.owner_id}` },
+    { name: "seller owns the token", ok: listing.seller === outlive.owner_id && info.owner_id === outlive.owner_id, detail: `outlive owner ${outlive.owner_id}, vault owner ${info.owner_id}` },
     { name: "vault locked for this listing", ok: info.locked && info.lock_id === listing.listing_id && info.owner_epoch === listing.epoch, detail: `locked=${info.locked} lock_id=${info.lock_id} epoch=${info.owner_epoch}` },
     {
       name: "no pending price increase",
@@ -144,7 +144,7 @@ async function appraiseVault(
 ): Promise<Appraisal> {
   const hist = await readVaultHistory(index, vault, undefined, { maxBatches: MAX_HISTORY_BATCHES, settleMs: 0, nowMs });
   say(`event log: ${hist.listed} vault transactions in the index, ${hist.listed - hist.unread} read (${hist.requests} requests to ${new URL(index.baseUrl).host})`);
-  const excluded = new Set([info.owner_id, listing.seller, vault, info.deed_id, ...ownersFromEvents(hist.events)]);
+  const excluded = new Set([info.owner_id, listing.seller, vault, info.outlive_id, ...ownersFromEvents(hist.events)]);
   const paying = [...revenueByCustomer(hist.events, nowMs - STATS_WINDOW_DAYS * DAY_MS, nowMs).keys()].filter((c) => !excluded.has(c));
   const funding = new Map<string, FundingRecord>();
   for (const customer of paying.slice(0, MAX_FUNDING_READS)) {
@@ -156,7 +156,7 @@ async function appraiseVault(
     }
   }
   return appraise(
-    { vault, deed: info.deed_id, owner: info.owner_id, alsoExcluded: [listing.seller], events: hist.events, funding, revenue30d, vaultCreatedAtMs: Number(info.created_at_ms), nowMs, ownerEpoch: info.owner_epoch },
+    { vault, outlive: info.outlive_id, owner: info.owner_id, alsoExcluded: [listing.seller], events: hist.events, funding, revenue30d, vaultCreatedAtMs: Number(info.created_at_ms), nowMs, ownerEpoch: info.owner_epoch },
     policy,
   );
 }
@@ -170,7 +170,7 @@ async function main(): Promise<void> {
   const { values } = parseArgs({
     options: {
       account: { type: "string" },
-      deed: { type: "string" },
+      outlive: { type: "string" },
       "token-id": { type: "string" },
       "max-payback-days": { type: "string", default: "30" },
       policy: { type: "string", default: "strict" },
@@ -188,20 +188,20 @@ async function main(): Promise<void> {
   });
   const dep = loadDeployments();
   const account = values.account ?? dep.accounts.buyer;
-  const deedId = values.deed ?? dep.accounts.deed;
+  const outliveId = values.outlive ?? dep.accounts.outlive;
   const maxPayback = Number(values["max-payback-days"]);
   const r = rpc();
-  const index = new TxIndex(process.env.DEED_TX_INDEX || TESTNET_TX_API);
-  const deedViews = new DeedViews(r, deedId);
+  const index = new TxIndex(process.env.OUTLIVE_TX_INDEX || TESTNET_TX_API);
+  const outliveViews = new OutliveViews(r, outliveId);
   const say = (line: string) => process.stdout.write(`${clock()} [buyer] ${line}\n`);
   const { policy, overridden } = resolvePolicy(values.policy!, { minCustomers: values["min-customers"], maxShare: values["max-share"], minAgeHours: values["min-age-hours"] });
 
-  say(`I am ${account}. I look for deeds on ${deedId} whose ${PAYBACK_LABEL} is within ${maxPayback} days.`);
+  say(`I am ${account}. I look for tokens on ${outliveId} whose ${PAYBACK_LABEL} is within ${maxPayback} days.`);
   say(`policy ${describePolicy(policy)}`);
   if (values.policy === "demo") say(DEMO_POLICY_NOTICE);
   if (overridden.length > 0) say(`policy overrides given on the command line: ${overridden.join(", ")}`);
   say(`${PAYBACK_LABEL}: ${PAYBACK_COSTS_NOTE}.`);
-  const config = await deedViews.config();
+  const config = await outliveViews.config();
   const token = await tokenMeta(r, config.payment_token);
   const fmt = (v: bigint | string) => `${formatUnits(v, token.decimals, 4)} ${token.symbol}`;
 
@@ -218,7 +218,7 @@ async function main(): Promise<void> {
     }
   }
 
-  const listings = (await deedViews.listings(0, 100)).filter((l) => !values["token-id"] || l.token_id === values["token-id"]);
+  const listings = (await outliveViews.listings(0, 100)).filter((l) => !values["token-id"] || l.token_id === values["token-id"]);
   if (listings.length === 0) {
     say("no listings found. Nothing to buy.");
     writeJson(values.out, { decision: "none", reason: "no listings", policy });
@@ -229,20 +229,20 @@ async function main(): Promise<void> {
   const evaluations: Evaluation[] = [];
   for (const listing of listings) {
     if (listing.seller === account) continue;
-    const deed = await deedViews.deedOf(listing.token_id);
-    if (!deed) continue;
-    const vault = new VaultViews(r, deed.vault_id);
+    const outlive = await outliveViews.outliveOf(listing.token_id);
+    if (!outlive) continue;
+    const vault = new VaultViews(r, outlive.vault_id);
     const [info, stats] = await Promise.all([vault.info(), vault.stats()]);
     const price = BigInt(listing.price);
     const cash = BigInt(info.revenue);
-    say(`--- ${listing.token_id} (${deed.title}) listed by ${listing.seller} for ${fmt(price)}, listing #${listing.listing_id}`);
-    say(`vault ${deed.vault_id}: withdrawable proceeds (cash) ${fmt(cash)} come with the deed; customer credit ${fmt(info.liabilities)} is owed to ${info.customers} customers and is not withdrawable`);
+    say(`--- ${listing.token_id} (${outlive.title}) listed by ${listing.seller} for ${fmt(price)}, listing #${listing.listing_id}`);
+    say(`vault ${outlive.vault_id}: withdrawable proceeds (cash) ${fmt(cash)} come with the token; customer credit ${fmt(info.liabilities)} is owed to ${info.customers} customers and is not withdrawable`);
     say(`trailing 30 days per the vault: ${stats.calls_30d} calls, revenue ${fmt(stats.revenue_30d)}, gas ${formatUnits(BigInt(stats.gas_spent_30d), 24, 5)} NEAR`);
 
     let appraisal: Appraisal | null = null;
-    const checks: Check[] = staticChecks(listing, deed, info, now);
+    const checks: Check[] = staticChecks(listing, outlive, info, now);
     try {
-      appraisal = await appraiseVault(index, listing, info, deed.vault_id, BigInt(stats.revenue_30d), config.payment_token, policy, now, say);
+      appraisal = await appraiseVault(index, listing, info, outlive.vault_id, BigInt(stats.revenue_30d), config.payment_token, policy, now, say);
       for (const c of appraisal.customers) {
         say(`  customer ${c.customer}: ${c.calls} paid calls, ${fmt(c.revenue)} -> ${c.class === "independent" ? "counted" : `NOT counted (${c.class})`}: ${c.reason}`);
       }
@@ -277,7 +277,7 @@ async function main(): Promise<void> {
     say(`decision: ${decision.toUpperCase()} (${why})`);
     evaluations.push({
       listing,
-      deed,
+      outlive,
       info,
       calls30d: stats.calls_30d,
       revenue30d: BigInt(stats.revenue_30d),
@@ -294,7 +294,7 @@ async function main(): Promise<void> {
   const pick = evaluations.filter((e) => e.decision === "buy").sort((a, b) => (a.result.paybackDays ?? Infinity) - (b.result.paybackDays ?? Infinity))[0];
   const report: Record<string, unknown> = {
     account,
-    deed: deedId,
+    outlive: outliveId,
     near_price_usd: nearPrice,
     max_payback_days: maxPayback,
     policy,
@@ -349,7 +349,7 @@ async function main(): Promise<void> {
   }
   report.decision = "buy";
   report.token_id = pick.listing.token_id;
-  report.vault = pick.deed.vault_id;
+  report.vault = pick.outlive.vault_id;
   if (values["dry-run"]) {
     say(`dry run: I would buy ${pick.listing.token_id} for ${fmt(pick.listing.price)}.`);
     writeJson(values.out, report);
@@ -362,18 +362,18 @@ async function main(): Promise<void> {
   if (balance < price) throw new Error(`not enough ${token.symbol}: have ${fmt(balance)}, need ${fmt(price)}`);
 
   const msg = JSON.stringify({ buy: { token_id: pick.listing.token_id, max_price: price.toString(), listing_id: pick.listing.listing_id } });
-  say(`buying: ft_transfer_call ${fmt(price)} to ${deedId} with msg ${msg}`);
+  say(`buying: ft_transfer_call ${fmt(price)} to ${outliveId} with msg ${msg}`);
   const tx = await withRpcRetry(() => txSigner(account).call(config.payment_token, {
     method: "ft_transfer_call",
-    args: { receiver_id: deedId, amount: price.toString(), msg },
+    args: { receiver_id: outliveId, amount: price.toString(), msg },
     gasTgas: 250,
     depositYocto: 1n,
   }), 4, (line) => say(`  ${line}`));
-  const after = await deedViews.deedOf(pick.listing.token_id);
-  const vaultAfter = await new VaultViews(r, pick.deed.vault_id).info();
+  const after = await outliveViews.outliveOf(pick.listing.token_id);
+  const vaultAfter = await new VaultViews(r, pick.outlive.vault_id).info();
   const bought = after?.owner_id === account && vaultAfter.owner_id === account;
   say(`${bought ? "bought" : "purchase did not go through"}: ${txLink(tx.hash)}`);
-  say(`deed owner now ${after?.owner_id}, vault owner now ${vaultAfter.owner_id} (epoch ${vaultAfter.owner_epoch}, locked ${vaultAfter.locked})`);
+  say(`outlive owner now ${after?.owner_id}, vault owner now ${vaultAfter.owner_id} (epoch ${vaultAfter.owner_epoch}, locked ${vaultAfter.locked})`);
   report.buy_tx = tx.hash;
   report.buy_link = txLink(tx.hash);
   report.bought = bought;

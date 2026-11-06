@@ -26,7 +26,7 @@ import {
   type ObligationReceipt,
 } from "../src/index.js";
 
-const VAULT = "relay.deed2.deedlab.testnet";
+const VAULT = "relay.outlive.testnet";
 
 function receipt(publicKey: string): ObligationReceipt {
   return {

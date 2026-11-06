@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// owner: the deed holder's tool. Each command signs one transaction with the owner's key from
+// owner: the outlive holder's tool. Each command signs one transaction with the owner's key from
 // the legacy keychain and prints the explorer link.
 //
 //   owner mint     --as <acc> --slug <s> --title <t> --price <tUSDC> --endpoint <url> --image-hash <h> [--daily-cap <tUSDC>]
@@ -15,8 +15,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { DeedViews, VaultViews, formatUnits, fromUnits, generateSecretKey, vaultAccountFor } from "@deed/sdk";
-import { credentialsDir, displayPath, readKeyFile, writeKeyFile, type TxOutcome } from "@deed/sdk/node";
+import { OutliveViews, VaultViews, formatUnits, fromUnits, generateSecretKey, vaultAccountFor } from "@outlive/sdk";
+import { credentialsDir, displayPath, readKeyFile, writeKeyFile, type TxOutcome } from "@outlive/sdk/node";
 import { NETWORK, clock, isMain, loadDeployments, rpc, runMain, tokenMeta, txLink, txSigner, withRpcRetry, writeJson } from "./common.js";
 
 const ONE_YOCTO = 1n;
@@ -37,7 +37,7 @@ async function main(): Promise<void> {
     args: rest,
     options: {
       as: { type: "string" },
-      deed: { type: "string" },
+      outlive: { type: "string" },
       vault: { type: "string" },
       "token-id": { type: "string" },
       slug: { type: "string" },
@@ -55,13 +55,13 @@ async function main(): Promise<void> {
   });
   if (!command || !values.as) throw new Error("usage: owner <mint|rotate|list|cancel|withdraw|push-stats> --as <account> ...");
   const dep = loadDeployments();
-  const deedId = values.deed ?? dep.accounts.deed;
+  const outliveId = values.outlive ?? dep.accounts.outlive;
   const r = rpc();
   const signer = txSigner(values.as);
   const send = <T,>(fn: () => Promise<T>): Promise<T> => withRpcRetry(fn, 4, (line) => say(`  ${line}`));
   const say = (line: string) => process.stdout.write(`${clock()} [owner ${values.as}] ${line}\n`);
-  const deed = new DeedViews(r, deedId);
-  const config = await deed.config();
+  const outlive = new OutliveViews(r, outliveId);
+  const config = await outlive.config();
   const token = await tokenMeta(r, config.payment_token);
   const units = (v: string) => fromUnits(v, token.decimals);
   let result: Record<string, unknown> = {};
@@ -69,9 +69,9 @@ async function main(): Promise<void> {
   switch (command) {
     case "mint": {
       if (!values.slug || !values.price || !values.endpoint) throw new Error("mint needs --slug, --price and --endpoint");
-      const cost = BigInt(await deed.mintCost());
+      const cost = BigInt(await outlive.mintCost());
       const { slug, price, endpoint } = { slug: values.slug!, price: values.price!, endpoint: values.endpoint! };
-      const out = await send(() => signer.call(deedId, {
+      const out = await send(() => signer.call(outliveId, {
         method: "mint",
         args: {
           slug,
@@ -85,7 +85,7 @@ async function main(): Promise<void> {
         depositYocto: cost,
       }));
       report(say, `mint ${slug} (deposit ${formatUnits(cost, 24, 3)} NEAR, excess refunded)`, out);
-      result = { tx: out.hash, success: out.success, vault: vaultAccountFor(deedId, slug) };
+      result = { tx: out.hash, success: out.success, vault: vaultAccountFor(outliveId, slug) };
       break;
     }
     case "rotate": {
@@ -128,16 +128,16 @@ async function main(): Promise<void> {
     case "list": {
       if (!values["token-id"] || !values.price) throw new Error("list needs --token-id and --price");
       const { token_id: listToken, price: listPrice } = { token_id: values["token-id"]!, price: values.price! };
-      const out = await send(() => signer.call(deedId, { method: "list", args: { token_id: listToken, price: units(listPrice).toString() }, gasTgas: 100, depositYocto: ONE_YOCTO }));
+      const out = await send(() => signer.call(outliveId, { method: "list", args: { token_id: listToken, price: units(listPrice).toString() }, gasTgas: 100, depositYocto: ONE_YOCTO }));
       report(say, `list ${values["token-id"]} for ${values.price} ${token.symbol}`, out);
-      const d = await deed.deedOf(values["token-id"]);
+      const d = await outlive.outliveOf(values["token-id"]);
       say(`listing ${d?.listing ? `#${d.listing.listing_id} active=${d.listing.active}` : "missing"}`);
       result = { tx: out.hash, success: out.success, listing: d?.listing ?? null };
       break;
     }
     case "cancel": {
       if (!values["token-id"]) throw new Error("cancel needs --token-id");
-      const out = await send(() => signer.call(deedId, { method: "cancel_listing", args: { token_id: values["token-id"] }, gasTgas: 100, depositYocto: ONE_YOCTO }));
+      const out = await send(() => signer.call(outliveId, { method: "cancel_listing", args: { token_id: values["token-id"] }, gasTgas: 100, depositYocto: ONE_YOCTO }));
       report(say, `cancel listing of ${values["token-id"]}`, out);
       result = { tx: out.hash, success: out.success };
       break;

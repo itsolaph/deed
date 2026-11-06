@@ -3,11 +3,11 @@
 // quote for sending vault revenue (USDC on NEAR) to an address on another chain and prints
 // the exact vault call it would make. It never signs or sends anything.
 //
-//   node agents/dist/src/withdraw-xchain.js --vault relay.deed2.deedlab.testnet \
+//   node agents/dist/src/withdraw-xchain.js --vault relay.outlive.testnet \
 //     --to eth:usdc --recipient 0x... [--amount 10|all] [--refund-to <near account>]
 
 import { parseArgs } from "node:util";
-import { VaultViews, formatUnits, fromUnits } from "@deed/sdk";
+import { VaultViews, formatUnits, fromUnits } from "@outlive/sdk";
 import { NETWORK, clock, isMain, rpc, runMain, tokenMeta, writeJson } from "./common.js";
 import { DRY_QUOTE_LABEL, dryQuote, fetchTokens, findAsset, payoutQuoteRequest } from "./oneclick.js";
 

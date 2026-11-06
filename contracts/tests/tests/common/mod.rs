@@ -88,7 +88,7 @@ pub struct Env {
     _sandbox: near_sandbox::Sandbox,
     pub worker: Worker<Sandbox>,
     pub root: Account,
-    pub deed: Contract,
+    pub outlive: Contract,
     pub tusdc: Contract,
     pub seller: Account,
     pub buyer: Account,
@@ -97,7 +97,7 @@ pub struct Env {
 }
 
 impl Env {
-    /// Deed + tUSDC deployed; buyer, alice and bob registered on tUSDC with 1,000 tUSDC each.
+    /// Outlive + tUSDC deployed; buyer, alice and bob registered on tUSDC with 1,000 tUSDC each.
     /// The seller is registered too unless `register_seller` is false.
     pub async fn new(register_seller: bool) -> Result<Self> {
         let (sandbox, worker) = start_sandbox().await?;
@@ -105,8 +105,8 @@ impl Env {
 
         let tusdc = Self::deploy(&root, "tusdc", "tusdc", NearToken::from_near(10)).await?;
         done(tusdc.call("new").transact().await?);
-        let deed = Self::deploy(&root, "deed", "deed", NearToken::from_near(30)).await?;
-        done(deed
+        let outlive = Self::deploy(&root, "outlive", "outlive", NearToken::from_near(30)).await?;
+        done(outlive
             .call("new")
             .args_json(json!({ "admin_id": root.id(), "payment_token": tusdc.id(), "payment_symbol": "tUSDC" }))
             .transact()
@@ -123,9 +123,9 @@ impl Env {
             users.push(acc);
         }
         let [seller, buyer, alice, bob]: [Account; 4] = users.try_into().unwrap();
-        let env = Self { _sandbox: sandbox, worker, root, deed, tusdc, seller, buyer, alice, bob };
+        let env = Self { _sandbox: sandbox, worker, root, outlive, tusdc, seller, buyer, alice, bob };
 
-        env.register(env.deed.id()).await?;
+        env.register(env.outlive.id()).await?;
         for acc in [&env.buyer, &env.alice, &env.bob] {
             env.register(acc.id()).await?;
             env.faucet(acc, 1_000 * ONE_TUSDC).await?;
@@ -185,13 +185,13 @@ impl Env {
     }
 
     pub async fn mint_cost(&self) -> Result<u128> {
-        let v: Value = self.deed.view("mint_cost").await?.json()?;
+        let v: Value = self.outlive.view("mint_cost").await?.json()?;
         Ok(u128_of(&v))
     }
 
     pub async fn try_mint(&self, owner: &Account, slug: &str, deposit: u128) -> Result<ExecutionFinalResult> {
         Ok(owner
-            .call(self.deed.id(), "mint")
+            .call(self.outlive.id(), "mint")
             .args_json(json!({
                 "slug": slug,
                 "title": "Webhook Relay",
@@ -206,13 +206,13 @@ impl Env {
             .await?)
     }
 
-    /// Mints a deed and returns the vault account id.
+    /// Mints a outlive and returns the vault account id.
     pub async fn mint(&self, owner: &Account, slug: &str) -> Result<AccountId> {
         let cost = self.mint_cost().await?;
         let res = ok(self.try_mint(owner, slug, cost).await?);
         let logs = format!("{:?}", res.logs());
         ensure!(res.json::<bool>()?, "mint callback reported failure: {logs}");
-        Ok(format!("{slug}.{}", self.deed.id()).parse()?)
+        Ok(format!("{slug}.{}", self.outlive.id()).parse()?)
     }
 
     pub async fn deposit(&self, from: &Account, vault: &AccountId, amount: u128, msg: &str) -> Result<ExecutionFinalResult> {
@@ -238,8 +238,8 @@ impl Env {
             .json()?)
     }
 
-    pub async fn deed_view(&self, token_id: &str) -> Result<Value> {
-        Ok(self.deed.view("get_deed").args_json(json!({ "token_id": token_id })).await?.json()?)
+    pub async fn outlive_view(&self, token_id: &str) -> Result<Value> {
+        Ok(self.outlive.view("get_token").args_json(json!({ "token_id": token_id })).await?.json()?)
     }
 
     pub async fn call_owner(&self, owner: &Account, vault: &AccountId, method: &str, args: Value) -> Result<ExecutionFinalResult> {
@@ -291,18 +291,18 @@ impl Env {
         Ok(())
     }
 
-    /// The deed's payment-token balance equals proceeds held for sellers plus those in flight.
-    pub async fn assert_deed_invariant(&self) -> Result<()> {
-        let cfg: Value = self.deed.view("get_config").await?.json()?;
-        let held = self.ft_balance(self.deed.id()).await?;
+    /// The outlive's payment-token balance equals proceeds held for sellers plus those in flight.
+    pub async fn assert_outlive_invariant(&self) -> Result<()> {
+        let cfg: Value = self.outlive.view("get_config").await?.json()?;
+        let held = self.ft_balance(self.outlive.id()).await?;
         let owed = u128_of(&cfg["proceeds_total"]) + u128_of(&cfg["proceeds_in_flight"]);
-        ensure!(held == owed, "deed invariant broken: balance {held} != proceeds {owed}");
+        ensure!(held == owed, "outlive invariant broken: balance {held} != proceeds {owed}");
         Ok(())
     }
 
     pub async fn list(&self, owner: &Account, token_id: &str, price: u128) -> Result<ExecutionFinalResult> {
         Ok(owner
-            .call(self.deed.id(), "list")
+            .call(self.outlive.id(), "list")
             .args_json(json!({ "token_id": token_id, "price": price.to_string() }))
             .deposit(NearToken::from_yoctonear(1))
             .gas(MAX_GAS)
@@ -314,7 +314,7 @@ impl Env {
         let msg = json!({ "buy": { "token_id": token_id, "max_price": max_price.to_string() } }).to_string();
         Ok(buyer
             .call(self.tusdc.id(), "ft_transfer_call")
-            .args_json(json!({ "receiver_id": self.deed.id(), "amount": amount.to_string(), "msg": msg }))
+            .args_json(json!({ "receiver_id": self.outlive.id(), "amount": amount.to_string(), "msg": msg }))
             .deposit(NearToken::from_yoctonear(1))
             .gas(MAX_GAS)
             .transact()
@@ -323,7 +323,7 @@ impl Env {
 
     pub async fn transfer(&self, from: &Account, to: &AccountId, token_id: &str) -> Result<ExecutionFinalResult> {
         Ok(from
-            .call(self.deed.id(), "nft_transfer")
+            .call(self.outlive.id(), "nft_transfer")
             .args_json(json!({ "receiver_id": to, "token_id": token_id }))
             .deposit(NearToken::from_yoctonear(1))
             .gas(MAX_GAS)

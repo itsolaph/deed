@@ -1,6 +1,6 @@
 name: pages
 
-# Static web app to GitHub Pages: https://itsolaph.github.io/deed/
+# Static web app to GitHub Pages: https://itsolaph.github.io/outlive/
 # The page talks to the public testnet RPC and the FastNEAR transaction index directly,
 # so the hosted copy needs no backend of ours.
 

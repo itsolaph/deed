@@ -1,4 +1,4 @@
-//! Sandbox integration tests for the deed, vault and tUSDC contracts.
+//! Sandbox integration tests for the outlive, vault and tUSDC contracts.
 //! One test binary so every sandbox gets its own port pair from the shared counter.
 
 #[path = "common/mod.rs"]

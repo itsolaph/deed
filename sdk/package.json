@@ -1,5 +1,5 @@
 {
-  "name": "@deed/sdk",
+  "name": "@outlive/sdk",
   "version": "0.1.0",
   "private": true,
   "description": "Customer client for Outlive relays: NEP-413 auth, top-ups, receipts and proofs",

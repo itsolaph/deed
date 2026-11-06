@@ -1,5 +1,5 @@
 {
-  "name": "deed",
+  "name": "outlive",
   "private": true,
   "version": "0.1.0",
   "description": "An NFT that owns a running paid API on NEAR",

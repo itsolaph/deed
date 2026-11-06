@@ -79,7 +79,7 @@ async fn buy_listing(env: &Env, buyer: &Account, listing_id: &Value) -> Result<n
     .to_string();
     Ok(buyer
         .call(env.tusdc.id(), "ft_transfer_call")
-        .args_json(json!({ "receiver_id": env.deed.id(), "amount": SALE_PRICE.to_string(), "msg": msg }))
+        .args_json(json!({ "receiver_id": env.outlive.id(), "amount": SALE_PRICE.to_string(), "msg": msg }))
         .deposit(NearToken::from_yoctonear(1))
         .gas(MAX_GAS)
         .transact()
@@ -97,14 +97,14 @@ async fn buyer_can_pin_the_listing_it_evaluated() -> Result<()> {
     env.charge_ok(&vault, &sk, vec![item(env.alice.id(), 1, 10)]).await?;
 
     done(env.list(&env.seller, "relay", SALE_PRICE).await?);
-    let seen = env.deed_view("relay").await?["listing"]["listing_id"].clone();
+    let seen = env.outlive_view("relay").await?["listing"]["listing_id"].clone();
     assert!(seen.is_number(), "listing has an id: {seen}");
     assert_eq!(env.vault_info(&vault).await?["lock_id"], seen);
 
     // The seller pulls the cash and re-lists at the same price.
     let cancel = env
         .seller
-        .call(env.deed.id(), "cancel_listing")
+        .call(env.outlive.id(), "cancel_listing")
         .args_json(json!({ "token_id": "relay" }))
         .deposit(NearToken::from_yoctonear(1))
         .gas(MAX_GAS)
@@ -114,22 +114,22 @@ async fn buyer_can_pin_the_listing_it_evaluated() -> Result<()> {
     let cash = u128_of(&env.vault_info(&vault).await?["revenue"]);
     done(env.call_owner(&env.seller, &vault, "withdraw", json!({ "amount": cash.to_string() })).await?);
     done(env.list(&env.seller, "relay", SALE_PRICE).await?);
-    let relisted = env.deed_view("relay").await?["listing"]["listing_id"].clone();
+    let relisted = env.outlive_view("relay").await?["listing"]["listing_id"].clone();
     assert_ne!(relisted, seen);
 
     // The buy for the listing the buyer evaluated is refused and refunded in full.
     let start = env.ft_balance(env.buyer.id()).await?;
     let res = ok(buy_listing(&env, &env.buyer, &seen).await?);
-    assert!(has_event(&res, "deed_buy_refused"));
+    assert!(has_event(&res, "outlive_buy_refused"));
     assert_eq!(res.json::<String>()?, "0");
     assert_eq!(env.ft_balance(env.buyer.id()).await?, start);
 
     // A buy pinned to the current listing goes through.
     let res = ok(buy_listing(&env, &env.buyer, &relisted).await?);
-    assert!(has_event(&res, "deed_sold"));
+    assert!(has_event(&res, "outlive_sold"));
     assert_eq!(env.vault_info(&vault).await?["owner_id"], env.buyer.id().as_str());
     env.assert_invariant(&vault).await?;
-    env.assert_deed_invariant().await?;
+    env.assert_outlive_invariant().await?;
     Ok(())
 }
 
@@ -138,14 +138,14 @@ async fn buyer_can_pin_the_listing_it_evaluated() -> Result<()> {
 #[tokio::test]
 async fn stale_lock_ids_are_ignored() -> Result<()> {
     let env = Env::new(true).await?;
-    let fake_deed = env
+    let fake_outlive = env
         .root
-        .create_subaccount("fakedeed")
+        .create_subaccount("fakeoutlive")
         .initial_balance(NearToken::from_near(10))
         .transact()
         .await?
         .into_result()?;
-    let v = fake_deed
+    let v = fake_outlive
         .create_subaccount("v")
         .initial_balance(NearToken::from_near(4))
         .transact()
@@ -154,7 +154,7 @@ async fn stale_lock_ids_are_ignored() -> Result<()> {
         .deploy(&Env::vault_wasm()?)
         .await?
         .into_result()?;
-    done(fake_deed
+    done(fake_outlive
         .call(v.id(), "new")
         .args_json(json!({
             "token_id": "t1",
@@ -168,7 +168,7 @@ async fn stale_lock_ids_are_ignored() -> Result<()> {
         .transact()
         .await?);
     let hook = |method: &'static str, lock_id: u64| {
-        fake_deed.call(v.id(), method).args_json(json!({ "epoch": 1, "lock_id": lock_id })).transact()
+        fake_outlive.call(v.id(), method).args_json(json!({ "epoch": 1, "lock_id": lock_id })).transact()
     };
     let locked = || async { Ok::<Value, anyhow::Error>(v.view("get_info").await?.json::<Value>()?["locked"].clone()) };
 
@@ -193,22 +193,22 @@ async fn transfer_edge_cases() -> Result<()> {
     let env = Env::new(true).await?;
     let vault = env.mint(&env.seller, "relay").await?;
     fails(env.transfer(&env.seller, &vault, "relay").await?, "cannot receive");
-    fails(env.transfer(&env.seller, env.deed.id(), "relay").await?, "cannot receive");
+    fails(env.transfer(&env.seller, env.outlive.id(), "relay").await?, "cannot receive");
 
     let res = ok(env
         .seller
-        .call(env.deed.id(), "nft_transfer_call")
+        .call(env.outlive.id(), "nft_transfer_call")
         .args_json(json!({ "receiver_id": env.alice.id(), "token_id": "relay", "msg": "" }))
         .deposit(NearToken::from_yoctonear(1))
         .gas(MAX_GAS)
         .transact()
         .await?);
     assert!(!res.json::<bool>()?, "receiver has no contract, so the transfer reverts");
-    let deed = env.deed_view("relay").await?;
-    assert_eq!(deed["owner_id"], env.seller.id().as_str());
-    assert_eq!(deed["transfer_call_pending"], false);
+    let outlive = env.outlive_view("relay").await?;
+    assert_eq!(outlive["owner_id"], env.seller.id().as_str());
+    assert_eq!(outlive["transfer_call_pending"], false);
     let info = env.vault_info(&vault).await?;
     assert_eq!(info["owner_id"], env.seller.id().as_str());
-    assert_eq!(info["owner_epoch"], deed["owner_epoch"]);
+    assert_eq!(info["owner_epoch"], outlive["owner_epoch"]);
     Ok(())
 }

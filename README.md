@@ -5,8 +5,8 @@
 Outlive is an NFT that owns a transferable service instance of a running paid API: the vault that
 holds its treasury, price list, customer ledger and worker key is a NEAR sub-account the token
 controls. Selling the token moves that instance to the buyer while customers keep calling it.
-One token is one deed to one running service; the contract that issues deeds is called the deed
-contract, and that word is used throughout the code and the docs.
+One token is one running service; the contract that issues them is called the Outlive contract,
+and that name is used throughout the code and the docs.
 The demo service is a durable webhook relay that agents pay per delivery; the demo buyer is
 itself an agent that attributes the vault's on-chain revenue to independent customers, computes
 payback on chain-visible costs, and buys. Testnet only. Built for the NEAR hackathon (November
@@ -14,17 +14,17 @@ payback on chain-visible costs, and buys. Testnet only. Built for the NEAR hacka
 
 ## Try it
 
-Hosted demo: <https://itsolaph.github.io/deed/> (static page, reads testnet directly, no backend of
+Hosted demo: <https://itsolaph.github.io/outlive/> (static page, reads testnet directly, no backend of
 ours in the path). Three-minute demo with the recorded runs:
 [docs/media/outlive-demo.mp4](docs/media/outlive-demo.mp4).
 
 | Do | See | Time |
 |---|---|---|
 | `npm ci && bash scripts/check.sh` | Contract wasm builds, 41 contract unit tests, 19 sandbox integration tests (near-workspaces), 57 Node tests (sdk 28, worker 20, agents 5, web 4) and the web build pass; ends with `== all checks passed`. `SKIP_SANDBOX=1` skips the sandbox tests (they download `neard` once). | 3 to 6 min |
-| `npm run build && node agents/dist/src/buyer.js --account <any testnet account> --dry-run` | Read only. The buyer agent prints its policy (strict by default), then for every listing on `deed2.deedlab.testnet`: each customer with its paid revenue and whether it counts as independent, the payback on chain-visible costs, every check with pass/FAIL and the reason, and its decision. The listings on testnet today are past demo runs; each is skipped with its reasons (too few independent customers, too young, worker stopped). | 15 s |
+| `npm run build && node agents/dist/src/buyer.js --account <any testnet account> --dry-run` | Read only. The buyer agent prints its policy (strict by default), then for every listing on `outlive.testnet`: each customer with its paid revenue and whether it counts as independent, the payback on chain-visible costs, every check with pass/FAIL and the reason, and its decision. The listings on testnet today are past demo runs; each is skipped with its reasons (too few independent customers, too young, worker stopped). | 15 s |
 | `node examples/customer.mjs --account <you>.testnet`, then `--fund 2` | Become a paying customer of the hosted relay: HTTP 402 with the exact payment call, then mint test tUSDC, prepay, a signed receipt and a signed delivery proof. See [docs/TRY-AS-CUSTOMER.md](docs/TRY-AS-CUSTOMER.md). | 10 min |
-| `npm run dev -w web`, open http://127.0.0.1:7650 | Every deed with live figures and its on-chain certificate. Open one for its earnings history per holder, its customers (our demo traffic agents marked), and for a listing the payback on chain-visible costs with the worked formula. Connect a testnet wallet to buy, list, withdraw, rotate the worker or manage relay credit. `npm run build -w web` writes a static site to `web/dist/`. | 1 min |
-| Open a deed in the web app and connect a testnet wallet that owns it; otherwise stay disconnected or connect another account | The holder console in the deed detail: withdraw revenue, rotate the worker, list/set config and manage customer credit and refunds. Without the holder wallet it shows "Holder console - locked", the owner read live with `nft_token`, and a hint to connect as that account. | 2 min |
+| `npm run dev -w web`, open http://127.0.0.1:7650 | Every token with live figures and its on-chain certificate. Open one for its earnings history per holder, its customers (our demo traffic agents marked), and for a listing the payback on chain-visible costs with the worked formula. Connect a testnet wallet to buy, list, withdraw, rotate the worker or manage relay credit. `npm run build -w web` writes a static site to `web/dist/`. | 1 min |
+| Open a token in the web app and connect a testnet wallet that owns it; otherwise stay disconnected or connect another account | The holder console in the token detail: withdraw revenue, rotate the worker, list/set config and manage customer credit and refunds. Without the holder wallet it shows "Holder console - locked", the owner read live with `nft_token`, and a hint to connect as that account. | 2 min |
 | Open `deployments/testnet.json` | Every recorded testnet run with transaction links: `demo`, `hostileSeller`, `washReject`. | |
 | `bash scripts/demo-testnet.sh` (funded accounts, see below) | The whole story on testnet: worker A and traffic, revenue ticking, listing, the buyer agent (demo policy, printed) buying, the seller's withdraw reverting, worker B taking over, open deliveries delivered, the buyer withdrawing. Prints a link at every step, ends with `Demo passed`, stops every process it started. | 8 to 16 min |
 | `bash scripts/hostile-seller.sh` | The seller kills its worker with SIGKILL after the sale, with jobs in flight. Prints jobs in flight at the kill, delivered by the buyer's worker, refunded, and double charges (0), each with links. | about 20 min (10 are the refund delay) |
@@ -41,7 +41,7 @@ target, `cargo-near` 0.22.0, near-sdk 5.30.0, near-workspaces 0.24.0. `near` CLI
 there: they stay in the near-cli legacy keychain (`~/.near-credentials/testnet/<account>.json`).
 
 The testnet scripts need accounts with keys in that keychain: a seller with about 3.5 NEAR
-(each run mints a new deed for 2.88 NEAR; use a fresh one per run) and a buyer, alice and bob
+(each run mints a new token for 2.88 NEAR; use a fresh one per run) and a buyer, alice and bob
 with about 1 NEAR each. Create them with
 `near account create-account sponsor-by-faucet-service <name>.testnet autogenerate-new-keypair save-to-legacy-keychain network-config testnet create`
 and pass them as `DEMO_SELLER`, `DEMO_BUYER`, `DEMO_ALICE`, `DEMO_BOB` (or `HOSTILE_SELLER`,
@@ -67,29 +67,29 @@ The corrected hostile-seller run and regression tests are the evidence for that 
 | Rotation moves authorization and hands open obligations to a new worker | worker handover tests | v2 rotation [6tJr9gk…](https://testnet.nearblocks.io/txns/6tJr9gkPj4u8odBdJHBTjL5hKC5eucvrVFhQxhLLS2wK); 30/30 obligations handed over in recorded main run | 1:50–2:09 |
 | After a hostile seller kills its worker, receipts can be resumed and unused credit refunded; corrected hostile run reports 0 double charges | worker hostile-seller and concurrent-admission regression tests; `scripts/hostile-seller.sh` | `hostile-1103v2b`: 10 in flight, 8 resumed deliveries plus 2 new calls, 2 uncharged jobs refunded; refund [2frLN1R…](https://testnet.nearblocks.io/txns/2frLN1RDnbAPFggsQRxaVnS1cuVHA3wTRzKo9Bhoi7mg) | 2:09–2:28 |
 | The buyer excludes demonstrated owner-funded revenue and skips the listing | `sdk/test/appraisal.test.ts`; `scripts/wash-reject.mjs` | `wash-1103v2a`: seller transfer [C8xZr2w…](https://testnet.nearblocks.io/txns/C8xZr2wz6WbZLgcz34gTQ96X4jUi71fGgUnuNeGWWuza); buyer SKIP in `deployments/testnet.json` | 2:28–2:41 |
-| An agent appraises and buys a listed deed under the explicitly relaxed demo policy | agents buyer test; `scripts/demo-testnet.sh` | `relay-1103v2b`: buy [HsaNut7…](https://testnet.nearblocks.io/txns/HsaNut74t6ssVUq9SMe6AgWQPz4JKWt2Jc17PQVTMmFr); 7.48-day payback on chain-visible costs, using project-generated traffic | 1:25–1:50 |
+| An agent appraises and buys a listed token under the explicitly relaxed demo policy | agents buyer test; `scripts/demo-testnet.sh` | `relay-1103v2b`: buy [HsaNut7…](https://testnet.nearblocks.io/txns/HsaNut74t6ssVUq9SMe6AgWQPz4JKWt2Jc17PQVTMmFr); 7.48-day payback on chain-visible costs, using project-generated traffic | 1:25–1:50 |
 | Earnings are reconstructed per ownership epoch from NEP-297 events | `sdk/test/history.test.ts` (recorded fixture) | web Earnings history and vault counters | 2:41–2:59 |
 | 1Click integration produces mainnet dry quotes only; no cross-chain payment was executed | agents 1Click test refuses `dry: false` | recorded buyer funding quote; no transaction by design | 1:44–1:48 |
 
 ## Track requirements (nfts)
 
-- [x] **NEP-171 contract and the token → sub-account link.** `contracts/deed/src/nft.rs` implements NEP-171 (`nft_transfer`, `nft_transfer_call`, `nft_token`); `contracts/deed/src/mint.rs` derives `vault_id = <token_id>.<deed>` and creates that sub-account in the same mint batch; views in `contracts/deed/src/views.rs`.
-- [x] **Control passes on transfer and the old owner cannot keep access.** `contracts/deed/src/ownership.rs` bumps `owner_epoch` and pushes the new owner to the vault after every transfer/sale; every owner method starts with `assert_owner` against that pushed owner in `contracts/vault/src/owner.rs`, so the old account's withdraw/rotate calls revert. Sandbox tests: `contracts/tests/tests/integration/ownership.rs`, `sale.rs`, `owner_powers.rs`.
+- [x] **NEP-171 contract and the token → sub-account link.** `contracts/outlive/src/nft.rs` implements NEP-171 (`nft_transfer`, `nft_transfer_call`, `nft_token`); `contracts/outlive/src/mint.rs` derives `vault_id = <token_id>.<outlive>` and creates that sub-account in the same mint batch; views in `contracts/outlive/src/views.rs`.
+- [x] **Control passes on transfer and the old owner cannot keep access.** `contracts/outlive/src/ownership.rs` bumps `owner_epoch` and pushes the new owner to the vault after every transfer/sale; every owner method starts with `assert_owner` against that pushed owner in `contracts/vault/src/owner.rs`, so the old account's withdraw/rotate calls revert. Sandbox tests: `contracts/tests/tests/integration/ownership.rs`, `sale.rs`, `owner_powers.rs`.
 - [x] **Holder-gated page (the new console).** `web/src/gate.ts` (`isHolder`, 4 cases in `web/test/gate.test.ts`); `web/src/main.ts` reads the live owner with `nft_token(token_id)` and renders either the holder actions or the locked card.
 - [x] **Per-NFT history: what it earned, what it paid out, who held it.** `sdk/src/history.ts` builds ownership epochs from the vault's NEP-297 events; `web/src/earnings.ts` reads the index and `web/src/main.ts` renders the ledger. Test: `sdk/test/history.test.ts` (recorded fixture under `sdk/test/fixtures/`).
-- [x] **Transfer-path tests, including a sale with a payout in flight.** `contracts/tests/tests/integration/sale.rs` and `ownership.rs`; `scripts/hostile-seller.sh` sells the deed mid-run, then kills worker A with jobs in flight. Recorded run `hostile-1103v2b` in `deployments/testnet.json` (`hostileSeller`) reports 0 double charges and is summarized in [`docs/DEMO.md`](docs/DEMO.md#hostile-seller).
+- [x] **Transfer-path tests, including a sale with a payout in flight.** `contracts/tests/tests/integration/sale.rs` and `ownership.rs`; `scripts/hostile-seller.sh` sells the token mid-run, then kills worker A with jobs in flight. Recorded run `hostile-1103v2b` in `deployments/testnet.json` (`hostileSeller`) reports 0 double charges and is summarized in [`docs/DEMO.md`](docs/DEMO.md#hostile-seller).
 
 ## NEAR features used
 
 | Feature | Where it is exercised |
 |---|---|
-| NEP-171 core, NEP-177 metadata, NEP-181 enumeration | `contracts/deed/src/nft.rs`, `contracts/deed/src/views.rs`; every mint and sale |
-| NEP-297 events (`deed_*`, `vault_*`, NEP-171 and NEP-141 events) | `contracts/deed/src/events.rs`, `contracts/vault/src/events.rs`; read back by `sdk/src/history.ts` (earnings history) and `sdk/src/appraisal.ts` (per-customer revenue, who paid credit in) |
+| NEP-171 core, NEP-177 metadata, NEP-181 enumeration | `contracts/outlive/src/nft.rs`, `contracts/outlive/src/views.rs`; every mint and sale |
+| NEP-297 events (`outlive_*`, `vault_*`, NEP-171 and NEP-141 events) | `contracts/outlive/src/events.rs`, `contracts/vault/src/events.rs`; read back by `sdk/src/history.ts` (earnings history) and `sdk/src/appraisal.ts` (per-customer revenue, who paid credit in) |
 | NEP-413 signed messages for API authentication | `sdk/src/nep413.ts`, `worker/src/auth.ts`; every relay request |
-| NEP-141 `ft_transfer_call` as the payment path (customer credit, deed purchase), NEP-145 storage, NEP-148 metadata | `contracts/vault/src/customer.rs`, `contracts/deed/src/sale.rs`, `contracts/tusdc/src/lib.rs`, `sdk/src/client.ts` |
-| Sub-accounts created by a contract (one vault per token, created, deployed and initialized in one batch) | `contracts/deed/src/mint.rs` |
+| NEP-141 `ft_transfer_call` as the payment path (customer credit, token purchase), NEP-145 storage, NEP-148 metadata | `contracts/vault/src/customer.rs`, `contracts/outlive/src/sale.rs`, `contracts/tusdc/src/lib.rs`, `sdk/src/client.ts` |
+| Sub-accounts created by a contract (one vault per token, created, deployed and initialized in one batch) | `contracts/outlive/src/mint.rs` |
 | Function-call access keys (the worker key may only call `charge` on the vault; the vault adds and deletes it itself) | `contracts/vault/src/owner.rs` (`set_worker`), `worker/src/vault-chain.ts`, `scripts/theft-proof.mjs` |
-| Dynamic NFT metadata (on-chain SVG certificate built from pushed stats) | `contracts/deed/src/svg.rs`, `contracts/vault/src/hooks.rs` (`push_stats`) |
+| Dynamic NFT metadata (on-chain SVG certificate built from pushed stats) | `contracts/outlive/src/svg.rs`, `contracts/vault/src/hooks.rs` (`push_stats`) |
 | NEAR Intents 1Click API, mainnet dry quotes only (`dry: true`, nothing executed): fund a purchase from another chain, pay revenue out to another chain | `agents/src/oneclick.ts`, `agents/src/buyer.ts`, `agents/src/withdraw-xchain.ts` |
 | NEAR Connect wallet connector | `web/src/wallet.ts` |
 
@@ -102,8 +102,8 @@ Not used: gas keys (NEP-611), global contracts (NEP-591), Chain Signatures. See 
 - No TEE. The worker's image hash in the vault is a published claim, not attested.
 - No Chain Signatures.
 - Testnet only, with a test token (tUSDC) anyone can mint.
-- Traffic in the recorded demos comes from the project's own agents (`deedlab-alice`,
-  `deedlab-bob`, and accounts funded by `deedl*-seller` accounts) unless shown otherwise; the
+- Traffic in the recorded demos comes from the project's own agents (`outlivelab-alice`,
+  `outlivelab-bob`, and accounts funded by `outlivel*-seller` accounts) unless shown otherwise; the
   web app marks them. The payback figures in the demos are figures of that traffic, not evidence
   of demand.
 - Payback is payback on chain-visible costs: revenue minus on-chain gas. Hosting, bandwidth and
@@ -111,17 +111,17 @@ Not used: gas keys (NEP-611), global contracts (NEP-591), Chain Signatures. See 
 - The worker is trusted off-chain software. It can take a paid job and not deliver it; signed
   receipts and missing proofs make that visible, daily caps and refunds limit it, and nothing
   on chain prevents it. A buyer gets the vault, not the servers, domains or code.
-- The deed is a transferable service instance, not a legal transfer of a business.
+- The token is a transferable service instance, not a legal transfer of a business.
 - "Six unauthorized actions rejected on testnet" covers those six actions; it is not a proof
   that no other path exists, and the contracts have had no independent audit.
-- The deed account still has an operator full-access key during preparation. Removing it
+- The contract account still has an operator full-access key during preparation. Removing it
   and recording the DeleteKey transaction is a pre-submission gate, not a completed claim;
-  see `deployments/testnet.json` `deedKeys`. Vault sub-accounts are a separate, keyless case.
+  see `deployments/testnet.json` `outliveKeys`. Vault sub-accounts are a separate, keyless case.
 
 ## How it works
 
 ```
- seller / buyer --- NEP-171 token ---> deed contract ---- owner push (epoch) ----> vault <slug>.<deed>
+ seller / buyer --- NEP-171 token ---> Outlive contract ---- owner push (epoch) ----> vault <slug>.<outlive>
                     built-in sale       (registry,          lock / unlock            treasury, price,
                     ft_transfer_call     factory, sale,                              customer ledger,
                     {"buy": ...}         dynamic NFT)  <---- on_stats -------------  worker key
@@ -131,7 +131,7 @@ Not used: gas keys (NEP-611), global contracts (NEP-591), Chain Signatures. See 
                                                     function-call key limited to charge   vault
 ```
 
-1. `mint` on the deed contract creates the vault sub-account `<slug>.<deed>` in one batch
+1. `mint` on the Outlive contract creates the vault sub-account `<slug>.<outlive>` in one batch
    (create account, deploy the vault code, init) and mints the token only after that succeeded.
    The vault has no full-access key, ever.
 2. Customers prepay credit in the payment token (`ft_transfer_call` to the vault) and call the
@@ -142,7 +142,7 @@ Not used: gas keys (NEP-611), global contracts (NEP-591), Chain Signatures. See 
    move credit to revenue within each customer's balance and daily cap.
 4. The token holder withdraws revenue. Listing the token locks the vault (no withdraw, no key
    rotation, no price change). A buyer pays through `ft_transfer_call` on the payment token; the
-   deed moves the token, pushes the new owner to the vault and pays the seller.
+   token moves the token, pushes the new owner to the vault and pays the seller.
 5. From the next charge on, revenue belongs to the buyer and the seller's withdraw reverts. The
    buyer starts a worker and rotates the worker key and endpoint in one transaction. The old
    worker sees it on chain, hands its open obligations to the new endpoint and exits. If the
@@ -182,10 +182,10 @@ Not enforced, and said plainly:
 
 | | |
 |---|---|
-| Deed contract | [`deed2.deedlab.testnet`](https://testnet.nearblocks.io/address/deed2.deedlab.testnet) |
-| Payment token (tUSDC, test only) | [`tusdc.deedlab.testnet`](https://testnet.nearblocks.io/address/tusdc.deedlab.testnet) |
-| Hosted relay (customer quickstart) | [`relay-live.deed2.deedlab.testnet`](https://testnet.nearblocks.io/address/relay-live.deed2.deedlab.testnet); endpoint in its `get_info` |
-| Code hashes | in [`deployments/testnet.json`](deployments/testnet.json); `vault_code_hash()` on the deed returns the hash every vault runs |
+| Outlive contract | [`outlive.testnet`](https://testnet.nearblocks.io/address/outlive.testnet) |
+| Payment token (tUSDC, test only) | [`tusdc.outlive.testnet`](https://testnet.nearblocks.io/address/tusdc.outlive.testnet) |
+| Hosted relay (customer quickstart) | [`relay-live.outlive.testnet`](https://testnet.nearblocks.io/address/relay-live.outlive.testnet); endpoint in its `get_info` |
+| Code hashes | in [`deployments/testnet.json`](deployments/testnet.json); `vault_code_hash()` on the token returns the hash every vault runs |
 
 The recorded runs, with every transaction, are in `deployments/testnet.json` (`demo`,
 `hostileSeller`, `washReject`) and summarized in [docs/DEMO.md](docs/DEMO.md).
@@ -199,7 +199,7 @@ The recorded runs, with every transaction, are in `deployments/testnet.json` (`d
   holds its own NEAR balance that the vault would have to fund and refill.
 - Each vault is a full contract deployment (about 2.3 NEAR of storage). NEP-591 global
   contracts would make vaults cheap at scale, but publishing one costs about 10 NEAR per 100 KB
-  once, so for a handful of deeds per-vault deployment is cheaper.
+  once, so for a handful of tokens per-vault deployment is cheaper.
 - Wash revenue: the buyer agent excludes owners, previous owners and customers they funded (one
   hop) and wants several independent payers, but funding through intermediaries or recruited
   third parties is not caught.
@@ -212,10 +212,10 @@ The recorded runs, with every transaction, are in `deployments/testnet.json` (`d
 
 ## Roadmap
 
-- Mainnet with native USDC and the deed account locked (no full-access key) or DAO-controlled.
+- Mainnet with native USDC and the token account locked (no full-access key) or DAO-controlled.
 - TEE-attested workers, so the image hash becomes a verified fact instead of a claim.
 - An uptime bond the owner posts in the vault, slashed when signed receipts show unserved work.
-- NEP-591 global contracts for vault code once there are many deeds; NEP-611 gas keys for
+- NEP-591 global contracts for vault code once there are many tokens; NEP-611 gas keys for
   parallel charge lanes.
 
 ## Credits

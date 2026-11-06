@@ -19,7 +19,7 @@ async fn stats_push_drives_dynamic_metadata() -> Result<()> {
     let alice = env.alice.id();
     done(env.deposit(&env.alice, &vault, 10 * ONE_TUSDC, "").await?);
 
-    let nft_token = || env.deed.view("nft_token").args_json(json!({ "token_id": "relay" }));
+    let nft_token = || env.outlive.view("nft_token").args_json(json!({ "token_id": "relay" }));
     let token: Value = nft_token().await?.json()?;
     let svg = decode_svg(&token);
     assert!(svg.contains("No figures reported yet"));
@@ -33,12 +33,12 @@ async fn stats_push_drives_dynamic_metadata() -> Result<()> {
             "liabilities": "0", "price_per_call": "1", "customers": 0, "owner_epoch": 1, "updated_at_ms": 1
         }
     });
-    fails(env.alice.call(env.deed.id(), "on_stats").args_json(fake).transact().await?, "only the token's vault");
+    fails(env.alice.call(env.outlive.id(), "on_stats").args_json(fake).transact().await?, "only the token's vault");
 
     // 123 calls at 0.01 tUSDC = 1.23 tUSDC revenue, then anyone pushes stats.
     env.charge_ok(&vault, &sk, vec![item(alice, 1, 123)]).await?;
     let res = ok(env.bob.call(&vault, "push_stats").gas(MAX_GAS).transact().await?);
-    assert!(has_event(&res, "deed_stats"));
+    assert!(has_event(&res, "outlive_stats"));
 
     let token: Value = nft_token().await?.json()?;
     let extra: Value = serde_json::from_str(token["metadata"]["extra"].as_str().unwrap())?;
@@ -62,24 +62,24 @@ async fn stats_push_drives_dynamic_metadata() -> Result<()> {
     // After the push interval a charge pushes stats by itself.
     advance_time(&env, 601).await?;
     let res = ok(env.charge(&vault, &sk, vec![item(alice, 2, 7)]).await?);
-    assert!(has_event(&res, "deed_stats"), "charge pushes stats after the interval");
+    assert!(has_event(&res, "outlive_stats"), "charge pushes stats after the interval");
     let token: Value = nft_token().await?.json()?;
     let extra: Value = serde_json::from_str(token["metadata"]["extra"].as_str().unwrap())?;
     assert_eq!(extra["calls_30d"], 130);
 
     // Enumeration views carry the same live metadata.
     let mine: Vec<Value> = env
-        .deed
+        .outlive
         .view("nft_tokens_for_owner")
         .args_json(json!({ "account_id": env.seller.id() }))
         .await?
         .json()?;
     assert_eq!(mine.len(), 1);
     assert_eq!(mine[0]["metadata"]["extra"], token["metadata"]["extra"]);
-    let all: Vec<Value> = env.deed.view("nft_tokens").args_json(json!({})).await?.json()?;
+    let all: Vec<Value> = env.outlive.view("nft_tokens").args_json(json!({})).await?.json()?;
     assert_eq!(all.len(), 1);
-    let meta: Value = env.deed.view("nft_metadata").await?.json()?;
+    let meta: Value = env.outlive.view("nft_metadata").await?.json()?;
     assert_eq!(meta["spec"], "nft-1.0.0");
-    assert_eq!(meta["symbol"], "DEED");
+    assert_eq!(meta["symbol"], "OUTLIVE");
     Ok(())
 }

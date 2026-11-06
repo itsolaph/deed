@@ -1,5 +1,5 @@
 {
-  "name": "@deed/worker",
+  "name": "@outlive/worker",
   "version": "0.1.0",
   "private": true,
   "description": "Outlive worker: NEP-413 gateway, durable webhook relay and batched charger for one vault",
@@ -7,13 +7,13 @@
   "type": "module",
   "main": "./dist/src/worker.js",
   "bin": {
-    "deed-worker": "./dist/src/cli.js"
+    "outlive-worker": "./dist/src/cli.js"
   },
   "scripts": {
     "build": "tsc -b",
     "test": "tsc -b && node --test dist/test/*.test.js"
   },
   "dependencies": {
-    "@deed/sdk": "0.1.0"
+    "@outlive/sdk": "0.1.0"
   }
 }

@@ -1,5 +1,5 @@
 // The worker: accepts paid deliveries, delivers them with retries, charges the vault and
-// hands its queue over when the deed's new owner registers another worker key.
+// hands its queue over when the outlive's new owner registers another worker key.
 
 import {
   HANDOFF_DOMAIN,
@@ -26,7 +26,7 @@ import {
   type Signer,
   type StatusResponse,
   type VaultInfo,
-} from "@deed/sdk";
+} from "@outlive/sdk";
 import { Charger, type PendingCharge, type RefusalReason } from "./charger.js";
 import { Journal } from "./journal.js";
 import { validateRequest } from "./requests.js";

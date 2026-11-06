@@ -30,12 +30,12 @@ jobs:
           curl --proto '=https' --tlsv1.2 -LsSf \
             "https://github.com/near/cargo-near/releases/download/cargo-near-v${CARGO_NEAR_VERSION}/cargo-near-installer.sh" | sh
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
-      - name: Build wasm (vault, deed, tusdc)
+      - name: Build wasm (vault, outlive, tusdc)
         run: bash scripts/build.sh
       - name: Contract unit tests
-        run: cd contracts && cargo test -p vault -p deed -p tusdc
+        run: cd contracts && cargo test -p vault -p outlive -p tusdc
       - name: Sandbox integration tests
-        run: cd contracts && cargo test -p deed-tests --test integration -- --test-threads 4
+        run: cd contracts && cargo test -p outlive-tests --test integration -- --test-threads 4
 
   node:
     name: node tests (Node 22) and web build

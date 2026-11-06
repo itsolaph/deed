@@ -1,4 +1,4 @@
-// End to end against a fake vault: a real HTTP worker, a local flaky target, and DeedClient.
+// End to end against a fake vault: a real HTTP worker, a local flaky target, and OutliveClient.
 // Ports 7620-7629 (the project keeps local servers in 7600-7699).
 
 import assert from "node:assert/strict";
@@ -8,15 +8,15 @@ import os from "node:os";
 import path from "node:path";
 import { after, test } from "node:test";
 import {
-  DeedClient,
+  OutliveClient,
   PaymentRequiredError,
   generateSecretKey,
   sha256Hex,
   signerFromSecretKey,
   verifyOutbound,
   type DeliveryRequest,
-} from "@deed/sdk";
-import { fileStore } from "@deed/sdk/node";
+} from "@outlive/sdk";
+import { fileStore } from "@outlive/sdk/node";
 
 import { Authenticator } from "../src/auth.js";
 import { createServer } from "../src/server.js";
@@ -25,7 +25,7 @@ import { Worker } from "../src/worker.js";
 import { FakeVault } from "./fake-vault.js";
 
 const TARGET_PORT = 7620;
-const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "deed-worker-test-"));
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "outlive-worker-test-"));
 after(() => fs.rmSync(TMP, { recursive: true, force: true }));
 
 interface Hit {
@@ -96,7 +96,7 @@ function customer(fake: FakeVault, account: string, balance: bigint) {
     customer: async (a: string) => fake.customerView(a),
   };
   const events: string[] = [];
-  const client = new DeedClient({ vault: fake.vault, accountId: account, signer: signerFromSecretKey(key.secretKey), views, keyCacheMs: 0, onEvent: (e) => events.push(e) });
+  const client = new OutliveClient({ vault: fake.vault, accountId: account, signer: signerFromSecretKey(key.secretKey), views, keyCacheMs: 0, onEvent: (e) => events.push(e) });
   return { client, events };
 }
 
@@ -121,7 +121,7 @@ test("paid delivery: 402 first, then receipt, retries, signed proofs, one charge
     // Unknown customer: 402 with the exact way to pay.
     const strangerKey = generateSecretKey();
     fake.fullKeys.set("carol.test", new Set([strangerKey.publicKey]));
-    const carol = new DeedClient({ vault: fake.vault, accountId: "carol.test", signer: signerFromSecretKey(strangerKey.secretKey), views: { info: async () => fake.infoView(), workerHistory: async () => fake.history, customer: async () => null } });
+    const carol = new OutliveClient({ vault: fake.vault, accountId: "carol.test", signer: signerFromSecretKey(strangerKey.secretKey), views: { info: async () => fake.infoView(), workerHistory: async () => fake.history, customer: async () => null } });
     const err = await carol.deliver(request(0)).catch((e) => e);
     assert.ok(err instanceof PaymentRequiredError);
     assert.equal(err.details.reason, "unknown_customer");
@@ -398,7 +398,7 @@ test("hostile seller: worker A killed without hand-off; a restarted customer res
   const aliceKey = generateSecretKey();
   fake.addCustomer("alice.test", aliceKey.publicKey, 1_000_000n);
   const views = { info: async () => fake.infoView(), workerHistory: async () => fake.history.slice(-10), customer: async (x: string) => fake.customerView(x) };
-  const alice = new DeedClient({ vault: fake.vault, accountId: "alice.test", signer: signerFromSecretKey(aliceKey.secretKey), views, keyCacheMs: 0, store: fileStore(store) });
+  const alice = new OutliveClient({ vault: fake.vault, accountId: "alice.test", signer: signerFromSecretKey(aliceKey.secretKey), views, keyCacheMs: 0, store: fileStore(store) });
   const { client: bob } = customer(fake, "bob.test", 1_000_000n);
 
   // Charged and delivered.
@@ -433,7 +433,7 @@ test("hostile seller: worker A killed without hand-off; a restarted customer res
     // Alice's process restarts: a new client loads the saved receipts and resubmits them to the
     // endpoint the vault publishes now.
     down = false;
-    const alice2 = new DeedClient({ vault: fake.vault, accountId: "alice.test", signer: signerFromSecretKey(aliceKey.secretKey), views, keyCacheMs: 0, store: fileStore(store) });
+    const alice2 = new OutliveClient({ vault: fake.vault, accountId: "alice.test", signer: signerFromSecretKey(aliceKey.secretKey), views, keyCacheMs: 0, store: fileStore(store) });
     assert.deepEqual(alice2.pendingEntries().map((e) => e.receipt.payload.delivery_id).sort(), [d2, d3, d4, d5].map((d) => d.delivery_id).sort());
     const results = new Map((await alice2.resubmit()).map((r) => [r.delivery_id, r]));
     assert.equal(results.get(d2.delivery_id)!.charged_as_new, false, "charged by A: delivered by B for free");

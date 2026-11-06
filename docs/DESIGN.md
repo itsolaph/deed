@@ -15,7 +15,7 @@ accepted delivery and a proof for every attempt, and charges the vault in batche
 ```
              NEP-171 token "relay"                       one vault per business
   +---------------------------------+  set_owner(epoch)  +----------------------------------+
-  | deed contract (deed2...)        | ----------------> | vault  relay.deed2...            |
+  | Outlive contract (outlive2...)        | ----------------> | vault  relay.outlive2...            |
   |  mint -> creates the vault      |  lock / unlock    |  treasury (payment token)        |
   |  built-in sale (list, buy)      |                   |  price, endpoint, image hash     |
   |  dynamic metadata (certificate) | <---------------- |  customer ledger (credit, caps)  |
@@ -31,23 +31,23 @@ accepted delivery and a proof for every attempt, and charges the vault in batche
                                                       +-------------+
 ```
 
-- `contracts/deed`: NEP-171/177/181 registry, vault factory, built-in sale, dynamic metadata.
+- `contracts/outlive`: NEP-171/177/181 registry, vault factory, built-in sale, dynamic metadata.
   Details in [CONTRACTS.md](CONTRACTS.md).
-- `contracts/vault`: one per business on `<slug>.<deed>`. Treasury, price list, customer
+- `contracts/vault`: one per business on `<slug>.<outlive>`. Treasury, price list, customer
   ledger, worker authorization.
 - `worker/`: one process per business. HTTP gateway with NEP-413 auth and HTTP 402, durable
   webhook relay, batched charger, handover.
-- `sdk/`: `DeedClient` for customers, plus the shared signing and view code.
+- `sdk/`: `OutliveClient` for customers, plus the shared signing and view code.
 - `agents/`: flaky echo target, traffic generator, buyer agent, owner tools, 1Click mainnet dry
   quotes (`dry: true`, nothing executed).
-- `web/`: static app that lists deeds with live numbers and signs actions in the user's wallet.
+- `web/`: static app that lists tokens with live numbers and signs actions in the user's wallet.
 
 ## What moves with the token, and what does not
 
 Moves trustlessly, enforced by the contracts:
 
 - **Treasury.** Withdrawable revenue in the vault. Only the current token holder can withdraw
-  it. The deed pushes every ownership change to the vault with an increasing epoch.
+  it. The outlive pushes every ownership change to the vault with an increasing epoch.
 - **Price list.** The price per call. Increases need a 24-hour notice.
 - **Customer ledger.** Balances, daily caps, sequence numbers, refund requests. Customer
   credit is never withdrawable by the owner.
@@ -70,7 +70,7 @@ Does not move by itself:
 ### Customer auth
 
 Every customer request carries a NEP-413 signature (`sdk/src/nep413.ts`). The signed message
-is `deed-relay-auth:v1`, the HTTP method, the path, the sha256 of the body and a timestamp, one
+is `outlive-relay-auth:v1`, the HTTP method, the path, the sha256 of the body and a timestamp, one
 per line. The recipient is the vault account and the nonce is 32 random bytes. The worker
 (`worker/src/auth.ts`) checks the signature, refuses timestamps more than 5 minutes off and
 nonces it has seen, and asks RPC whether the public key is a full-access key of the claimed
@@ -97,7 +97,7 @@ then hourly, with 20 percent jitter, until 24 hours after acceptance. 2xx is del
 other than 408 and 429 fails for good, everything else is retried. Every attempt produces a
 proof signed by the worker key: `{delivery_id, vault, attempt, status_code, response_sha256,
 at, worker_public_key}`. `GET /v1/deliveries/:id` returns the state, the receipt and every
-proof. Outbound requests carry `x-deed-relay-*` headers with an ed25519 signature over the
+proof. Outbound requests carry `x-outlive-relay-*` headers with an ed25519 signature over the
 vault, delivery id, attempt, timestamp, method, path and body hash, so a target can check that
 the request came from a worker of that vault (`verifyOutbound` in the SDK).
 
@@ -142,7 +142,7 @@ receipts (`POST /v1/obligations`). For each customer it records the vault's `las
 time it sees them, after it became the registered worker. A receipt with a seq at or below that
 mark was charged by an earlier worker: it is delivered without charging again. A higher seq was
 never charged: the new worker charges it as new and issues a fresh receipt. Paid obligations
-move with the deed even if the old server is gone.
+move with the token even if the old server is gone.
 
 The SDK re-reads the endpoint from the vault after a 410 or a failed connection and presents
 its pending receipts again before retrying.
@@ -165,7 +165,7 @@ Why there is no double charge: A's charges can only execute before the rotation 
 key as the registered worker key). B reads a customer's `last_seq` only after it saw itself as
 the registered worker in a final block, so that mark includes every charge A ever made.
 
-What the customer needs is the receipt and the request. `DeedClient` keeps them in memory, and
+What the customer needs is the receipt and the request. `OutliveClient` keeps them in memory, and
 with `store: fileStore(path)` (Node) also in a file, so a customer process that restarts can
 `resubmit()` them; `adopt(entries)` takes receipts saved anywhere else. Receipts are checked
 against the vault's worker key history (last 10 keys), so B accepts receipts signed by A's key.
@@ -183,13 +183,13 @@ Gaps, said plainly:
 
 ## Buyer agent
 
-`agents/src/buyer.ts` reads listings from the deed and figures from the vault, then appraises
+`agents/src/buyer.ts` reads listings from the token and figures from the vault, then appraises
 the revenue (`sdk/src/appraisal.ts`):
 
 - per-customer paid revenue over the trailing 30 days, from the vault's own `vault_charge`
   events (each charged item names its customer), read through the FastNEAR transaction index;
 - revenue charged to the current owner, every previous owner (ownership epochs from
-  `vault_init`, `vault_owner` and `deed_sold`), the listing seller, the vault and the deed is
+  `vault_init`, `vault_owner` and `outlive_sold`), the listing seller, the vault and the token is
   excluded;
 - customers funded by any of those accounts are excluded: a `vault_deposit` whose sender is
   one of them (`deposit_for`), a transaction signed by one of them that touches the customer

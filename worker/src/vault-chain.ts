@@ -1,7 +1,7 @@
 // What the worker needs from chain, behind an interface so tests can use a fake vault.
 
-import { Rpc, VaultViews, type ChargeItem, type ChargeResult, type CustomerView, type VaultInfo, type WorkerKeyView, withRpcRetry } from "@deed/sdk";
-import { NodeSigner } from "@deed/sdk/node";
+import { Rpc, VaultViews, type ChargeItem, type ChargeResult, type CustomerView, type VaultInfo, type WorkerKeyView, withRpcRetry } from "@outlive/sdk";
+import { NodeSigner } from "@outlive/sdk/node";
 
 export type KeyPermission = "full" | "function_call" | null;
 

@@ -1,4 +1,4 @@
-// DeedClient: the customer side of a Deed relay. Browser-safe apart from the optional
+// OutliveClient: the customer side of a Outlive relay. Browser-safe apart from the optional
 // transactor (see node.ts), which signs on-chain top-ups.
 
 import { Rpc } from "./chain.js";
@@ -42,7 +42,7 @@ export class RelayError extends Error {
   }
 }
 
-export interface DeedClientOptions {
+export interface OutliveClientOptions {
   vault: string;
   accountId: string;
   signer: Signer;
@@ -81,7 +81,7 @@ const REQUEST_TIMEOUT_MS = 15_000;
  * (worker-key history, each customer's ledger); the worker's own hand-off allows the same. */
 export const OBLIGATIONS_TIMEOUT_MS = 90_000;
 
-export class DeedClient {
+export class OutliveClient {
   readonly vault: string;
   readonly accountId: string;
   private readonly signer: Signer;
@@ -89,7 +89,7 @@ export class DeedClient {
   private readonly transactor: Transactor | undefined;
   private readonly fetchImpl: typeof fetch;
   private readonly keyCacheMs: number;
-  private readonly onEvent: NonNullable<DeedClientOptions["onEvent"]>;
+  private readonly onEvent: NonNullable<OutliveClientOptions["onEvent"]>;
   private endpoint: string | undefined;
   private readonly endpointOverride: boolean;
   private keys: { at: number; keys: Set<string> } | undefined;
@@ -97,7 +97,7 @@ export class DeedClient {
   private readonly store: PendingStore | undefined;
   private readonly rejected = new Map<string, { entry: ObligationEntry; reason: string }>();
 
-  constructor(opts: DeedClientOptions) {
+  constructor(opts: OutliveClientOptions) {
     this.vault = opts.vault;
     this.accountId = opts.accountId;
     this.signer = opts.signer;

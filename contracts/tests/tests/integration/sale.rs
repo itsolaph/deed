@@ -17,16 +17,16 @@ async fn listing_locks_owner_actions_and_cancel_unlocks() -> Result<()> {
 
     fails(env.list(&env.alice, "relay", SALE_PRICE).await?, "only the token owner");
     let res = ok(env.list(&env.seller, "relay", SALE_PRICE).await?);
-    assert!(has_event(&res, "deed_listed") && has_event(&res, "deed_listing_active"));
+    assert!(has_event(&res, "outlive_listed") && has_event(&res, "outlive_listing_active"));
     assert!(res.json::<bool>()?);
-    let deed = env.deed_view("relay").await?;
-    assert_eq!(deed["listing"]["active"], true);
-    assert_eq!(u128_of(&deed["listing"]["price"]), SALE_PRICE);
+    let outlive = env.outlive_view("relay").await?;
+    assert_eq!(outlive["listing"]["active"], true);
+    assert_eq!(u128_of(&outlive["listing"]["price"]), SALE_PRICE);
     assert_eq!(env.vault_info(&vault).await?["locked"], true);
     fails(env.list(&env.seller, "relay", SALE_PRICE).await?, "already listed");
 
     // While listed the seller cannot drain, rotate, reconfigure or reprice the vault.
-    let locked = "locked while the deed is listed";
+    let locked = "locked while the outlive is listed";
     fails(env.call_owner(&env.seller, &vault, "withdraw", json!({ "amount": "1" })).await?, locked);
     let new_key = SecretKey::from_random(KeyType::ED25519).public_key().to_string();
     fails(env.call_owner(&env.seller, &vault, "set_worker", json!({ "public_key": new_key })).await?, locked);
@@ -41,7 +41,7 @@ async fn listing_locks_owner_actions_and_cancel_unlocks() -> Result<()> {
     assert_eq!(env.charge_ok(&vault, &sk, vec![item(alice, 2, 1)]).await?, ["charged"]);
 
     let cancel = |who: &near_workspaces::Account| {
-        who.call(env.deed.id(), "cancel_listing")
+        who.call(env.outlive.id(), "cancel_listing")
             .args_json(json!({ "token_id": "relay" }))
             .deposit(near_workspaces::types::NearToken::from_yoctonear(1))
             .gas(MAX_GAS)
@@ -49,9 +49,9 @@ async fn listing_locks_owner_actions_and_cancel_unlocks() -> Result<()> {
     };
     fails(cancel(&env.alice).await?, "only the seller");
     let res = ok(cancel(&env.seller).await?);
-    assert!(has_event(&res, "deed_listing_cancelled") && has_event(&res, "vault_unlock"));
+    assert!(has_event(&res, "outlive_listing_cancelled") && has_event(&res, "vault_unlock"));
     assert_eq!(env.vault_info(&vault).await?["locked"], false);
-    assert!(env.deed_view("relay").await?["listing"].is_null());
+    assert!(env.outlive_view("relay").await?["listing"].is_null());
     done(env.call_owner(&env.seller, &vault, "withdraw", json!({ "amount": PRICE.to_string() })).await?);
     env.assert_invariant(&vault).await?;
     Ok(())
@@ -77,32 +77,32 @@ async fn buy_moves_the_business_and_rotation_hands_over_the_worker() -> Result<(
         (SALE_PRICE, SALE_PRICE, "nope"),
     ] {
         let res = ok(env.buy(&env.buyer, token, amount, max_price).await?);
-        assert!(has_event(&res, "deed_buy_refused"));
+        assert!(has_event(&res, "outlive_buy_refused"));
         assert_eq!(res.json::<String>()?, "0", "nothing used");
     }
     assert_eq!(env.ft_balance(env.buyer.id()).await?, buyer_start);
-    assert_eq!(env.deed_view("relay").await?["listing"]["active"], true);
+    assert_eq!(env.outlive_view("relay").await?["listing"]["active"], true);
 
     // Buy with 7 tUSDC too much: the excess comes back, the seller gets the price.
     let res = ok(env.buy(&env.buyer, "relay", SALE_PRICE + 7 * ONE_TUSDC, SALE_PRICE).await?);
-    assert!(has_event(&res, "deed_sold") && has_event(&res, "nft_transfer") && has_event(&res, "vault_owner"));
-    assert!(has_event(&res, "deed_seller_paid"));
+    assert!(has_event(&res, "outlive_sold") && has_event(&res, "nft_transfer") && has_event(&res, "vault_owner"));
+    assert!(has_event(&res, "outlive_seller_paid"));
     assert_eq!(res.json::<String>()?, SALE_PRICE.to_string());
     assert_eq!(buyer_start - env.ft_balance(env.buyer.id()).await?, SALE_PRICE);
     assert_eq!(env.ft_balance(env.seller.id()).await? - seller_start, SALE_PRICE);
 
-    let token: Value = env.deed.view("nft_token").args_json(json!({ "token_id": "relay" })).await?.json()?;
+    let token: Value = env.outlive.view("nft_token").args_json(json!({ "token_id": "relay" })).await?.json()?;
     assert_eq!(token["owner_id"], env.buyer.id().as_str());
     let info = env.vault_info(&vault).await?;
     assert_eq!(info["owner_id"], env.buyer.id().as_str());
     assert_eq!(info["owner_epoch"], 2);
     assert_eq!(info["locked"], false);
-    assert!(env.deed_view("relay").await?["listing"].is_null());
-    env.assert_deed_invariant().await?;
+    assert!(env.outlive_view("relay").await?["listing"].is_null());
+    env.assert_outlive_invariant().await?;
 
     // The seller's withdraw now reverts. Revenue from the next call accrues to the buyer.
     let w = json!({ "amount": PRICE.to_string() });
-    fails(env.call_owner(&env.seller, &vault, "withdraw", w.clone()).await?, "only the deed owner");
+    fails(env.call_owner(&env.seller, &vault, "withdraw", w.clone()).await?, "only the outlive owner");
     env.charge_ok(&vault, &old_key, vec![item(alice, 2, 5)]).await?;
     let revenue = u128_of(&env.vault_info(&vault).await?["revenue"]);
     assert_eq!(revenue, 15 * PRICE, "cash that came with the vault plus new revenue");
@@ -113,7 +113,7 @@ async fn buy_moves_the_business_and_rotation_hands_over_the_worker() -> Result<(
 
     // Only the new owner can rotate. Rotation deletes the old key; the new one charges.
     let seller_try = SecretKey::from_random(KeyType::ED25519).public_key().to_string();
-    fails(env.call_owner(&env.seller, &vault, "set_worker", json!({ "public_key": seller_try })).await?, "only the deed owner");
+    fails(env.call_owner(&env.seller, &vault, "set_worker", json!({ "public_key": seller_try })).await?, "only the outlive owner");
     let new_key = env.set_worker(&env.buyer, &vault).await?;
     let keys = env.worker.view_access_keys(&vault).await?;
     assert_eq!(keys.len(), 1);
@@ -129,7 +129,7 @@ async fn buy_moves_the_business_and_rotation_hands_over_the_worker() -> Result<(
     let res = ok(env.buy(&env.bob, "relay", SALE_PRICE, SALE_PRICE).await?);
     assert_eq!(res.json::<String>()?, "0");
     env.assert_invariant(&vault).await?;
-    env.assert_deed_invariant().await?;
+    env.assert_outlive_invariant().await?;
     Ok(())
 }
 
@@ -140,26 +140,26 @@ async fn seller_proceeds_stay_claimable_when_unregistered() -> Result<()> {
     done(env.list(&env.seller, "relay", SALE_PRICE).await?);
 
     let res = ok(env.buy(&env.buyer, "relay", SALE_PRICE, SALE_PRICE).await?);
-    assert!(has_event(&res, "deed_proceeds_held"));
-    let owed: Value = env.deed.view("proceeds_of").args_json(json!({ "account_id": env.seller.id() })).await?.json()?;
+    assert!(has_event(&res, "outlive_proceeds_held"));
+    let owed: Value = env.outlive.view("proceeds_of").args_json(json!({ "account_id": env.seller.id() })).await?.json()?;
     assert_eq!(u128_of(&owed), SALE_PRICE);
-    assert_eq!(env.ft_balance(env.deed.id()).await?, SALE_PRICE);
-    env.assert_deed_invariant().await?;
+    assert_eq!(env.ft_balance(env.outlive.id()).await?, SALE_PRICE);
+    env.assert_outlive_invariant().await?;
     assert_eq!(env.vault_info(&vault).await?["owner_id"], env.buyer.id().as_str());
 
-    let claim = || env.seller.call(env.deed.id(), "claim_proceeds").gas(MAX_GAS).transact();
+    let claim = || env.seller.call(env.outlive.id(), "claim_proceeds").gas(MAX_GAS).transact();
     // Still unregistered: the payout fails and the proceeds stay put.
     let res = ok(claim().await?);
     assert!(!res.json::<bool>()?);
-    env.assert_deed_invariant().await?;
-    assert_eq!(env.ft_balance(env.deed.id()).await?, SALE_PRICE);
+    env.assert_outlive_invariant().await?;
+    assert_eq!(env.ft_balance(env.outlive.id()).await?, SALE_PRICE);
 
     env.register(env.seller.id()).await?;
     let res = ok(claim().await?);
     assert!(res.json::<bool>()?);
     assert_eq!(env.ft_balance(env.seller.id()).await?, SALE_PRICE);
-    assert_eq!(env.ft_balance(env.deed.id()).await?, 0);
-    env.assert_deed_invariant().await?;
+    assert_eq!(env.ft_balance(env.outlive.id()).await?, 0);
+    env.assert_outlive_invariant().await?;
     fails(claim().await?, "no proceeds to claim");
     Ok(())
 }

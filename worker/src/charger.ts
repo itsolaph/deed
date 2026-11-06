@@ -7,7 +7,7 @@
 // and `unseen` (confirmed, but the view was read before). What it may still accept is
 // chargeable_today(view) minus the cost of those three lists.
 
-import type { ChargeItem, CustomerView } from "@deed/sdk";
+import type { ChargeItem, CustomerView } from "@outlive/sdk";
 import type { VaultChain } from "./vault-chain.js";
 
 export const MAX_BATCH = 40;

@@ -20,8 +20,8 @@ import {
   type IndexedTransaction,
 } from "../src/index.js";
 
-const VAULT = "relay.deed.testnet";
-const DEED = "deed.testnet";
+const VAULT = "relay.outlive.testnet";
+const OUTLIVE = "outlive.testnet";
 const TOKEN = "tusdc.testnet";
 const NOW = 1_800_000_000_000;
 const HOUR = 3_600_000;
@@ -43,7 +43,7 @@ const clean: FundingRecord = { funders: [{ account: "testnet", tx: "faucet", how
 function input(events: HistoryEvent[], funding: Record<string, FundingRecord>, over: Partial<AppraisalInput> = {}): AppraisalInput {
   return {
     vault: VAULT,
-    deed: DEED,
+    outlive: OUTLIVE,
     owner: "seller.testnet",
     events,
     funding: new Map(Object.entries(funding)),
@@ -166,7 +166,7 @@ test("appraisal: a missing ownership epoch fails the owner check", () => {
 });
 
 test("appraisal: vault_charge and vault_deposit logs carry customer, cost and sender", () => {
-  const evt = (event: string, data: unknown) => `EVENT_JSON:${JSON.stringify({ standard: "deed", version: "1.0.0", event, data: [data] })}`;
+  const evt = (event: string, data: unknown) => `EVENT_JSON:${JSON.stringify({ standard: "outlive", version: "1.0.0", event, data: [data] })}`;
   const tx: IndexedTransaction = {
     transaction: { hash: "T1", signer_id: "w.testnet", receiver_id: VAULT },
     receipts: [
@@ -218,8 +218,8 @@ test("funding read: only transactions the customer did not sign are read; owner 
 });
 
 test("demo-account labels: the project's own traffic agents and seller-funded accounts", () => {
-  assert.equal(isProjectDemoAccount("deedlab-alice.testnet"), true);
-  assert.equal(isProjectDemoAccount("wash1.deedl12-seller.testnet"), true);
-  assert.equal(isProjectDemoAccount("someone.testnet", ["deedl9-seller.testnet"]), true);
+  assert.equal(isProjectDemoAccount("outlivelab-alice.testnet"), true);
+  assert.equal(isProjectDemoAccount("wash1.outlivel12-seller.testnet"), true);
+  assert.equal(isProjectDemoAccount("someone.testnet", ["outlivel9-seller.testnet"]), true);
   assert.equal(isProjectDemoAccount("someone.testnet", ["someone.testnet"]), false);
 });

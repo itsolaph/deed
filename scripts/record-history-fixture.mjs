@@ -2,7 +2,7 @@
 // Records a vault's transactions from FastNEAR's transaction index as an SDK test fixture,
 // trimmed to the fields sdk/src/history.ts reads.
 //
-//   node scripts/record-history-fixture.mjs relay-1102ripe.deed2.deedlab.testnet
+//   node scripts/record-history-fixture.mjs relay-1102ripe.outlive.testnet
 //
 // Writes sdk/test/fixtures/<vault>.json. Read only; 1 + ceil(n / 20) requests.
 

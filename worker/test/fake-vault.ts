@@ -1,7 +1,7 @@
 // In-memory vault with the same charge rules as contracts/vault (seq, balance, daily cap,
 // worker key), so worker tests run without a chain.
 
-import type { ChargeItem, ChargeResult, CustomerView, VaultInfo, WorkerKeyView } from "@deed/sdk";
+import type { ChargeItem, ChargeResult, CustomerView, VaultInfo, WorkerKeyView } from "@outlive/sdk";
 import type { ChargeOutcome, KeyPermission, VaultChain } from "../src/vault-chain.js";
 
 interface FakeCustomer {
@@ -13,7 +13,7 @@ interface FakeCustomer {
 }
 
 export class FakeVault {
-  readonly vault = "relay.deed.test";
+  readonly vault = "relay.outlive.test";
   workerKey: string | null = null;
   endpoint = "http://127.0.0.1:1";
   price = 10_000n;
@@ -46,7 +46,7 @@ export class FakeVault {
 
   infoView(): VaultInfo {
     return {
-      deed_id: "deed.test",
+      outlive_id: "outlive.test",
       token_id: "relay",
       owner_id: "seller.test",
       owner_epoch: 1,

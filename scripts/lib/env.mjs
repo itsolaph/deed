@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { ROOT } from "./deployments.mjs";
 
-export function loadEnv(file = process.env.DEED_ENV_FILE || path.join(ROOT, ".env")) {
+export function loadEnv(file = process.env.OUTLIVE_ENV_FILE || path.join(ROOT, ".env")) {
   if (!fs.existsSync(file)) return [];
   const set = [];
   for (const raw of fs.readFileSync(file, "utf8").split("\n")) {

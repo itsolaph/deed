@@ -1,4 +1,4 @@
-/* Deed exchange board.
+/* Outlive exchange board.
    World: machine-commerce listings, port boards, split-flap price boards.
    System: white canvas, true ink, one International Orange signal, hard offset shadows only,
    square corners, Archivo 400-900, tabular numerals, ranked listings.
@@ -23,7 +23,7 @@
   --snap: cubic-bezier(0.16, 1, 0.3, 1);
   --hard: 5px 5px 0 var(--ink);
   --hard-s: 3px 3px 0 var(--ink);
-  /* rank | deed | calls | revenue | price | payback | status | toggle */
+  /* rank | outlive | calls | revenue | price | payback | status | toggle */
   --cols: 30px minmax(0, 1.6fr) minmax(0, 0.7fr) minmax(0, 0.95fr) minmax(0, 0.8fr) minmax(0, 1fr) 116px 26px;
 }
 
@@ -255,8 +255,8 @@ header.top.scrolled { box-shadow: 0 10px 14px -12px rgba(19, 19, 19, 0.45); }
 }
 .board-head span:nth-child(n + 3):nth-child(-n + 6) { text-align: right; }
 
-#deeds { border: 2px solid var(--ink); box-shadow: var(--hard); background: var(--canvas); }
-#deeds:has(> .empty) { box-shadow: none; }
+#tokens { border: 2px solid var(--ink); box-shadow: var(--hard); background: var(--canvas); }
+#tokens:has(> .empty) { box-shadow: none; }
 p.board-note { margin: 18px 0 0; }
 .board-note:empty { display: none; }
 .empty { margin: 0; padding: 22px 16px; color: var(--ink-2); }

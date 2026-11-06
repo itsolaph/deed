@@ -9,7 +9,7 @@ use crate::{Vault, VaultExt, MIN_CUSTOMER_DEPOSIT};
 
 #[near(serializers = [json])]
 pub struct VaultInfo {
-    pub deed_id: AccountId,
+    pub outlive_id: AccountId,
     pub token_id: String,
     pub owner_id: AccountId,
     pub owner_epoch: u64,
@@ -59,7 +59,7 @@ pub struct WorkerKeyView {
     pub owner_epoch: u64,
 }
 
-/// Pushed to the deed and shown in the NFT metadata. Field names are part of the deed's
+/// Pushed to the outlive and shown in the NFT metadata. Field names are part of the outlive's
 /// `on_stats` interface.
 #[near(serializers = [json])]
 #[derive(Clone, Debug)]
@@ -120,7 +120,7 @@ impl Vault {
         let now = env::block_timestamp();
         let pending = self.price.pending.filter(|(_, at)| now < *at);
         VaultInfo {
-            deed_id: self.deed_id.clone(),
+            outlive_id: self.outlive_id.clone(),
             token_id: self.token_id.clone(),
             owner_id: self.owner_id.clone(),
             owner_epoch: self.owner_epoch,
@@ -155,7 +155,7 @@ impl Vault {
         self.stats.view(self.today())
     }
 
-    /// Stats in the shape pushed to the deed.
+    /// Stats in the shape pushed to the outlive.
     pub fn get_push_stats(&self) -> VaultStats {
         self.current_stats()
     }

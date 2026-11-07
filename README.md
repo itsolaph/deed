@@ -30,6 +30,12 @@ number in it comes from a recorded testnet run:
 [docs/media/outlive-demo.mp4](docs/media/outlive-demo.mp4) ·
 [poster](docs/media/outlive-poster.jpg) ·
 [subtitles](docs/media/outlive-demo.srt).
+A 71-second launch film, also 4:5 and subtitled, tells the same story as an ad: a business that is sold
+while it keeps serving customers, not a password handover. Its b-roll is AI-generated illustration and
+is stamped as such; the product screens are captured from the hosted app, and the figures are labelled
+live or recorded run. [film](docs/media/outlive-ad.mp4) ·
+[poster](docs/media/outlive-ad-poster.jpg) · [subtitles](docs/media/outlive-ad.srt).
+The timecodes in the claims table below refer to the longer film above.
 
 | Do | See | Time |
 |---|---|---|

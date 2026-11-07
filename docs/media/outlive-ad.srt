@@ -1,0 +1,83 @@
+1
+00:00:00,260 --> 00:00:03,930
+Four a.m. Nobody's here. The shop is open anyway.
+
+2
+00:00:04,220 --> 00:00:06,770
+A paid API can earn all night.
+
+3
+00:00:07,160 --> 00:00:10,410
+Selling it usually means handing over a password, not the shop.
+
+4
+00:00:10,460 --> 00:00:15,070
+Outlive. A paid API, sold as an NFT on NEAR.
+
+5
+00:00:15,260 --> 00:00:16,830
+The token owns a vault:
+
+6
+00:00:17,400 --> 00:00:21,790
+treasury, price list, customer ledger, and the worker key that keeps serving.
+
+7
+00:00:21,990 --> 00:00:24,520
+Live on testnet: Webhook Relay.
+
+8
+00:00:24,590 --> 00:00:29,540
+156 paid calls. 1.56 tUSDC earned.
+
+9
+00:00:30,150 --> 00:00:33,060
+Customers hold 8.44 in credit.
+
+10
+00:00:33,170 --> 00:00:35,260
+Every holder's earnings, tracked.
+
+11
+00:00:35,920 --> 00:00:37,810
+Selling it is one transaction.
+
+12
+00:00:38,060 --> 00:00:40,910
+The owner changes. The old server's key is dead.
+
+13
+00:00:41,160 --> 00:00:42,250
+Service carries on.
+
+14
+00:00:42,640 --> 00:00:47,390
+Recorded run: 66 paid calls, sold for 3 tUSDC.
+
+15
+00:00:47,560 --> 00:00:50,670
+Payback 4.4 days, on demo traffic.
+
+16
+00:00:50,810 --> 00:00:52,440
+A stolen worker key?
+
+17
+00:00:52,570 --> 00:00:56,340
+In our tests: six attacks on a vault. Six blocked.
+
+18
+00:00:56,570 --> 00:01:00,760
+Honest limits: our own demo agents, a relaxed demo policy,
+
+19
+00:01:00,810 --> 00:01:03,220
+and demand from strangers is not proven.
+
+20
+00:01:04,260 --> 00:01:08,130
+Outlive. Sell the running API, not a password.
+
+21
+00:01:08,240 --> 00:01:09,810
+Live on NEAR testnet.
